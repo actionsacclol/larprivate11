@@ -1,0 +1,30 @@
+{
+  "name": "Kalshi — Krypt LARP",
+  "short_name": "Kalshi",
+  "description": "Kalshi, recreated. Part of the Krypt LARP collection.",
+  "start_url": "../../dashboards/kalshi/index.html",
+  "scope": "../../",
+  "display": "standalone",
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
+  "background_color": "#FFFFFF",
+  "theme_color": "#00D082",
+  "icons": [
+    {
+      "src": "../icons/kalshi-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../icons/kalshi-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

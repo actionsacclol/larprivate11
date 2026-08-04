@@ -1,0 +1,30 @@
+{
+  "name": "Whop — Krypt LARP",
+  "short_name": "Whop",
+  "description": "Whop, recreated. Part of the Krypt LARP collection.",
+  "start_url": "../../dashboards/whop/index.html",
+  "scope": "../../",
+  "display": "standalone",
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
+  "background_color": "#FFFFFF",
+  "theme_color": "#FF6243",
+  "icons": [
+    {
+      "src": "../icons/whop-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../icons/whop-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

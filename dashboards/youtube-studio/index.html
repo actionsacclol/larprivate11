@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en" data-krypt-status="translucent">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Krypt Studio · YouTube Studio Analytics (Learning Demo)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* bottom-bar panes */
+  .dashrow{display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+    padding:10px 0;border-bottom:1px solid #272727;font-size:14px;color:#aaa;}
+  .dashrow:last-child{border-bottom:0;}
+  .dashrow b{color:#fff;font-size:15px;}
+  .big-stat{font-size:34px;font-weight:700;letter-spacing:-1px;margin:6px 0 2px;}
+  .big-stat small{font-size:14px;font-weight:500;color:#aaa;letter-spacing:0;}
+  .sub-stat{font-size:13px;color:#aaa;}
+  .clist{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid #272727;}
+  .clist .cav{width:34px;height:34px;border-radius:50%;flex:0 0 auto;display:flex;
+    align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;background:#3a3a3a;}
+  .clist .cbody{flex:1;min-width:0;}
+  .clist .cwho{font-size:12.5px;color:#aaa;}
+  .clist .ctext{font-size:14px;margin-top:3px;line-height:1.35;}
+  .clist .cmeta{font-size:12px;color:#717171;margin-top:5px;}
+</style>
+<style>
+:root{
+  --font:'Roboto','Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  --bg:#0f0f0f;
+  --card:#212121;
+  --card2:#1c1c1c;
+  --line:#303030;
+  --text:#ffffff;
+  --sub:#aaaaaa;
+  --red:#FF0000;
+  --blue:#3ea6ff;
+  --green:#2ba640;
+  --neg:#ff5c5c;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+  font-family:var(--font);
+  background:#0a0a0a;
+  color:var(--text);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:100vh;
+  padding:26px 10px;
+  overflow-x:hidden;
+}
+
+/* ---------- Shared chrome ---------- */
+.back{
+  position:fixed;top:18px;left:18px;z-index:60;
+  background:#1c1c1c;color:#f1f1f1;text-decoration:none;
+  font-size:13px;font-weight:500;
+  padding:9px 14px;border-radius:20px;border:1px solid #333;
+  box-shadow:0 2px 10px rgba(0,0,0,.5);
+}
+.back:active{background:#2a2a2a;}
+.top-tools{
+  position:fixed;top:18px;right:18px;z-index:60;
+  display:flex;gap:8px;
+}
+.tool-btn{
+  background:#1c1c1c;color:#f1f1f1;
+  font-family:var(--font);font-size:13px;font-weight:500;
+  padding:9px 13px;border-radius:20px;border:1px solid #333;
+  box-shadow:0 2px 10px rgba(0,0,0,.5);cursor:pointer;
+}
+.tool-btn:active{background:#2a2a2a;}
+.tool-btn.active{background:var(--red);border-color:var(--red);color:#fff;}
+
+/* ---------- Phone frame ---------- */
+.phone{
+  width:390px;height:844px;
+  background:#000;
+  border-radius:44px;
+  padding:11px;
+  box-shadow:0 0 0 2px #1a1a1a,0 30px 70px rgba(0,0,0,.7);
+  position:relative;
+}
+.screen{
+  width:100%;height:100%;
+  background:var(--bg);
+  border-radius:34px;
+  overflow:hidden;
+  position:relative;
+  display:flex;flex-direction:column;
+}
+.notch{
+  position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:150px;height:26px;background:#000;
+  border-radius:0 0 18px 18px;z-index:40;
+}
+.statusbar{
+  height:40px;flex:0 0 40px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px 0 26px;
+  font-size:13px;font-weight:600;color:#fff;
+  position:relative;z-index:30;
+}
+.statusbar .r{display:flex;gap:6px;align-items:center;font-size:12px;}
+
+/* scroll area */
+.scroll{
+  flex:1;overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+}
+.scroll::-webkit-scrollbar{width:0;height:0;}
+
+/* ---------- YT header ---------- */
+.yt-header{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 16px 8px;
+  position:sticky;top:0;background:var(--bg);z-index:20;
+}
+.avatar{
+  width:32px;height:32px;border-radius:50%;
+  background:linear-gradient(135deg,#ff4e50,#f9436b 45%,#c724b1);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:14px;color:#fff;flex-shrink:0;
+}
+.ch-name{font-size:16px;font-weight:500;letter-spacing:.2px;flex:1;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.h-icons{display:flex;gap:16px;align-items:center;}
+.h-icons svg{width:22px;height:22px;fill:#f1f1f1;display:block;}
+.notif-wrap{position:relative;}
+.notif-dot{position:absolute;top:-2px;right:-2px;width:14px;height:14px;
+  background:var(--red);border-radius:50%;font-size:9px;font-weight:700;
+  color:#fff;display:flex;align-items:center;justify-content:center;
+  border:2px solid var(--bg);}
+
+.page-title{padding:6px 16px 4px;font-size:24px;font-weight:700;letter-spacing:.2px;}
+
+/* ---------- Analytics tab row ---------- */
+.tabs{
+  display:flex;gap:0;padding:0 8px;
+  border-bottom:1px solid var(--line);
+  position:sticky;top:52px;background:var(--bg);z-index:19;
+  overflow-x:auto;
+}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{
+  position:relative;flex:0 0 auto;
+  padding:14px 14px 13px;
+  font-size:14px;font-weight:500;color:var(--sub);
+  cursor:pointer;white-space:nowrap;
+}
+.tab.active{color:#fff;}
+.tab-ink{
+  position:absolute;left:8px;bottom:-1px;height:2px;
+  background:var(--red);border-radius:2px;
+  transition:transform .28s cubic-bezier(.4,0,.2,1),width .28s cubic-bezier(.4,0,.2,1);
+}
+
+/* ---------- content ---------- */
+.body-pad{padding:16px 16px 40px;}
+.card{
+  background:var(--card);
+  border-radius:12px;
+  padding:16px;
+  margin-bottom:14px;
+}
+.card.flat{background:var(--card2);}
+
+/* hero */
+.hero-label{font-size:13px;color:var(--sub);margin-bottom:6px;}
+.hero-big{font-size:40px;font-weight:400;line-height:1.05;letter-spacing:-.5px;}
+.hero-delta{margin-top:8px;font-size:13px;color:var(--sub);}
+.hero-delta b{color:var(--green);font-weight:500;}
+
+.summary-head{
+  display:flex;align-items:center;justify-content:space-between;
+  margin:20px 2px 12px;
+}
+.summary-head .t{font-size:16px;font-weight:500;}
+.summary-head .s{font-size:12px;color:var(--sub);}
+
+/* summary metric rows */
+.metric-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 0;border-bottom:1px solid var(--line);
+}
+.metric-row:last-child{border-bottom:none;}
+.metric-row .ml{display:flex;flex-direction:column;gap:3px;}
+.metric-row .m-name{font-size:14px;color:var(--sub);font-weight:400;}
+.metric-row .m-val{font-size:22px;font-weight:500;letter-spacing:-.2px;}
+.metric-row .m-delta{
+  font-size:13px;font-weight:500;display:flex;align-items:center;gap:3px;
+  padding:4px 9px;border-radius:14px;
+}
+.m-delta.up{color:var(--green);background:rgba(43,166,64,.13);}
+.m-delta.down{color:var(--neg);background:rgba(255,92,92,.12);}
+.m-delta .arw{font-size:11px;}
+
+/* chart card */
+.card-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:2px;}
+.card-title{font-size:15px;font-weight:500;}
+.card-sub{font-size:12px;color:var(--sub);margin-top:2px;}
+.chart-topval{font-size:28px;font-weight:400;margin:10px 0 2px;}
+.chart-wrap{margin-top:6px;}
+.chart-wrap svg{display:block;width:100%;height:auto;}
+.x-axis{display:flex;justify-content:space-between;margin-top:6px;padding:0 2px;}
+.x-axis span{font-size:11px;color:var(--sub);}
+
+/* realtime */
+.rt-head{display:flex;align-items:center;gap:8px;}
+.rt-live{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--sub);}
+.rt-pulse{width:8px;height:8px;border-radius:50%;background:var(--red);
+  box-shadow:0 0 0 0 rgba(255,0,0,.6);animation:pulse 1.6s infinite;}
+@keyframes pulse{
+  0%{box-shadow:0 0 0 0 rgba(255,0,0,.55);}
+  70%{box-shadow:0 0 0 7px rgba(255,0,0,0);}
+  100%{box-shadow:0 0 0 0 rgba(255,0,0,0);}
+}
+.rt-big{font-size:30px;font-weight:400;margin:12px 0 2px;}
+.rt-sub{font-size:12px;color:var(--sub);}
+.rt-bars{
+  display:flex;align-items:flex-end;gap:2px;height:70px;margin-top:14px;
+}
+.rt-bar{flex:1;background:var(--blue);border-radius:1px 1px 0 0;opacity:.9;
+  transform-origin:bottom;animation:ytGrow .5s cubic-bezier(.2,.7,.3,1) both;}
+@keyframes ytGrow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+#chLine{stroke-dasharray:1200;stroke-dashoffset:1200;animation:ytDraw 1.5s cubic-bezier(.4,0,.2,1) .1s forwards;}
+#chArea{opacity:0;animation:ytFade .8s ease .8s forwards;}
+#chDot{opacity:0;animation:ytFade .4s ease 1.4s forwards;}
+@keyframes ytDraw{to{stroke-dashoffset:0}}
+@keyframes ytFade{to{opacity:1}}
+
+.rt-split{display:flex;gap:24px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line);}
+.rt-split .b{flex:1;}
+.rt-split .k{font-size:12px;color:var(--sub);}
+.rt-split .v{font-size:20px;font-weight:500;margin-top:3px;}
+
+/* top content */
+.tc-row{
+  display:flex;gap:12px;align-items:center;
+  padding:10px 0;border-bottom:1px solid var(--line);
+}
+.tc-row:last-child{border-bottom:none;}
+.tc-thumb{
+  width:88px;height:50px;border-radius:6px;flex-shrink:0;position:relative;
+  overflow:hidden;display:flex;align-items:flex-end;justify-content:flex-end;
+}
+.tc-thumb .dur{
+  font-size:10px;font-weight:600;background:rgba(0,0,0,.8);color:#fff;
+  padding:1px 4px;border-radius:3px;margin:4px;
+}
+.tc-info{flex:1;min-width:0;}
+.tc-title{font-size:13px;font-weight:400;line-height:1.35;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.tc-meta{font-size:12px;color:var(--sub);margin-top:4px;}
+
+/* bottom nav */
+.tabbar{
+  flex:0 0 58px;display:flex;align-items:center;justify-content:space-around;
+  border-top:1px solid var(--line);background:var(--bg);padding-bottom:4px;
+}
+.tabbar .ti{display:flex;flex-direction:column;align-items:center;gap:3px;
+  color:var(--sub);font-size:10px;font-weight:500;}
+.tabbar .ti svg{width:22px;height:22px;fill:currentColor;}
+.tabbar .ti.on{color:#fff;}
+
+/* edit mode */
+body.editing [data-edit]{
+  outline:1.5px dashed var(--red);outline-offset:3px;border-radius:3px;
+  cursor:text;
+}
+[data-edit]:focus{outline:1.5px solid var(--red)!important;}
+
+.stagger{opacity:0;transform:translateY(10px);animation:kStag .45s ease forwards;}
+@keyframes kStag{to{opacity:1;transform:none;}}
+.stagger.in{opacity:1;transform:none;}
+
+.home-ind{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);
+  width:130px;height:5px;border-radius:3px;background:#5a5a5a;z-index:30;}
+</style>
+<!-- krypt:phone:start -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="YT Studio">
+<meta name="theme-color" content="#FF0000">
+<link rel="manifest" href="../../assets/manifests/youtube-studio.webmanifest">
+<link rel="apple-touch-icon" href="../../assets/icons/youtube-studio-180.png">
+<link rel="icon" type="image/png" sizes="512x512" href="../../assets/icons/youtube-studio-512.png">
+<link rel="stylesheet" href="../../assets/phone.css">
+<!-- krypt:phone:end -->
+</head>
+<body>
+
+<a class="back" href="../../index.html">← Collection</a>
+<div class="top-tools">
+  <button class="tool-btn" id="editBtn">✎ Edit</button>
+  <button class="tool-btn" id="resetBtn">↺ Reset</button>
+</div>
+
+<div class="phone">
+  <div class="screen">
+    <div class="notch"></div>
+    <div class="statusbar">
+      <span>9:41</span>
+      <span class="r">
+        <svg width="17" height="12" viewBox="0 0 17 12" fill="#fff"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="2.5" width="3" height="9.5" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></svg>
+        <svg width="16" height="12" viewBox="0 0 16 12" fill="#fff"><path d="M8 2.2c2.2 0 4.2.8 5.7 2.2l1.1-1.2C13 1.4 10.6.5 8 .5S3 1.4 1.2 3.2l1.1 1.2C3.8 3 5.8 2.2 8 2.2zM8 5.6c1.3 0 2.5.5 3.4 1.3l1.1-1.2C11.3 4.5 9.7 3.9 8 3.9s-3.3.6-4.5 1.8l1.1 1.2C5.5 6.1 6.7 5.6 8 5.6zm0 3.3l1.7 1.8L8 12.4l-1.7-1.7L8 8.9z"/></svg>
+        <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3" fill="none" stroke="#fff" stroke-opacity=".5"/><rect x="2" y="2" width="17" height="8" rx="1.5" fill="#fff"/><rect x="22.5" y="4" width="1.8" height="4" rx="1" fill="#fff" fill-opacity=".6"/></svg>
+      </span>
+    </div>
+
+    <div class="scroll" id="scroll">
+      <!-- header -->
+      <div class="yt-header">
+        <div class="avatar" data-edit="avatarInitial">K</div>
+        <div class="ch-name" data-edit="channel">Krypt Studio</div>
+        <div class="h-icons">
+          <svg viewBox="0 0 24 24"><path d="M20.87 20.17l-5.59-5.59A6.94 6.94 0 0016.5 10a7 7 0 10-7 7 6.94 6.94 0 004.58-1.72l5.59 5.59zM4.5 10a5 5 0 115 5 5 5 0 01-5-5z"/></svg>
+          <div class="notif-wrap">
+            <svg viewBox="0 0 24 24"><path d="M12 22a2.1 2.1 0 002.1-2H9.9A2.1 2.1 0 0012 22zm6.5-6v-5.5c0-3.15-1.9-5.72-4.75-6.32V3.5a1.75 1.75 0 00-3.5 0v.68C7.4 4.78 5.5 7.35 5.5 10.5V16l-2 2v1h17v-1z"/></svg>
+            <span class="notif-dot">3</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="pane" id="paneAnalytics">
+      <div class="page-title">Analytics</div>
+
+      <!-- analytics tabs -->
+      <div class="tabs" id="tabs">
+        <div class="tab active" data-tab="overview">Overview</div>
+        <div class="tab" data-tab="content">Content</div>
+        <div class="tab" data-tab="audience">Audience</div>
+        <div class="tab" data-tab="revenue">Revenue</div>
+        <div class="tab" data-tab="trends">Trends</div>
+        <div class="tab-ink" id="tabInk"></div>
+      </div>
+
+      <div class="body-pad">
+        <!-- hero -->
+        <div class="card stagger" data-s="0">
+          <div class="hero-label">Current subscribers</div>
+          <div class="hero-big"><span class="cu" data-count="24812" data-edit="subs">0</span></div>
+          <div class="hero-delta"><b data-edit="subsDelta">+312</b> in last 28 days</div>
+        </div>
+
+        <div class="summary-head stagger" data-s="1">
+          <div class="t">Summary</div>
+          <div class="s" data-edit="period">Last 28 days</div>
+        </div>
+
+        <!-- summary metrics -->
+        <div class="card stagger" data-s="2" id="metricsCard">
+          <!-- rendered from DATA.metrics -->
+        </div>
+
+        <!-- main views chart -->
+        <div class="card stagger" data-s="3">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Views</div>
+              <div class="card-sub" data-edit="chartPeriod">Last 28 days</div>
+            </div>
+          </div>
+          <div class="chart-topval"><span class="cu" data-count="173700" data-fmt="k" data-edit="viewsTotal">0</span></div>
+          <div class="chart-wrap" id="chartWrap"><!-- svg injected --></div>
+          <div class="x-axis" id="xAxis"></div>
+        </div>
+
+        <!-- realtime -->
+        <div class="card flat stagger" data-s="4">
+          <div class="rt-head">
+            <div class="card-title" style="flex:1">Realtime</div>
+            <div class="rt-live"><span class="rt-pulse"></span>Updating live</div>
+          </div>
+          <div class="rt-big"><span class="cu" data-count="1284" data-edit="rtSubs">0</span> <span style="font-size:14px;color:var(--sub);font-weight:400;">subscribers</span></div>
+          <div class="rt-sub">Subscribers · Last 48 hours</div>
+          <div class="rt-bars" id="rtBars"></div>
+          <div class="rt-split">
+            <div class="b">
+              <div class="k">Views</div>
+              <div class="v" data-edit="rtViews">12.4K</div>
+            </div>
+            <div class="b">
+              <div class="k">Est. minutes watched</div>
+              <div class="v" data-edit="rtMinutes">48.9K</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- top content -->
+        <div class="card stagger" data-s="5">
+          <div class="card-head" style="margin-bottom:8px;">
+            <div>
+              <div class="card-title">Top videos</div>
+              <div class="card-sub">Last 48 hours</div>
+            </div>
+          </div>
+          <div id="topList"><!-- rendered from DATA.videos --></div>
+        </div>
+      </div>
+      </div><!-- /paneAnalytics -->
+
+      <!-- ============ DASHBOARD ============ -->
+      <div class="pane" id="paneDashboard" style="display:none;">
+        <div class="page-title">Dashboard</div>
+        <div class="card">
+          <div class="card-h">Latest video performance</div>
+          <div class="big-stat"><span data-edit="dash-views">14,208</span><small> views</small></div>
+          <div class="sub-stat">Published <span data-edit="dash-when">3 days ago</span> &middot; ranks <span data-edit="dash-rank">#4</span> of your last 10</div>
+        </div>
+        <div class="card">
+          <div class="card-h">Channel analytics</div>
+          <div class="dashrow"><span>Current subscribers</span><b data-edit="dash-subs">24,812</b></div>
+          <div class="dashrow"><span>Summary &middot; last 28 days</span><b data-edit="dash-sum">173.7K views</b></div>
+          <div class="dashrow"><span>Watch time (hours)</span><b data-edit="dash-watch">8,240</b></div>
+        </div>
+        <div class="card">
+          <div class="card-h">News</div>
+          <div class="dashrow"><span data-edit="dash-news">New: edit Shorts captions from mobile</span></div>
+        </div>
+      </div>
+
+      <!-- ============ CONTENT ============ -->
+      <div class="pane" id="paneContent" style="display:none;">
+        <div class="page-title">Content</div>
+        <div id="contentList"></div>
+      </div>
+
+      <!-- ============ COMMENTS ============ -->
+      <div class="pane" id="paneComments" style="display:none;">
+        <div class="page-title">Comments</div>
+        <div id="commentList"></div>
+      </div>
+    </div>
+
+    <!-- bottom tabbar -->
+    <div class="tabbar">
+      <div class="ti" data-pane="Dashboard"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>Dashboard</div>
+      <div class="ti" data-pane="Content"><svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h10v2H4z"/></svg>Content</div>
+      <div class="ti on" data-pane="Analytics"><svg viewBox="0 0 24 24"><path d="M4 20h3v-8H4zm6 0h3V4h-3zm6 0h3v-5h-3z"/></svg>Analytics</div>
+      <div class="ti" data-pane="Comments"><svg viewBox="0 0 24 24"><path d="M12 12a5 5 0 10-5-5 5 5 0 005 5zm0 2c-3.3 0-10 1.7-10 5v3h20v-3c0-3.3-6.7-5-10-5z"/></svg>Comments</div>
+    </div>
+    <div class="home-ind"></div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   DATA — edit here to change the demo content
+   ========================================================= */
+const DATA = {
+  channel: "Krypt Studio",
+  subs: 24812,
+  metrics: [
+    { name:"Views",                 val:"173.7K",  count:173700, fmt:"k",  delta:"+18%", dir:"up" },
+    { name:"Watch time (hours)",    val:"8,240",   count:8240,   fmt:"n",  delta:"+11%", dir:"up" },
+    { name:"Estimated revenue",     val:"$742.18", count:742.18, fmt:"$",  delta:"-4%",  dir:"down" }
+  ],
+  // 28 daily view points for the main chart
+  chart: [3.1,3.4,3.0,3.8,4.2,4.0,4.6,5.1,4.7,5.4,5.9,5.5,6.2,6.8,6.4,7.1,6.7,7.4,7.0,6.6,7.3,7.9,7.5,8.2,8.8,8.4,9.1,9.6],
+  // realtime 48h bars (subscriber activity)
+  rt: [2,3,2,4,3,5,4,6,5,4,7,6,8,7,9,6,8,10,9,11,8,10,12,9,13,11,14,10,12,15,13,11,14,16,12,15,18,14,16,13,17,15,19,16,14,18,20,17],
+  videos: [
+    { title:"I Built a Secret Underground Base in 24 Hours", views:"84K views", dur:"14:22", c1:"#ff512f", c2:"#dd2476" },
+    { title:"Ranking Every Programming Language (Tier List)", views:"52K views", dur:"22:07", c1:"#396afc", c2:"#2948ff" },
+    { title:"We Tried the World's Spiciest Ramen Challenge", views:"41K views", dur:"09:48", c1:"#11998e", c2:"#38ef7d" },
+    { title:"Why This Tiny Startup Beat Google (Case Study)", views:"33K views", dur:"17:35", c1:"#f7971e", c2:"#ffd200" }
+  ],
+
+  // rows for the Content and Comments panes (bottom tab bar)
+  contentRows:[
+    {t:"Building a studio desk from scratch", v:"14,208", d:"3 days ago",  vis:"Public"},
+    {t:"My 2026 editing workflow",            v:"38,940", d:"2 weeks ago", vis:"Public"},
+    {t:"Answering your questions",            v:"9,112",  d:"3 weeks ago", vis:"Public"},
+    {t:"Shorts: one-take colour grade",       v:"84,610", d:"1 month ago", vis:"Public"},
+    {t:"Draft - lighting test",               v:"0",      d:"Not published", vis:"Private"},
+  ],
+  comments:[
+    {av:"MR", who:"@mara.reyes",  tx:"The desk build video finally got me to start mine. Thank you!", tm:"2 days ago"},
+    {av:"TK", who:"@tomkeller",   tx:"What lens are you using for the close-ups?",                    tm:"4 days ago"},
+    {av:"JP", who:"@jpixels",     tx:"That colour grade short is unreal for one take.",               tm:"1 week ago"},
+    {av:"SD", who:"@sdiaz",       tx:"Could you do a follow-up on the audio chain?",                  tm:"2 weeks ago"},
+  ],
+};
+
+const LS_KEY = "youtube-dash-v1";
+
+/* ---------- render summary metrics ---------- */
+function renderMetrics(){
+  const el = document.getElementById('metricsCard');
+  el.innerHTML = DATA.metrics.map((m,i)=>`
+    <div class="metric-row">
+      <div class="ml">
+        <div class="m-name">${m.name}</div>
+        <div class="m-val"><span class="cu" data-count="${m.count}" data-fmt="${m.fmt}" data-edit="metric_val_${i}">0</span></div>
+      </div>
+      <div class="m-delta ${m.dir}"><span class="arw">${m.dir==='up'?'▲':'▼'}</span><span data-edit="metric_delta_${i}">${m.delta}</span></div>
+    </div>`).join('');
+}
+
+/* ---------- render top videos ---------- */
+function renderVideos(){
+  const el = document.getElementById('topList');
+  el.innerHTML = DATA.videos.map((v,i)=>`
+    <div class="tc-row">
+      <div class="tc-thumb" style="background:linear-gradient(135deg,${v.c1},${v.c2})">
+        <span class="dur" data-edit="vid_dur_${i}">${v.dur}</span>
+      </div>
+      <div class="tc-info">
+        <div class="tc-title" data-edit="vid_title_${i}">${v.title}</div>
+        <div class="tc-meta" data-edit="vid_views_${i}">${v.views}</div>
+      </div>
+    </div>`).join('');
+}
+
+/* ---------- number formatting ---------- */
+function fmtCount(v, fmt){
+  if(fmt==='k'){
+    if(v>=1000) return (v/1000).toFixed(1).replace(/\.0$/,'')+'K';
+    return Math.round(v).toString();
+  }
+  if(fmt==='$'){ return '$'+v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,','); }
+  return Math.round(v).toLocaleString('en-US');
+}
+
+/* ---------- count up ---------- */
+function countUp(){
+  document.querySelectorAll('.cu').forEach(el=>{
+    if(el.dataset.done) return;
+    const target = parseFloat(el.dataset.count);
+    const fmt = el.dataset.fmt || 'n';
+    const dur = 1300;
+    const start = performance.now();
+    function step(now){
+      let p = Math.min((now-start)/dur,1);
+      const e = 1-Math.pow(1-p,3);
+      el.textContent = fmtCount(target*e, fmt);
+      if(p<1){ requestAnimationFrame(step); }
+      else { el.textContent = fmtCount(target,fmt); el.dataset.done="1"; }
+    }
+    requestAnimationFrame(step);
+  });
+}
+
+/* ---------- draw main chart ---------- */
+/* The daily points are views in thousands, so they add up to the total
+   printed above the chart — retype that total and the curve follows. */
+/* Resting top of the y-axis, captured from the shipped series before
+   any edit rescales it. */
+const CHART_REST=Math.max(...DATA.chart)*1.15;
+function rescaleChart(){
+  const el=document.querySelector('[data-edit="viewsTotal"]');
+  const target=(parseFloat(String(el?el.textContent:"").replace(/[^\d.]/g,""))||0)/1000;
+  const sum=DATA.chart.reduce((a,b)=>a+b,0);
+  DATA.chart = sum>0 ? DATA.chart.map(v=>v*(target/sum)) : DATA.chart.map(()=>target/DATA.chart.length);
+}
+function drawChart(){
+  const wrap = document.getElementById('chartWrap');
+  const pts = DATA.chart;
+  const W=340, H=130, pad=6;
+  // Zero-based against a resting top, not min/max auto-zoom. Auto-zoom
+  // redraws an identical curve at any scale, so the view count above it
+  // could say anything and the chart would look the same.
+  const REST=CHART_REST;
+  const max=Math.max(REST, Math.max(...pts)*1.05), min=0;
+  const x=i=> pad + i*(W-pad*2)/(pts.length-1);
+  const y=v=> H-8 - (v-min)/(max-min)*(H-24);
+  let line = pts.map((v,i)=>`${i?'L':'M'}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(' ');
+  let area = line + ` L${x(pts.length-1).toFixed(1)} ${H} L${x(0).toFixed(1)} ${H} Z`;
+  wrap.innerHTML = `
+  <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    <defs>
+      <linearGradient id="ag" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#3ea6ff" stop-opacity=".38"/>
+        <stop offset="1" stop-color="#3ea6ff" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <line x1="0" y1="${H-8}" x2="${W}" y2="${H-8}" stroke="#303030" stroke-width="1"/>
+    <path d="${area}" fill="url(#ag)" id="chArea"/>
+    <path d="${line}" fill="none" stroke="#3ea6ff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" id="chLine"/>
+    <circle r="4" fill="#3ea6ff" cx="${x(pts.length-1).toFixed(1)}" cy="${y(pts[pts.length-1]).toFixed(1)}" id="chDot"/>
+  </svg>`;
+
+  // x axis labels
+  const ax = document.getElementById('xAxis');
+  const today = new Date(2026,6,20);
+  function lbl(daysAgo){
+    const d = new Date(today); d.setDate(d.getDate()-daysAgo);
+    return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  }
+  ax.innerHTML = `<span>${lbl(27)}</span><span>${lbl(18)}</span><span>${lbl(9)}</span><span>${lbl(0)}</span>`;
+}
+
+/* ---------- realtime bars ---------- */
+function drawRealtime(){
+  const wrap = document.getElementById('rtBars');
+  const bars = DATA.rt;
+  const max = Math.max(...bars);
+  wrap.innerHTML = bars.map((v,i)=>`<div class="rt-bar" style="height:${(6 + v/max*60).toFixed(1)}px;animation-delay:${200+i*14}ms"></div>`).join('');
+}
+
+/* ---------- stagger in ---------- */
+function staggerIn(){
+  document.querySelectorAll('.stagger').forEach(el=>{
+    const d = parseInt(el.dataset.s||0)*90;
+    setTimeout(()=>el.classList.add('in'), 120+d);
+  });
+}
+
+/* ---------- tab interaction ---------- */
+const TAB_SUMMARIES = {
+  overview: DATA.metrics,
+  content: [
+    {name:"Views",count:182400,fmt:"k",delta:"+18%",dir:"up"},
+    {name:"Impressions",count:1240000,fmt:"k",delta:"+9%",dir:"up"},
+    {name:"Impr. click-through rate",count:6.4,fmt:"pct",delta:"+0.4%",dir:"up"}
+  ],
+  audience: [
+    {name:"Returning viewers",count:38200,fmt:"k",delta:"+14%",dir:"up"},
+    {name:"Unique viewers",count:96400,fmt:"k",delta:"+21%",dir:"up"},
+    {name:"Subscribers",count:312,fmt:"n",delta:"+7%",dir:"up"}
+  ],
+  revenue: [
+    {name:"Estimated revenue",count:742.18,fmt:"$",delta:"-4%",dir:"down"},
+    {name:"RPM",count:4.07,fmt:"$",delta:"+2%",dir:"up"},
+    {name:"CPM",count:9.82,fmt:"$",delta:"-1%",dir:"down"}
+  ],
+  trends: [
+    {name:"Trending views",count:54200,fmt:"k",delta:"+63%",dir:"up"},
+    {name:"Avg. view duration",count:0,fmt:"dur",delta:"+8%",dir:"up",valOverride:"4:52"},
+    {name:"New viewers",count:44100,fmt:"k",delta:"+27%",dir:"up"}
+  ]
+};
+
+function fmtPct(v){ return v.toFixed(1)+'%'; }
+function renderTabSummary(key){
+  const arr = TAB_SUMMARIES[key];
+  if(!arr) return;
+  const el = document.getElementById('metricsCard');
+  el.innerHTML = arr.map((m,i)=>{
+    let disp;
+    if(m.valOverride) disp = m.valOverride;
+    else if(m.fmt==='pct') disp = fmtPct(m.count);
+    else disp = fmtCount(m.count, m.fmt);
+    const editable = (key==='overview') ? `data-edit="metric_val_${i}"` : '';
+    return `
+    <div class="metric-row">
+      <div class="ml">
+        <div class="m-name">${m.name}</div>
+        <div class="m-val"><span ${editable}>${disp}</span></div>
+      </div>
+      <div class="m-delta ${m.dir}"><span class="arw">${m.dir==='up'?'▲':'▼'}</span>${m.delta}</div>
+    </div>`;
+  }).join('');
+  // re-apply persisted for overview edits
+  if(key==='overview') applyStored();
+}
+
+function moveInk(tab){
+  const ink = document.getElementById('tabInk');
+  const tabs = document.getElementById('tabs');
+  const r = tab.getBoundingClientRect();
+  const pr = tabs.getBoundingClientRect();
+  ink.style.width = (r.width-16)+'px';
+  ink.style.transform = `translateX(${r.left - pr.left + tabs.scrollLeft}px)`;
+}
+
+function initTabs(){
+  const tabs = document.querySelectorAll('.tab');
+  tabs.forEach(t=>{
+    t.addEventListener('click',()=>{
+      if(document.body.classList.contains('editing')) return;
+      tabs.forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      moveInk(t);
+      renderTabSummary(t.dataset.tab);
+    });
+  });
+  moveInk(document.querySelector('.tab.active'));
+}
+
+/* ---------- edit / persist ---------- */
+function applyStored(){
+  const store = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+  document.querySelectorAll('[data-edit]').forEach(el=>{
+    const k = el.dataset.edit;
+    if(store[k]!==undefined){
+      el.textContent = store[k];
+      if(el.classList.contains('cu')) el.dataset.done="1";
+    }
+  });
+}
+function saveEl(el){
+  const store = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+  store[el.dataset.edit] = el.textContent.trim();
+  localStorage.setItem(LS_KEY, JSON.stringify(store));
+}
+function bindEdits(){
+  document.querySelectorAll('[data-edit]').forEach(el=>{
+    el.addEventListener('blur',()=>{ if(el.isContentEditable) saveEl(el); });
+    if(el.dataset.edit==='viewsTotal')
+      el.addEventListener('input',()=>{ if(el.isContentEditable){ rescaleChart(); drawChart(); } });
+  });
+}
+
+
+/* ---- bottom tab bar: Dashboard / Content / Analytics / Comments ----
+   The Analytics screen is the original one, now wrapped in a pane so
+   the other three have somewhere to live. */
+function renderPanes(){
+  const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const cl=document.getElementById("contentList");
+  if(cl)cl.innerHTML=DATA.contentRows.map((r,i)=>`
+    <div class="dashrow" style="display:block">
+      <div style="font-size:14.5px;color:#fff;" data-edit="cr-${i}-t">${esc(r.t)}</div>
+      <div style="font-size:12.5px;color:#aaa;margin-top:4px;">
+        <span data-edit="cr-${i}-v">${esc(r.v)}</span> views &middot;
+        <span data-edit="cr-${i}-d">${esc(r.d)}</span> &middot;
+        <span data-edit="cr-${i}-vis">${esc(r.vis)}</span></div>
+    </div>`).join("");
+  const km=document.getElementById("commentList");
+  if(km)km.innerHTML=DATA.comments.map((r,i)=>`
+    <div class="clist">
+      <span class="cav">${esc(r.av)}</span>
+      <span class="cbody"><span class="cwho" data-edit="cm-${i}-who">${esc(r.who)}</span>
+      <div class="ctext" data-edit="cm-${i}-tx">${esc(r.tx)}</div>
+      <div class="cmeta" data-edit="cm-${i}-tm">${esc(r.tm)}</div></span>
+    </div>`).join("");
+}
+document.querySelector(".tabbar").addEventListener("click", e => {
+  const t = e.target.closest(".ti"); if(!t || !t.dataset.pane) return;
+  document.querySelectorAll(".tabbar .ti").forEach(x => x.classList.toggle("on", x === t));
+  ["Dashboard","Content","Analytics","Comments"].forEach(n => {
+    const el = document.getElementById("pane" + n);
+    if (el) el.style.display = (n === t.dataset.pane) ? "" : "none";
+  });
+  document.getElementById("scroll").scrollTop = 0;
+  bindEdits();
+});
+renderPanes();
+const editBtn = document.getElementById('editBtn');
+editBtn.addEventListener('click',()=>{
+  const on = document.body.classList.toggle('editing');
+  editBtn.classList.toggle('active', on);
+  editBtn.textContent = on ? '✓ Done' : '✎ Edit';
+  document.querySelectorAll('[data-edit]').forEach(el=>{
+    el.contentEditable = on ? 'true' : 'false';
+  });
+});
+
+document.getElementById('resetBtn').addEventListener('click',()=>{
+  if(confirm('Reset all edits and restore the demo defaults?')){
+    localStorage.removeItem(LS_KEY);
+    location.reload();
+  }
+});
+
+/* ---------- init ---------- */
+renderMetrics();
+renderVideos();
+bindEditsAfterRender();
+function bindEditsAfterRender(){}
+applyStored();
+bindEdits();
+initTabs();
+staggerIn();
+drawChart();
+drawRealtime();
+/* show real values immediately (background tabs must never display 0) */
+document.querySelectorAll('.cu').forEach(el=>{
+  if(el.textContent.trim()==="0"){
+    const t=parseFloat(el.dataset.count);
+    if(!isNaN(t)) el.textContent=fmtCount(t, el.dataset.fmt||'n');
+  }
+});
+(function maybeCountUp(){
+  if(document.visibilityState==="visible"){ setTimeout(countUp,250); return; }
+  document.addEventListener("visibilitychange",function h(){
+    if(document.visibilityState==="visible"){ countUp(); document.removeEventListener("visibilitychange",h); }
+  });
+})();
+
+// keep ink aligned if fonts load late
+window.addEventListener('load',()=>{
+  const active = document.querySelector('.tab.active');
+  if(active) moveInk(active);
+});
+</script>
+<!-- krypt:app:start -->
+<script src="../../assets/krypt-app.js" data-root="../../" data-label="YT Studio" defer></script>
+<script src="../../assets/krypt-desktop.js" defer></script>
+<script src="../../assets/push.js" defer></script>
+<!-- krypt:app:end -->
+</body>
+</html>

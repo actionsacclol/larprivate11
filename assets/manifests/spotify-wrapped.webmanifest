@@ -1,0 +1,30 @@
+{
+  "name": "Spotify Wrapped — Krypt LARP",
+  "short_name": "Wrapped",
+  "description": "Spotify Wrapped, recreated. Part of the Krypt LARP collection.",
+  "start_url": "../../dashboards/spotify-wrapped/index.html",
+  "scope": "../../",
+  "display": "standalone",
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
+  "background_color": "#000000",
+  "theme_color": "#1DB954",
+  "icons": [
+    {
+      "src": "../icons/spotify-wrapped-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../icons/spotify-wrapped-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

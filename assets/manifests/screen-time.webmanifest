@@ -1,0 +1,30 @@
+{
+  "name": "Screen Time — Krypt LARP",
+  "short_name": "Screen Time",
+  "description": "Screen Time, recreated. Part of the Krypt LARP collection.",
+  "start_url": "../../dashboards/screen-time/index.html",
+  "scope": "../../",
+  "display": "standalone",
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
+  "background_color": "#000000",
+  "theme_color": "#5E5CE6",
+  "icons": [
+    {
+      "src": "../icons/screen-time-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../icons/screen-time-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

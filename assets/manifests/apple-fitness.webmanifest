@@ -1,0 +1,30 @@
+{
+  "name": "Apple Fitness — Krypt LARP",
+  "short_name": "Fitness",
+  "description": "Apple Fitness, recreated. Part of the Krypt LARP collection.",
+  "start_url": "../../dashboards/apple-fitness/index.html",
+  "scope": "../../",
+  "display": "standalone",
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
+  "background_color": "#000000",
+  "theme_color": "#0A0A0C",
+  "icons": [
+    {
+      "src": "../icons/apple-fitness-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../icons/apple-fitness-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

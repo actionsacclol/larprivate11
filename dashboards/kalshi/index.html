@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en" data-krypt-status="translucent">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Kalshi · Learning Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     KALSHI — a learning recreation (TEST demo).
+     Bottom nav: Explore (For You, default) · Live · Portfolio ·
+     Search · Social. Hamburger opens a slide-in drawer; the
+     "Manage Funds" pill / drawer opens the Manage funds sub-view.
+     Pure-black + Kalshi mint green. Data-driven — see DEFAULT_DATA.
+     Edit toggle = click values; saved to your browser.
+     Entrance animations are pure CSS; headline numbers count up
+     (only when the tab is visible, so previews never show blanks).
+     ============================================================ */
+  :root{
+    --green:#00D68A;          /* Kalshi mint */
+    --green-d:#0b3a2b;        /* dim green fill */
+    --blue:#4b7bec;           /* "No" side */
+    --bg:#000000;
+    --card:#121214;
+    --card2:#17171a;
+    --line:#242428;
+    --text:#f4f4f5;
+    --muted:#8a8a90;
+    --dim:#5b5b60;
+    --font:'Space Grotesk',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    /* Kalshi's real font (Basis Grotesque) has a diagonal SLASHED ZERO. No
+       proportional Google font offers it, so numeric figures use Roboto Mono,
+       whose zero has a true diagonal slash (Space Mono's is a center dot). */
+    --num:'Roboto Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{background:#0a0a0a;font-family:var(--font);color:var(--text);display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;-webkit-font-smoothing:antialiased;font-feature-settings:"zero" 1;}
+
+  /* shared chrome — only .back is fixed; toolbar buttons flow inside .toolbar */
+  .back{position:fixed;top:18px;left:18px;z-index:50;background:#1c1c1e;color:#fff;border:1px solid #333;text-decoration:none;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;font-family:var(--font);transition:.15s;}
+  .back:hover{background:#2a2a2c;}
+  .toolbar{position:fixed;top:18px;right:18px;display:flex;gap:8px;z-index:50;}
+  .toolbar button{background:#1c1c1e;color:#fff;border:1px solid #333;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);transition:.15s;}
+  .toolbar button:hover{background:#2a2a2c;}
+  .toolbar button.on{background:var(--green);color:#00230f;border-color:var(--green);}
+
+  .phone{position:relative;width:390px;max-width:100%;height:844px;background:var(--bg);border-radius:44px;box-shadow:0 0 0 12px #111,0 40px 90px rgba(0,0,0,.7);overflow:hidden;display:flex;flex-direction:column;}
+
+  .statusbar{display:flex;align-items:center;justify-content:space-between;padding:15px 30px 4px;font-size:15px;font-weight:600;flex:0 0 auto;}
+  .statusbar .right{display:flex;align-items:center;gap:7px;}
+  .battery{border:1.5px solid #fff;border-radius:4px;width:26px;height:13px;position:relative;display:flex;align-items:center;padding:1.5px;}
+  .battery::after{content:"";position:absolute;right:-4px;top:4px;width:2px;height:5px;background:#fff;border-radius:0 2px 2px 0;}
+  .battery i{display:block;height:100%;background:#fff;border-radius:1.5px;width:78%;}
+  .signal{display:flex;align-items:flex-end;gap:2px;height:12px;}
+  .signal b{width:3px;background:#fff;border-radius:1px;display:block;}
+  .signal b:nth-child(1){height:5px}.signal b:nth-child(2){height:7px}.signal b:nth-child(3){height:9px;opacity:.4}.signal b:nth-child(4){height:12px;opacity:.4}
+
+  .screen{flex:1;overflow-y:auto;scrollbar-width:none;position:relative;}
+  .screen::-webkit-scrollbar{display:none;}
+
+  .view{display:none;}
+  .view.on{display:block;animation:vfade .22s ease;}
+  @keyframes vfade{from{opacity:0}to{opacity:1}}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  @keyframes drawin{from{transform:translateX(-100%)}to{transform:translateX(0)}}
+
+  /* ============ EXPLORE top bar ============ */
+  .ex-top{display:flex;align-items:center;justify-content:space-between;padding:6px 18px 4px;}
+  .ex-top .lft{display:flex;align-items:center;gap:14px;}
+  .burger{cursor:pointer;display:flex;flex-direction:column;gap:4px;padding:4px;}
+  .burger span{width:20px;height:2px;background:#fff;border-radius:2px;}
+  .wordmark{font-size:24px;font-weight:700;letter-spacing:-.5px;color:var(--green);}
+  .ex-top .rgt{display:flex;align-items:center;gap:12px;}
+  .pill500{background:var(--green);color:#00230f;font-size:14px;font-weight:700;padding:9px 15px;border-radius:22px;cursor:pointer;white-space:nowrap;}
+  .bell{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:2;cursor:pointer;flex:0 0 auto;}
+
+  /* category tabs */
+  .cats{display:flex;gap:22px;padding:14px 18px 6px;overflow-x:auto;scrollbar-width:none;}
+  .cats::-webkit-scrollbar{display:none;}
+  .cat{font-size:16px;font-weight:700;color:var(--dim);white-space:nowrap;cursor:pointer;padding-bottom:8px;border-bottom:2px solid transparent;transition:.15s;letter-spacing:.2px;}
+  .cat.on{color:#fff;border-bottom-color:#fff;}
+
+  .body{padding:0 0 96px;}
+
+  /* hero carousel */
+  .carousel{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:12px 18px 6px;scrollbar-width:none;}
+  .carousel::-webkit-scrollbar{display:none;}
+  .hcard{scroll-snap-align:start;flex:0 0 88%;background:linear-gradient(150deg,#1a1622,#101012 62%);border:1px solid #26242e;border-radius:20px;padding:18px 18px 16px;cursor:pointer;
+    opacity:0;transform:translateY(14px);animation:rise .5s ease forwards;}
+  .hcard.g2{background:linear-gradient(150deg,#101a22,#101012 62%);border-color:#1e2a30;}
+  .hcard.g3{background:linear-gradient(150deg,#1c1710,#101012 62%);border-color:#2c2418;}
+  .hcard .cat-row{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+  .hcard .ico{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex:0 0 auto;}
+  .hcard .klabel{font-size:12px;font-weight:700;letter-spacing:1.4px;color:var(--muted);}
+  .hcard h3{font-size:24px;font-weight:700;letter-spacing:-.6px;line-height:1.1;}
+  .hcard .date{font-size:13px;color:var(--muted);margin:5px 0 20px;}
+  .orow{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .orow .onm{font-size:19px;font-weight:600;padding-bottom:5px;border-bottom:2px solid var(--green);}
+  .orow.no .onm{border-bottom-color:var(--blue);}
+  .orow .rr{display:flex;align-items:center;gap:20px;}
+  .orow .mult{font-size:15px;color:var(--muted);font-weight:500;}
+  .orow .pct{font-size:19px;font-weight:700;min-width:52px;text-align:right;}
+  .hcard .foot{display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--muted);margin-top:2px;}
+
+  .dots{display:flex;gap:6px;justify-content:center;padding:12px 0 2px;}
+  .dots i{width:6px;height:6px;border-radius:50%;background:#333;transition:.2s;}
+  .dots i.on{width:20px;border-radius:4px;background:#bbb;}
+
+  /* section headers */
+  .sec-h{display:flex;align-items:center;gap:8px;padding:22px 18px 4px;font-size:13px;font-weight:700;letter-spacing:1.4px;color:var(--muted);text-transform:uppercase;}
+  .sec-h2{display:flex;align-items:center;justify-content:space-between;padding:26px 18px 12px;}
+  .sec-h2 h2{font-size:26px;font-weight:700;letter-spacing:-.6px;}
+  .arrowbtn{width:40px;height:40px;border-radius:50%;border:1px solid #2a2a2e;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto;}
+  .arrowbtn svg{width:16px;height:16px;stroke:#ccc;fill:none;stroke-width:2.2;}
+
+  /* new-on-kalshi promo */
+  .promos{display:flex;gap:12px;overflow-x:auto;padding:8px 18px 4px;scrollbar-width:none;}
+  .promos::-webkit-scrollbar{display:none;}
+  .pcard{flex:0 0 82%;height:150px;border-radius:18px;padding:18px;position:relative;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;justify-content:flex-start;
+    opacity:0;transform:translateY(14px);animation:rise .5s .08s ease forwards;}
+  .pcard.perp{background:linear-gradient(120deg,#0c2a20,#0a0a0c 70%);border:1px solid #17392c;}
+  .pcard.wc{background:linear-gradient(120deg,#2a1c08,#0a0a0c 70%);border:1px solid #3a2c12;}
+  .pcard .pk{font-size:12px;font-weight:700;letter-spacing:1.2px;}
+  .pcard.perp .pk{color:var(--green);}
+  .pcard.wc .pk{color:#f0a020;}
+  .pcard .ph{font-size:23px;font-weight:700;letter-spacing:-.4px;line-height:1.12;margin-top:8px;max-width:60%;}
+  .pcard .art{position:absolute;right:-30px;top:-10px;width:170px;height:170px;border-radius:50%;
+    background:conic-gradient(from 0deg,#0a3, #0f6, #063, #0b5, #084, #0d7, #0a3);
+    filter:blur(2px) opacity(.55);mask:radial-gradient(circle,#000 34%,transparent 62%);-webkit-mask:radial-gradient(circle,#000 34%,transparent 62%);}
+  .pcard.wc .art{background:radial-gradient(circle at 40% 40%,#f5c451,#a8630f 60%,transparent 72%);filter:none;mask:none;-webkit-mask:none;}
+
+  /* chips */
+  .chips{display:flex;gap:12px;padding:8px 18px 2px;overflow-x:auto;scrollbar-width:none;}
+  .chips::-webkit-scrollbar{display:none;}
+  .chip{display:flex;align-items:center;gap:9px;border:1px solid #2a2a2e;border-radius:14px;padding:14px 20px;font-size:16px;font-weight:600;cursor:pointer;white-space:nowrap;transition:.15s;}
+  .chip:active{background:#161618;}
+  .chip .coin{width:22px;height:22px;border-radius:50%;border:1.5px solid #555;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#bbb;flex:0 0 auto;}
+
+  /* up/down market rows (Perpetuals) */
+  .mrow{display:flex;align-items:center;gap:14px;padding:14px 18px;cursor:pointer;
+    opacity:0;transform:translateY(10px);animation:rise .5s ease forwards;}
+  .mrow:active{background:#0e0e10;}
+  .mrow .mi{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex:0 0 auto;}
+  .mrow .mm{flex:1;min-width:0;}
+  .mrow .mt{font-size:16px;font-weight:700;}
+  .mrow .ms{font-size:13px;color:var(--muted);margin-top:2px;}
+  .mrow .mv{text-align:right;}
+  .mrow .mp{font-size:16px;font-weight:700;}
+  .mrow .mc{font-size:13px;font-weight:700;margin-top:2px;}
+  .up{color:var(--green);}.down{color:#ff5470;}
+
+  /* ============ PORTFOLIO ============ */
+  .pf{padding:6px 18px 96px;}
+  .pf-top{display:flex;align-items:center;justify-content:space-between;padding:8px 0 2px;}
+  .pf-top .who{display:flex;align-items:center;gap:12px;}
+  .pf-top .av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#2c6a4a,#16324a);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#eafff5;}
+  .pf-top .un{font-size:20px;font-weight:600;}
+  .gear{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:1.8;cursor:pointer;}
+  .pf-title{display:flex;align-items:center;justify-content:space-between;margin:12px 0 18px;}
+  .pf-title h1{font-size:38px;font-weight:700;letter-spacing:-1.2px;}
+  .mfpill{background:var(--green);color:#00230f;font-size:15px;font-weight:700;padding:12px 18px;border-radius:26px;cursor:pointer;display:flex;align-items:center;gap:9px;}
+  .mfpill svg{width:18px;height:18px;stroke:#00230f;fill:none;stroke-width:2;}
+  .balcards{display:flex;gap:12px;}
+  .balcard{flex:1;border:1px solid var(--line);border-radius:16px;padding:16px 16px 18px;cursor:pointer;transition:.15s;background:var(--card);}
+  .balcard.sel{border-color:#3a3a40;background:var(--card2);box-shadow:0 0 0 1px #3a3a40;}
+  .balcard .bk{font-size:12px;font-weight:700;letter-spacing:1.2px;color:var(--muted);}
+  .balcard .bv{font-size:34px;font-weight:700;letter-spacing:-1.4px;margin-top:8px;}
+  .stats{display:flex;gap:26px;overflow-x:auto;padding:16px 2px 4px;scrollbar-width:none;}
+  .stats::-webkit-scrollbar{display:none;}
+  .stat{flex:0 0 auto;}
+  .stat .sl{font-size:14px;color:var(--muted);white-space:nowrap;}
+  .stat .sv{font-size:16px;font-weight:700;margin-top:3px;white-space:nowrap;}
+  .earn{border:1px solid #1c4a38;border-radius:14px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin:18px 0 6px;cursor:pointer;background:linear-gradient(120deg,#0c1c16,#0a0a0c);}
+  .earn .et{font-size:16px;font-weight:700;}
+  .earn .es{font-size:13px;color:var(--muted);margin-top:3px;}
+  .earn .ea{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:2;flex:0 0 auto;}
+  .pf-tabs{display:flex;gap:26px;border-bottom:1px solid var(--line);margin:22px 0 0;}
+  .pf-tab{font-size:15px;font-weight:700;letter-spacing:.6px;color:var(--dim);padding:2px 0 14px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:.15s;}
+  .pf-tab.on{color:#fff;border-bottom-color:#fff;}
+  .pf-pane{display:none;}
+  .pf-pane.on{display:block;animation:vfade .2s ease;}
+  .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:70px 0;color:var(--muted);}
+  .empty .eic{width:56px;height:56px;border-radius:50%;background:#141416;display:flex;align-items:center;justify-content:center;margin-bottom:18px;}
+  .empty .eic svg{width:24px;height:24px;stroke:#6a6a70;fill:none;stroke-width:1.8;}
+  .empty .em{font-size:18px;}
+  .hlist .hitem{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:16px 0;border-bottom:1px solid var(--line);
+    opacity:0;transform:translateY(10px);animation:rise .45s ease forwards;}
+  .hlist .ht{font-size:16px;font-weight:600;}
+  .hlist .hd{font-size:13px;color:var(--muted);margin-top:4px;}
+  .hlist .hr{text-align:right;white-space:nowrap;}
+  .hlist .ha{font-size:16px;font-weight:700;}
+  .hlist .hs{font-size:13px;color:var(--green);font-weight:600;margin-top:4px;}
+
+  /* ============ MANAGE FUNDS ============ */
+  .mf{padding:8px 18px 96px;}
+  .mf-back{width:30px;height:30px;stroke:#fff;fill:none;stroke-width:2;cursor:pointer;margin:6px 0 8px;}
+  .mf h1{font-size:34px;font-weight:700;letter-spacing:-1px;margin-bottom:18px;}
+  .mf-bals{display:flex;gap:44px;margin-bottom:24px;}
+  .mf-bal .k{font-size:12px;font-weight:700;letter-spacing:1.2px;color:var(--muted);}
+  .mf-bal .v{font-size:34px;font-weight:700;letter-spacing:-1.4px;margin-top:6px;}
+  .mf-acts{display:flex;gap:12px;margin-bottom:22px;}
+  .mf-act{flex:1;border:1px solid var(--line);border-radius:12px;padding:16px 6px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;background:var(--card);transition:.15s;}
+  .mf-act.on{border-color:var(--green);background:var(--green-d);}
+  .mf-act svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:2;}
+  .mf-act.on svg{stroke:var(--green);}
+  .mf-act span{font-size:16px;font-weight:600;}
+  .mf-act.on span{color:var(--green);}
+  .shield{display:flex;align-items:flex-start;gap:12px;background:#161618;border-radius:12px;padding:16px;margin-bottom:26px;}
+  .shield svg{width:20px;height:20px;stroke:#9a9aa0;fill:none;stroke-width:1.8;flex:0 0 auto;margin-top:1px;}
+  .shield p{font-size:14px;color:var(--muted);line-height:1.4;}
+  .mf h2{font-size:26px;font-weight:700;letter-spacing:-.5px;margin-bottom:6px;}
+
+  /* ============ generic list views (Live / Search / Social) ============ */
+  .simple{padding:14px 18px 96px;}
+  .simple h1{font-size:30px;font-weight:700;letter-spacing:-.8px;margin:6px 0 4px;}
+  .simple .subh{font-size:14px;color:var(--muted);margin-bottom:16px;}
+  .livedot{width:9px;height:9px;border-radius:50%;background:#ff4b60;display:inline-block;margin-right:7px;animation:pulse 1.4s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .srch{display:flex;align-items:center;gap:10px;background:#161618;border-radius:14px;padding:14px 16px;margin-bottom:20px;}
+  .srch svg{width:20px;height:20px;stroke:#8a8a90;fill:none;stroke-width:2;}
+  .srch input{background:transparent;border:0;outline:none;color:#fff;font-family:var(--font);font-size:16px;flex:1;}
+  .tagline{display:flex;flex-wrap:wrap;gap:10px;}
+  .tag{border:1px solid #2a2a2e;border-radius:20px;padding:9px 15px;font-size:14px;font-weight:600;cursor:pointer;}
+  .tag:active{background:#161618;}
+  .sfeed .sf{display:flex;gap:12px;padding:14px 0;border-bottom:1px solid var(--line);
+    opacity:0;transform:translateY(10px);animation:rise .45s ease forwards;}
+  .sfeed .sfav{width:40px;height:40px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff;}
+  .sfeed .sfm{flex:1;font-size:15px;line-height:1.4;}
+  .sfeed .sfm b{font-weight:700;}
+  .sfeed .sfm .grn{color:var(--green);font-weight:700;}
+  .sfeed .sft{font-size:12px;color:var(--dim);margin-top:3px;}
+
+  /* ============ bottom nav ============ */
+  .nav{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-around;align-items:flex-start;padding:10px 6px 22px;background:linear-gradient(to top,#000 60%,rgba(0,0,0,.85),transparent);z-index:20;}
+  .nb{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;position:relative;flex:1;}
+  .nb svg{width:24px;height:24px;stroke:#7a7a80;fill:none;stroke-width:1.9;}
+  .nb .nlab{font-size:11px;font-weight:600;color:#7a7a80;}
+  .nb .dollar{width:24px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#7a7a80;}
+  .nb.on svg{stroke:var(--green);}
+  .nb.on .nlab{color:var(--green);}
+  .nb.on .dollar{color:var(--green);}
+  .nb .nbadge{position:absolute;top:-6px;left:calc(50% + 6px);background:#ff3b5c;color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;padding:0 4px;border-radius:9px;display:flex;align-items:center;justify-content:center;}
+
+  /* ============ drawer ============ */
+  .scrim{position:absolute;inset:0;background:rgba(0,0,0,.55);z-index:60;display:none;}
+  .scrim.on{display:block;animation:vfade .2s ease;}
+  .drawer{position:absolute;top:0;left:0;bottom:0;width:78%;background:#0c0c0e;z-index:61;padding:56px 22px 22px;overflow-y:auto;scrollbar-width:none;display:none;}
+  .drawer::-webkit-scrollbar{display:none;}
+  .drawer.on{display:block;animation:drawin .26s cubic-bezier(.2,.7,.3,1);}
+  .dopen{font-size:15px;color:var(--muted);padding-bottom:16px;border-bottom:1px solid var(--line);}
+  .ditem{display:flex;align-items:center;gap:16px;padding:16px 0;cursor:pointer;}
+  .ditem .dic{width:44px;height:44px;border-radius:50%;border:1px solid #2a2a2e;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+  .ditem .dic.grn{border:0;background:var(--green-d);}
+  .ditem .dic svg{width:20px;height:20px;stroke:#e6e6e8;fill:none;stroke-width:1.9;}
+  .ditem .dic.grn svg{stroke:var(--green);}
+  .ditem .dm{flex:1;}
+  .ditem .dt{font-size:18px;font-weight:600;}
+  .ditem .ds{font-size:13px;color:var(--muted);margin-top:2px;}
+  .ditem .dchev{width:16px;height:16px;stroke:#6a6a70;fill:none;stroke-width:2;}
+  .ddiv{height:1px;background:var(--line);margin:8px 0;}
+  .drawer .compact .ditem{padding:13px 0;}
+  .drawer .compact .dt{font-size:17px;}
+
+  /* numeric figures use the slashed-zero mono face */
+  .bv,.mf-bal .v,.pct,.mult,.mp,.mc,.sv,.hcard .foot,.hlist .ha{font-family:var(--num);}
+  .bv,.mf-bal .v{font-size:30px;letter-spacing:-1px;}
+
+  body.editing [data-edit]{outline:1.5px dashed var(--green);outline-offset:3px;border-radius:4px;cursor:text;}
+  [data-edit]:focus{outline:1.5px solid var(--green);}
+  .hint{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);color:#666;font-size:12px;text-align:center;max-width:90vw;}
+</style>
+<!-- krypt:phone:start -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kalshi">
+<meta name="theme-color" content="#00D082">
+<link rel="manifest" href="../../assets/manifests/kalshi.webmanifest">
+<link rel="apple-touch-icon" href="../../assets/icons/kalshi-180.png">
+<link rel="icon" type="image/png" sizes="512x512" href="../../assets/icons/kalshi-512.png">
+<link rel="stylesheet" href="../../assets/phone.css">
+<!-- krypt:phone:end -->
+</head>
+<body>
+
+<a class="back" href="../../index.html">← Collection</a>
+<div class="toolbar">
+  <button id="editBtn">✎ Edit</button>
+  <button id="resetBtn">↺ Reset</button>
+</div>
+
+<div class="phone">
+  <div class="statusbar">
+    <span>6:30</span>
+    <span class="right">
+      <span class="signal"><b></b><b></b><b></b><b></b></span>
+      <svg width="18" height="14" viewBox="0 0 18 14" fill="none"><path d="M9 3C11.5 3 13.8 4 15.5 5.6M9 7C10.4 7 11.7 7.6 12.7 8.5M4.3 5.6C6 4 8.3 3 9 3M6.3 8.5C7.3 7.6 8 7.4 9 7.4" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/><circle cx="9" cy="11" r="1.2" fill="#fff"/></svg>
+      <span class="battery"><i></i></span>
+    </span>
+  </div>
+
+  <div class="screen" id="screen">
+
+    <!-- ============ EXPLORE (For You) — default ============ -->
+    <div class="view on" data-view="explore">
+      <div class="ex-top">
+        <div class="lft">
+          <div class="burger" id="burgerBtn"><span></span><span></span><span></span></div>
+          <div class="wordmark">Kalshi</div>
+        </div>
+        <div class="rgt">
+          <div class="pill500"><span data-edit="promo500">Get $500?</span></div>
+          <svg class="bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+      <div class="cats" id="cats">
+        <div class="cat on">For You</div>
+        <div class="cat">Crypto</div>
+        <div class="cat">Sports</div>
+        <div class="cat">Politics</div>
+        <div class="cat">Economics</div>
+        <div class="cat">World</div>
+      </div>
+
+      <div class="body">
+        <div class="carousel" id="carousel"></div>
+        <div class="dots" id="dots"></div>
+
+        <div class="sec-h"><span>✦</span> New on Kalshi</div>
+        <div class="promos">
+          <div class="pcard perp">
+            <div class="pk">PERPETUALS</div>
+            <div class="ph" data-edit="perpPromo">Up or down, no expiry</div>
+            <div class="art"></div>
+          </div>
+          <div class="pcard wc">
+            <div class="pk">WORLD CUP</div>
+            <div class="ph" data-edit="wcPromo">Trade the beautiful game</div>
+            <div class="art"></div>
+          </div>
+        </div>
+
+        <div class="sec-h">Recent visits</div>
+        <div class="chips">
+          <div class="chip"><span class="coin">₿</span><span data-edit="recent1">BTC</span></div>
+          <div class="chip"><span class="coin">₿</span><span data-edit="recent2">BTC · 15 Min</span></div>
+        </div>
+
+        <div class="sec-h2">
+          <h2>Perpetuals · Up or Down</h2>
+          <div class="arrowbtn"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        </div>
+        <div id="perpList"></div>
+      </div>
+    </div>
+
+    <!-- ============ LIVE ============ -->
+    <div class="view" data-view="live">
+      <div class="simple">
+        <h1>Live</h1>
+        <div class="subh"><span class="livedot"></span><span data-edit="liveSub">47 markets moving right now</span></div>
+        <div id="liveList"></div>
+      </div>
+    </div>
+
+    <!-- ============ PORTFOLIO ============ -->
+    <div class="view" data-view="portfolio">
+      <div class="pf">
+        <div class="pf-top">
+          <div class="who">
+            <div class="av" data-edit="avInit">MK</div>
+            <div class="un" data-edit="handle">marketmuse</div>
+          </div>
+          <svg class="gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-1.8-.3 1.6 1.6 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.6 1.6 0 00-1-1.5 1.6 1.6 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.6 1.6 0 00.3-1.8 1.6 1.6 0 00-1.5-1H3a2 2 0 110-4h.1a1.6 1.6 0 001.5-1 1.6 1.6 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.6 1.6 0 001.8.3H10a1.6 1.6 0 001-1.5V3a2 2 0 114 0v.1a1.6 1.6 0 001 1.5 1.6 1.6 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.6 1.6 0 00-.3 1.8V10a1.6 1.6 0 001.5 1H21a2 2 0 110 4h-.1a1.6 1.6 0 00-1.5 1z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="pf-title">
+          <h1>Portfolio</h1>
+          <div class="mfpill" id="mfPill"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2"/></svg>Manage Funds</div>
+        </div>
+        <div class="balcards">
+          <div class="balcard" data-bal="pred">
+            <div class="bk">PREDICTIONS</div>
+            <div class="bv">$<span class="cu" data-edit="predBal" data-count="1.17" data-fmt="2">1.17</span></div>
+          </div>
+          <div class="balcard sel" data-bal="perp">
+            <div class="bk">PERPETUALS</div>
+            <div class="bv">$<span class="cu" data-edit="perpBal" data-count="0.06" data-fmt="2">0.06</span></div>
+          </div>
+        </div>
+        <div class="stats">
+          <div class="stat"><div class="sl">Change 24h</div><div class="sv"><span data-edit="chg24">+$0.00 (0%)</span></div></div>
+          <div class="stat"><div class="sl">Positions</div><div class="sv">$<span data-edit="posVal">0</span></div></div>
+          <div class="stat"><div class="sl">Cash</div><div class="sv">$<span data-edit="cashVal">0.06</span></div></div>
+          <div class="stat"><div class="sl">Credit</div><div class="sv">$<span data-edit="creditVal">0</span></div></div>
+          <div class="stat"><div class="sl">Interest</div><div class="sv"><span data-edit="interest">3.25%</span></div></div>
+        </div>
+        <div class="earn" id="earnCard">
+          <div>
+            <div class="et" data-edit="earnTitle">Earn $15 by trading $100K on Perps</div>
+            <div class="es" data-edit="earnSub">Offer expires in 16 days</div>
+          </div>
+          <svg class="ea" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="pf-tabs" id="pfTabs">
+          <div class="pf-tab on" data-pane="positions">POSITIONS</div>
+          <div class="pf-tab" data-pane="orders">ORDERS</div>
+          <div class="pf-tab" data-pane="history">HISTORY</div>
+        </div>
+        <div class="pf-pane on" data-pane="positions">
+          <div class="empty">
+            <div class="eic"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 00-4 10.5c.6.6 1 1.4 1 2.5h6c0-1.1.4-1.9 1-2.5A6 6 0 0012 3z" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="em">No positions</div>
+          </div>
+        </div>
+        <div class="pf-pane" data-pane="orders">
+          <div class="empty">
+            <div class="eic"><svg viewBox="0 0 24 24"><path d="M9 5h6M9 9h6M9 13h4M6 3h12a1 1 0 011 1v16l-3-2-2 2-2-2-2 2-2-2-3 2V4a1 1 0 011-1z" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="em">No open orders</div>
+          </div>
+        </div>
+        <div class="pf-pane" data-pane="history">
+          <div class="hlist" id="pfHistory"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ SEARCH ============ -->
+    <div class="view" data-view="search">
+      <div class="simple">
+        <div class="srch">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4" stroke-linecap="round"/></svg>
+          <input placeholder="Search markets, events, people" />
+        </div>
+        <div class="subh" style="font-weight:700;letter-spacing:1px;text-transform:uppercase;font-size:12px;">Trending</div>
+        <div class="tagline" id="trending"></div>
+      </div>
+    </div>
+
+    <!-- ============ SOCIAL ============ -->
+    <div class="view" data-view="social">
+      <div class="simple">
+        <h1>Social</h1>
+        <div class="subh">What traders you follow are doing</div>
+        <div class="sfeed" id="socialFeed"></div>
+      </div>
+    </div>
+
+    <!-- ============ MANAGE FUNDS (sub-view) ============ -->
+    <div class="view" data-view="funds">
+      <div class="mf">
+        <svg class="mf-back" id="mfBack" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <h1>Manage funds</h1>
+        <div class="mf-bals">
+          <div class="mf-bal"><div class="k">PREDICTIONS</div><div class="v">$<span data-edit="predBal2">1.17</span></div></div>
+          <div class="mf-bal"><div class="k">PERPETUALS</div><div class="v">$<span data-edit="perpBal2">0.06</span></div></div>
+        </div>
+        <div class="mf-acts" id="mfActs">
+          <div class="mf-act on" data-act="deposit"><svg viewBox="0 0 24 24"><path d="M12 4v13M6 11l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Deposit</span></div>
+          <div class="mf-act" data-act="transfer"><svg viewBox="0 0 24 24"><path d="M8 4v16M8 4L4 8M8 4l4 4M16 20V4M16 20l-4-4M16 20l4-4" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Transfer</span></div>
+          <div class="mf-act" data-act="withdraw"><svg viewBox="0 0 24 24"><path d="M12 20V7M6 13l6-6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Withdraw</span></div>
+        </div>
+        <div class="shield">
+          <svg viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" stroke-linejoin="round"/></svg>
+          <p data-edit="shieldText">Your cash is always protected and accessible in a federally regulated clearinghouse.</p>
+        </div>
+        <h2>History</h2>
+        <div class="hlist" id="fundsHistory"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- bottom nav -->
+  <div class="nav">
+    <div class="nb on" data-tab="explore"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5 5-2z" stroke-linejoin="round" fill="none"/></svg><span class="nlab">Explore</span></div>
+    <div class="nb" data-tab="live"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.4"/><path d="M7.5 7.5a6 6 0 000 9M16.5 7.5a6 6 0 010 9M4.7 4.7a10 10 0 000 14.6M19.3 4.7a10 10 0 010 14.6" stroke-linecap="round"/></svg><span class="nlab">Live</span><span class="nbadge" data-edit="liveBadge">47</span></div>
+    <div class="nb" data-tab="portfolio"><span class="dollar">$1</span><span class="nlab">Portfolio</span></div>
+    <div class="nb" data-tab="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4" stroke-linecap="round"/></svg><span class="nlab">Search</span></div>
+    <div class="nb" data-tab="social"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3 19c0-3 2.7-5 6-5s6 2 6 5M15.5 14c2.5 0 5 1.6 5 4.5" stroke-linecap="round"/></svg><span class="nlab">Social</span></div>
+  </div>
+
+  <!-- drawer -->
+  <div class="scrim" id="scrim"></div>
+  <div class="drawer" id="drawer">
+    <div class="dopen">Exchange is open</div>
+    <div class="ditem" id="drawerDeposit"><div class="dic grn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5a2.5 2.5 0 012.5-1.5c1.4 0 2.5.7 2.5 1.8s-1 1.6-2.5 1.9-2.5.8-2.5 2 1.1 1.8 2.5 1.8a2.5 2.5 0 002.5-1.5" stroke-linecap="round"/></svg></div><div class="dm"><div class="dt">Deposit to Kalshi</div><div class="ds">Cash $<span data-edit="drawerCash">1.17</span></div></div></div>
+    <div class="ditem"><div class="dic"><svg viewBox="0 0 24 24"><path d="M6 3h12a1 1 0 011 1v17l-7-4-7 4V4a1 1 0 011-1z" stroke-linejoin="round"/></svg></div><div class="dm"><div class="dt">Watchlist</div></div></div>
+    <div class="ditem"><div class="dic"><svg viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 01-10 0V4zM7 6H4v2a3 3 0 003 3M17 6h3v2a3 3 0 01-3 3" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="dm"><div class="dt">Leaderboard</div><div class="ds">Check out the top traders</div></div></div>
+    <div class="ditem"><div class="dic"><svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v9h14v-9M12 8v13M12 8S9 3 6.5 4.5 9 8 12 8zM12 8s3-5 5.5-3.5S15 8 12 8z" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="dm"><div class="dt">Invite friends</div><div class="ds">Get up to $500 when they join</div></div></div>
+    <div class="ddiv"></div>
+    <div class="compact">
+      <div class="ditem"><div class="dic"><svg viewBox="0 0 24 24"><circle cx="8" cy="12" r="4"/><path d="M11 12h9l-2 2m2-2l-2-2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="dm"><div class="dt">Account &amp; security</div></div></div>
+      <div class="ditem"><div class="dic"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 109-9 9 9 0 00-8 5M3 4v4h4" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 8v4l3 2" stroke-linecap="round"/></svg></div><div class="dm"><div class="dt">Your activity</div></div></div>
+      <div class="ditem" id="drawerFunds"><div class="dic"><svg viewBox="0 0 24 24"><path d="M4 9a8 8 0 0114-4M20 5v4h-4M20 15a8 8 0 01-14 4M4 19v-4h4" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="dm"><div class="dt">Manage funds</div></div></div>
+      <div class="ditem"><div class="dic"><svg viewBox="0 0 24 24"><path d="M14 3H7a1 1 0 00-1 1v16a1 1 0 001 1h10a1 1 0 001-1V7l-4-4z" stroke-linejoin="round"/><path d="M14 3v4h4" stroke-linejoin="round"/></svg></div><div class="dm"><div class="dt">Documents</div></div></div>
+      <div class="ditem"><div class="dic"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="dm"><div class="dt">Notifications</div></div></div>
+      <div class="ditem"><div class="dic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 00-.1-1l2-1.5-2-3.5-2.3 1a7 7 0 00-1.7-1l-.3-2.5h-4l-.3 2.5a7 7 0 00-1.7 1l-2.3-1-2 3.5 2 1.5a7 7 0 000 2l-2 1.5 2 3.5 2.3-1a7 7 0 001.7 1l.3 2.5h4l.3-2.5a7 7 0 001.7-1l2.3 1 2-3.5-2-1.5a7 7 0 00.1-1z" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="dm"><div class="dt">Settings</div></div></div>
+      <div class="ditem"><div class="dic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 015 .3c0 1.7-2.5 2-2.5 3.7M12 17h.01" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="dm"><div class="dt">Kalshi Support</div></div><svg class="dchev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="ditem"><div class="dic"><svg viewBox="0 0 24 24"><path d="M14 3h5a1 1 0 011 1v16a1 1 0 01-1 1h-5M10 12h10M17 9l3 3-3 3" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="dm"><div class="dt">Log out</div></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="hint">Bottom nav switches screens · tap ☰ for the menu · Manage Funds opens deposits · Toggle Edit (top-right) to change values</div>
+
+<script>
+/* ============================================================
+   DATA — all fictional placeholder values. Edit freely.
+   ============================================================ */
+const DEFAULT_DATA = {
+  promo500:"Get $500?",
+  perpPromo:"Up or down, no expiry",
+  wcPromo:"Trade the beautiful game",
+  recent1:"BTC", recent2:"BTC · 15 Min",
+  liveSub:"47 markets moving right now", liveBadge:"47",
+  handle:"marketmuse", avInit:"MK",
+  predBal:"1.17", perpBal:"0.06", predBal2:"1.17", perpBal2:"0.06",
+  chg24:"+$0.00 (0%)", posVal:"0", cashVal:"0.06", creditVal:"0", interest:"3.25%",
+  earnTitle:"Earn $15 by trading $100K on Perps", earnSub:"Offer expires in 16 days",
+  drawerCash:"1.17",
+  shieldText:"Your cash is always protected and accessible in a federally regulated clearinghouse.",
+
+  /* hero prediction-market cards (sample events, made-up entities) */
+  hero:[
+    {cat:"BASKETBALL", ico:"🏀", bg:"#1d4ed8", title:"Finals MVP 2026", date:"Oct 22 @ 9:00pm PDT",
+      a:{name:"North Bay", mult:"2.05x", pct:"46%"}, b:{name:"Lakeview", mult:"3.80x", pct:"24%"},
+      vol:"$174,093,370 vol", markets:"30 markets"},
+    {cat:"AWARDS", ico:"🏆", bg:"#b45309", title:"Player of the Year", date:"Nov 3 @ 5:00pm EST",
+      a:{name:"A. Harper", mult:"1.62x", pct:"61%"}, b:{name:"L. Mendez", mult:"4.10x", pct:"22%"},
+      vol:"$3,325,880 vol", markets:"12 markets"},
+    {cat:"CRYPTO", ico:"₿", bg:"#0e7f5c", title:"BTC above $120k by EOY", date:"Dec 31 @ 11:59pm EST",
+      a:{name:"Yes", mult:"1.58x", pct:"63%"}, b:{name:"No", mult:"2.70x", pct:"37%"},
+      vol:"$58,204,110 vol", markets:"1 market"},
+  ],
+
+  /* perpetuals up/down list */
+  perps:[
+    {sym:"BTC", name:"Bitcoin", sub:"Perpetual · Up or Down", bg:"#f7931a", price:"$63,180", chg:"+1.24%", dir:"up"},
+    {sym:"ETH", name:"Ethereum", sub:"Perpetual · Up or Down", bg:"#627eea", price:"$1,904", chg:"+2.38%", dir:"up"},
+    {sym:"SOL", name:"Solana", sub:"Perpetual · Up or Down", bg:"#111", price:"$77.86", chg:"-0.61%", dir:"down"},
+  ],
+
+  /* live markets */
+  live:[
+    {sym:"🏈", name:"Sunday Night winner", sub:"closes in 2h 14m", bg:"#4b2e83", price:"58¢", chg:"+6¢", dir:"up"},
+    {sym:"₿", name:"BTC above $63k at 4pm", sub:"closes in 42m", bg:"#f7931a", price:"71¢", chg:"-3¢", dir:"down"},
+    {sym:"🗳️", name:"Turnout above 60%", sub:"closes tonight", bg:"#0e7f5c", price:"44¢", chg:"+2¢", dir:"up"},
+    {sym:"🌡️", name:"NYC high above 88°F", sub:"closes in 5h", bg:"#c2410c", price:"33¢", chg:"+9¢", dir:"up"},
+  ],
+
+  /* portfolio history (settled) */
+  pfHistory:[
+    {t:"Bought 20 · Finals MVP · North Bay", d:"Filled Jul 6, 2026", a:"-$9.20", s:"Settled"},
+    {t:"Sold 15 · BTC above $120k · Yes", d:"Filled Jul 4, 2026", a:"+$11.40", s:"Settled"},
+    {t:"Bought 10 · Turnout above 60% · No", d:"Filled Jul 1, 2026", a:"-$4.10", s:"Settled"},
+  ],
+
+  /* manage-funds history */
+  fundsHistory:[
+    {t:"Withdrawal to Debit card", d:"Completed on Jul 7, 2026", a:"-$44", s:"Applied"},
+    {t:"Transfer from Perpetuals to Predictions", d:"Completed on Jul 6, 2026", a:"+$31", s:"Applied"},
+    {t:"Transfer from Predictions to Perpetuals", d:"Completed on Jul 5, 2026", a:"+$10", s:"Applied"},
+    {t:"Withdrawal to Debit card", d:"Completed on Jul 5, 2026", a:"-$103", s:"Applied"},
+    {t:"Withdrawal to Debit card", d:"Completed on Jul 2, 2026", a:"-$100", s:"Applied"},
+    {t:"Withdrawal to Debit card", d:"Completed on Jun 29, 2026", a:"-$136.12", s:"Applied"},
+  ],
+
+  /* search trending + social feed */
+  trending:["Bitcoin EOY","Finals MVP","Fed rate July","World Cup winner","NYC weather","Election turnout","AI benchmark","Oscars Best Picture"],
+  social:[
+    {who:"Ava Sinclair", init:"AS", bg:"#7c3aed", act:"bought <b>Yes</b> on", mkt:"<b>BTC above $120k</b>", grn:"+18%", t:"12m ago"},
+    {who:"Dev Okonkwo", init:"DO", bg:"#0e7f5c", act:"sold <b>No</b> on", mkt:"<b>Fed cuts in July</b>", grn:"+7%", t:"1h ago"},
+    {who:"Priya Raman", init:"PR", bg:"#be185d", act:"opened a position on", mkt:"<b>Finals MVP</b>", grn:"", t:"3h ago"},
+  ],
+};
+
+const KEY="kalshi-dash-v1";
+let DATA=load();
+function load(){try{const s=localStorage.getItem(KEY);if(s)return{...structuredClone(DEFAULT_DATA),...JSON.parse(s)};}catch(e){}return structuredClone(DEFAULT_DATA);}
+function save(){localStorage.setItem(KEY,JSON.stringify(DATA));}
+function editing(){return document.body.classList.contains("editing");}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+/* ---- render: hero carousel ---- */
+function renderHero(){
+  const c=document.getElementById("carousel");c.innerHTML="";
+  const dots=document.getElementById("dots");dots.innerHTML="";
+  DATA.hero.forEach((h,i)=>{
+    const card=document.createElement("div");
+    card.className="hcard"+(i===1?" g2":i===2?" g3":"");
+    card.style.animationDelay=(i*70)+"ms";
+    card.innerHTML=`
+      <div class="cat-row"><div class="ico" style="background:${h.bg}">${h.ico}</div><div class="klabel">${esc(h.cat)}</div></div>
+      <h3>${esc(h.title)}</h3>
+      <div class="date">${esc(h.date)}</div>
+      <div class="orow"><div class="onm">${esc(h.a.name)}</div><div class="rr"><span class="mult">${esc(h.a.mult)}</span><span class="pct">${esc(h.a.pct)}</span></div></div>
+      <div class="orow no"><div class="onm">${esc(h.b.name)}</div><div class="rr"><span class="mult">${esc(h.b.mult)}</span><span class="pct">${esc(h.b.pct)}</span></div></div>
+      <div class="foot"><span>${esc(h.vol)}</span><span>${esc(h.markets)}</span></div>`;
+    c.appendChild(card);
+    const d=document.createElement("i");if(i===0)d.className="on";dots.appendChild(d);
+  });
+  c.onscroll=()=>{
+    const idx=Math.round(c.scrollLeft/(c.scrollWidth/DATA.hero.length));
+    [...dots.children].forEach((d,i)=>d.classList.toggle("on",i===idx));
+  };
+}
+
+/* ---- render: a generic market-row list (perps / live) ---- */
+function marketRows(list,startDelay){
+  return list.map((m,i)=>`
+    <div class="mrow" style="animation-delay:${startDelay+i*45}ms">
+      <div class="mi" style="background:${m.bg};color:#fff">${esc(m.sym)}</div>
+      <div class="mm"><div class="mt">${esc(m.name)}</div><div class="ms">${esc(m.sub)}</div></div>
+      <div class="mv"><div class="mp">${esc(m.price)}</div><div class="mc ${m.dir}">${esc(m.chg)}</div></div>
+    </div>`).join("");
+}
+function renderPerps(){document.getElementById("perpList").innerHTML=marketRows(DATA.perps,120);}
+function renderLive(){document.getElementById("liveList").innerHTML=marketRows(DATA.live,60);}
+
+/* ---- render: history lists ---- */
+function historyRows(list){
+  return list.map((h,i)=>`
+    <div class="hitem" style="animation-delay:${i*45}ms">
+      <div><div class="ht">${esc(h.t)}</div><div class="hd">${esc(h.d)}</div></div>
+      <div class="hr"><div class="ha">${esc(h.a)}</div><div class="hs">${esc(h.s)}</div></div>
+    </div>`).join("");
+}
+function renderPfHistory(){document.getElementById("pfHistory").innerHTML=historyRows(DATA.pfHistory);}
+function renderFundsHistory(){document.getElementById("fundsHistory").innerHTML=historyRows(DATA.fundsHistory);}
+
+/* ---- render: search + social ---- */
+function renderTrending(){
+  document.getElementById("trending").innerHTML=DATA.trending.map(t=>`<div class="tag">${esc(t)}</div>`).join("");
+}
+function renderSocial(){
+  document.getElementById("socialFeed").innerHTML=DATA.social.map((s,i)=>`
+    <div class="sf" style="animation-delay:${i*60}ms">
+      <div class="sfav" style="background:${s.bg}">${esc(s.init)}</div>
+      <div><div class="sfm"><b>${esc(s.who)}</b> ${s.act} ${s.mkt} ${s.grn?`<span class="grn">${esc(s.grn)}</span>`:""}</div><div class="sft">${esc(s.t)}</div></div>
+    </div>`).join("");
+}
+
+/* ---- count-up (visible-only, so previews/background tabs show real values) ---- */
+function fmtNum(v,fmt){
+  if(fmt==="2") return v.toFixed(2);
+  return Math.round(v).toLocaleString("en-US");
+}
+function countUp(){
+  document.querySelectorAll(".cu").forEach(el=>{
+    if(el.dataset.done) return;
+    const target=parseFloat(el.dataset.count); if(isNaN(target)) return;
+    const fmt=el.dataset.fmt||"n", dur=1100, start=performance.now();
+    function step(now){
+      const p=Math.min((now-start)/dur,1), e=1-Math.pow(1-p,3);
+      el.textContent=fmtNum(target*e,fmt);
+      if(p<1) requestAnimationFrame(step);
+      else{ el.textContent=fmtNum(target,fmt); el.dataset.done="1"; }
+    }
+    requestAnimationFrame(step);
+  });
+}
+function maybeCountUp(){
+  if(document.visibilityState==="visible") countUp();
+  else document.addEventListener("visibilitychange",function h(){
+    if(document.visibilityState==="visible"){countUp();document.removeEventListener("visibilitychange",h);}
+  });
+}
+
+/* ---- editing ---- */
+function bindEdits(){
+  document.querySelectorAll("[data-edit]").forEach(el=>{
+    el.setAttribute("contenteditable",editing());
+    el.oninput=()=>{DATA[el.getAttribute("data-edit")]=el.textContent;save();};
+  });
+}
+document.getElementById("editBtn").addEventListener("click",function(){
+  const on=document.body.classList.toggle("editing");
+  this.classList.toggle("on",on);this.textContent=on?"✓ Done":"✎ Edit";bindEdits();
+});
+document.getElementById("resetBtn").addEventListener("click",()=>{
+  if(confirm("Reset this dashboard to its original values?")){
+    localStorage.removeItem(KEY);DATA=structuredClone(DEFAULT_DATA);
+    renderAll();restoreScalars();bindEdits();
+  }
+});
+function restoreScalars(){
+  document.querySelectorAll("[data-edit]").forEach(el=>{
+    const k=el.getAttribute("data-edit");if(DATA[k]!==undefined)el.textContent=DATA[k];
+  });
+}
+
+/* ---- router: bottom-nav tabs + sub-views ---- */
+const TAB_VIEWS=["explore","live","portfolio","search","social"];
+function showView(name,fromTab){
+  document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.dataset.view===name));
+  // keep a bottom-nav item highlighted (funds counts as portfolio)
+  const navName = TAB_VIEWS.includes(name) ? name : (name==="funds"?"portfolio":name);
+  document.querySelectorAll(".nb").forEach(b=>b.classList.toggle("on",b.dataset.tab===navName));
+  document.getElementById("screen").scrollTop=0;
+  bindEdits();
+}
+document.querySelectorAll(".nb").forEach(b=>{
+  b.addEventListener("click",()=>{if(!editing())showView(b.dataset.tab);});
+});
+
+/* portfolio balance-card select */
+document.querySelectorAll(".balcard").forEach(c=>{
+  c.addEventListener("click",()=>{if(editing())return;
+    document.querySelectorAll(".balcard").forEach(x=>x.classList.remove("sel"));c.classList.add("sel");});
+});
+/* portfolio inner tabs */
+document.getElementById("pfTabs").addEventListener("click",e=>{
+  const t=e.target.closest(".pf-tab");if(!t||editing())return;
+  document.querySelectorAll(".pf-tab").forEach(x=>x.classList.toggle("on",x===t));
+  document.querySelectorAll(".pf-pane").forEach(p=>p.classList.toggle("on",p.dataset.pane===t.dataset.pane));
+});
+/* manage-funds action select */
+document.getElementById("mfActs").addEventListener("click",e=>{
+  const a=e.target.closest(".mf-act");if(!a||editing())return;
+  document.querySelectorAll(".mf-act").forEach(x=>x.classList.toggle("on",x===a));
+});
+/* category tabs highlight */
+document.getElementById("cats").addEventListener("click",e=>{
+  const c=e.target.closest(".cat");if(!c||editing())return;
+  document.querySelectorAll(".cat").forEach(x=>x.classList.toggle("on",x===c));
+});
+
+/* funds sub-view entry/exit */
+document.getElementById("mfPill").addEventListener("click",()=>{if(!editing())showView("funds");});
+document.getElementById("mfBack").addEventListener("click",()=>{if(!editing())showView("portfolio");});
+
+/* drawer */
+const scrim=document.getElementById("scrim"), drawer=document.getElementById("drawer");
+function openDrawer(){scrim.classList.add("on");drawer.classList.add("on");}
+function closeDrawer(){scrim.classList.remove("on");drawer.classList.remove("on");}
+document.getElementById("burgerBtn").addEventListener("click",()=>{if(!editing())openDrawer();});
+scrim.addEventListener("click",closeDrawer);
+document.getElementById("drawerFunds").addEventListener("click",()=>{closeDrawer();showView("funds");});
+document.getElementById("drawerDeposit").addEventListener("click",()=>{closeDrawer();showView("funds");});
+
+/* ---- init ---- */
+function renderAll(){
+  renderHero();renderPerps();renderLive();renderPfHistory();renderFundsHistory();renderTrending();renderSocial();
+}
+renderAll();restoreScalars();bindEdits();maybeCountUp();
+</script>
+<!-- krypt:app:start -->
+<script src="../../assets/krypt-app.js" data-root="../../" data-label="Kalshi" defer></script>
+<script src="../../assets/krypt-desktop.js" defer></script>
+<script src="../../assets/push.js" defer></script>
+<!-- krypt:app:end -->
+</body>
+</html>

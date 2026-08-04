@@ -1,0 +1,30 @@
+{
+  "name": "Strava — Krypt LARP",
+  "short_name": "Strava",
+  "description": "Strava, recreated. Part of the Krypt LARP collection.",
+  "start_url": "../../dashboards/strava/index.html",
+  "scope": "../../",
+  "display": "standalone",
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
+  "background_color": "#FFFFFF",
+  "theme_color": "#FC4C02",
+  "icons": [
+    {
+      "src": "../icons/strava-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../icons/strava-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

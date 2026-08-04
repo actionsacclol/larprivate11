@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en" data-krypt-status="translucent">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Futures PnL Card · Learning Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     FUTURES PnL "FLEX CARD" — a learning recreation (TEST demo).
+     The shareable position card traders screenshot. Two skins you
+     can toggle: Binance (black/yellow) and Hyperliquid (dark/mint).
+     Positions list → tap Share → the card. Data-driven (DEFAULT_DATA).
+     The QR is a DECORATIVE, NON-FUNCTIONAL pattern (encodes nothing,
+     links nowhere); referral codes are fictional. Clearly TEST.
+     ============================================================ */
+  :root{
+    --bg:#0b0e11; --card:#161b22; --card2:#1e242d; --line:#262d37;
+    --text:#eef1f4; --muted:#8b95a1; --dim:#5a636e;
+    --up:#0ecb81; --down:#f6465d; --yellow:#f0b90b; --mint:#7cf7d4;
+    --font:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{background:#0a0a0a;font-family:var(--font);color:var(--text);display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;-webkit-font-smoothing:antialiased;}
+
+  .back{position:fixed;top:18px;left:18px;z-index:50;background:#1c1c1e;color:#fff;border:1px solid #333;text-decoration:none;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;font-family:var(--font);transition:.15s;}
+  .back:hover{background:#2a2a2c;}
+  .toolbar{position:fixed;top:18px;right:18px;display:flex;gap:8px;z-index:50;}
+  .toolbar button{background:#1c1c1e;color:#fff;border:1px solid #333;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);transition:.15s;}
+  .toolbar button:hover{background:#2a2a2c;}
+  .toolbar button.on{background:var(--yellow);color:#241a00;border-color:var(--yellow);}
+
+  .phone{position:relative;width:390px;max-width:100%;height:844px;background:var(--bg);border-radius:44px;box-shadow:0 0 0 12px #111,0 40px 90px rgba(0,0,0,.7);overflow:hidden;display:flex;flex-direction:column;}
+
+  .statusbar{display:flex;align-items:center;justify-content:space-between;padding:15px 30px 4px;font-size:15px;font-weight:600;flex:0 0 auto;color:#fff;}
+  .statusbar .right{display:flex;align-items:center;gap:7px;}
+  .battery{border:1.5px solid #fff;border-radius:4px;width:26px;height:13px;position:relative;display:flex;align-items:center;padding:1.5px;}
+  .battery::after{content:"";position:absolute;right:-4px;top:4px;width:2px;height:5px;background:#fff;border-radius:0 2px 2px 0;}
+  .battery i{display:block;height:100%;background:#fff;border-radius:1.5px;width:82%;}
+  .signal{display:flex;align-items:flex-end;gap:2px;height:12px;}
+  .signal b{width:3px;background:#fff;border-radius:1px;display:block;}
+  .signal b:nth-child(1){height:5px}.signal b:nth-child(2){height:7px}.signal b:nth-child(3){height:9px}.signal b:nth-child(4){height:12px}
+
+  .header{display:flex;align-items:center;gap:10px;padding:6px 16px 10px;flex:0 0 auto;border-bottom:1px solid var(--line);}
+  .header .bk{display:none;align-items:center;gap:1px;color:var(--yellow);font-size:16px;font-weight:600;cursor:pointer;}
+  .header .bk svg{width:20px;height:22px;stroke:var(--yellow);fill:none;stroke-width:2.4;}
+  .header .ttl{font-size:20px;font-weight:800;flex:1;}
+
+  .screen{flex:1;overflow-y:auto;scrollbar-width:none;padding:14px 16px 40px;}
+  .screen::-webkit-scrollbar{display:none;}
+  .view{display:none;}
+  .view.on{display:block;animation:vfade .22s ease;}
+  @keyframes vfade{from{opacity:0}to{opacity:1}}
+  @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+  /* ============ POSITIONS ============ */
+  .equity{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;}
+  .equity .k{font-size:13px;color:var(--muted);}
+  .equity .v{font-size:28px;font-weight:900;letter-spacing:-.6px;margin-top:3px;}
+  .equity .pnl{font-size:15px;font-weight:800;margin-top:4px;}
+  .pos{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 15px;margin-bottom:11px;
+    opacity:0;transform:translateY(12px);animation:rise .5s ease forwards;}
+  .pos .p-top{display:flex;align-items:center;gap:9px;margin-bottom:12px;}
+  .pos .p-pair{font-size:16px;font-weight:800;}
+  .pos .p-side{font-size:11px;font-weight:800;padding:2px 6px;border-radius:4px;}
+  .pos .p-side.long{background:rgba(14,203,129,.16);color:var(--up);}
+  .pos .p-side.short{background:rgba(246,70,93,.16);color:var(--down);}
+  .pos .p-lev{font-size:11px;font-weight:800;color:var(--muted);background:var(--card2);padding:2px 6px;border-radius:4px;}
+  .pos .p-grid{display:flex;justify-content:space-between;gap:8px;margin-bottom:12px;}
+  .pos .p-cell .cl{font-size:11px;color:var(--muted);}
+  .pos .p-cell .cv{font-size:14px;font-weight:700;margin-top:2px;}
+  .pos .p-cell.right{text-align:right;}
+  .pos .p-roi{font-size:22px;font-weight:900;}
+  .pos .p-foot{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--line);padding-top:11px;}
+  .pos .p-pnl{font-size:15px;font-weight:800;}
+  .pos .share{display:flex;align-items:center;gap:6px;background:var(--card2);border-radius:8px;padding:8px 14px;font-size:13px;font-weight:800;cursor:pointer;}
+  .pos .share svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.2;}
+  .up{color:var(--up);}.down{color:var(--down);}
+
+  /* ============ SKIN TOGGLE ============ */
+  .skin{display:flex;background:var(--card);border-radius:10px;padding:3px;margin-bottom:16px;}
+  .skin span{flex:1;text-align:center;padding:9px;font-size:14px;font-weight:800;color:var(--muted);border-radius:8px;cursor:pointer;transition:.15s;}
+  .skin span.on{background:var(--card2);color:#fff;}
+
+  /* ============ PnL FLEX CARD ============ */
+  .pnlcard{border-radius:18px;padding:22px 20px;position:relative;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.5);animation:rise .5s ease forwards;}
+  .pc-brand{display:flex;align-items:center;gap:8px;font-size:18px;font-weight:900;letter-spacing:-.3px;margin-bottom:20px;}
+  .pc-brand .bsub{font-size:12px;font-weight:800;opacity:.7;letter-spacing:.5px;}
+  .pc-pos{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;font-weight:800;margin-bottom:18px;}
+  .pc-pos .side{padding:2px 7px;border-radius:5px;font-size:13px;}
+  .pc-pos .side.long{color:var(--up);} .pc-pos .side.short{color:var(--down);}
+  .pc-pos .lev{opacity:.85;}
+  .pc-pos .divider{opacity:.4;}
+  .pc-roi{font-size:52px;font-weight:900;letter-spacing:-1.5px;line-height:1;}
+  .pc-sub{font-size:13px;opacity:.65;font-weight:600;margin-top:6px;}
+  .pc-prices{display:flex;gap:36px;margin:26px 0 22px;}
+  .pc-prices .pl{font-size:12px;opacity:.6;font-weight:600;}
+  .pc-prices .pv{font-size:16px;font-weight:800;margin-top:4px;}
+  .pc-foot{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;}
+  .pc-ref .rl{font-size:11px;opacity:.6;font-weight:600;}
+  .pc-ref .rv{font-size:18px;font-weight:900;letter-spacing:1px;margin-top:3px;}
+  .pc-ref .rt{font-size:11px;opacity:.6;margin-top:8px;max-width:150px;line-height:1.4;}
+  .pc-qr{width:78px;height:78px;border-radius:8px;padding:5px;flex:0 0 auto;background:#fff;}
+  .pc-qr svg{display:block;width:100%;height:100%;}
+
+  /* Binance skin */
+  .pnlcard.binance{background:#0c0d10;color:#eef1f4;border:1px solid #23262d;}
+  .pnlcard.binance .pc-brand{color:var(--yellow);}
+  .pnlcard.binance .pc-brand .bsub{color:#eef1f4;}
+  .pnlcard.binance::before{content:"";position:absolute;right:-40px;top:-30px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(240,185,11,.12),transparent 70%);}
+  .pnlcard.binance .pc-roi.up{color:var(--up);} .pnlcard.binance .pc-roi.down{color:var(--down);}
+  .pnlcard.binance .pc-ref .rv{color:var(--yellow);}
+
+  /* Hyperliquid skin */
+  .pnlcard.hyper{background:linear-gradient(160deg,#0a1f1c,#07100f);color:#eafffb;border:1px solid #17332e;}
+  .pnlcard.hyper .pc-brand{color:var(--mint);}
+  .pnlcard.hyper .pc-brand .bsub{color:#eafffb;}
+  .pnlcard.hyper::before{content:"";position:absolute;right:-40px;top:-30px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(124,247,212,.14),transparent 70%);}
+  .pnlcard.hyper .pc-roi.up{color:var(--mint);} .pnlcard.hyper .pc-roi.down{color:var(--down);}
+  .pnlcard.hyper .pc-ref .rv{color:var(--mint);}
+
+  .card-note{text-align:center;font-size:12px;color:var(--dim);margin-top:16px;line-height:1.5;}
+  .pc-note{position:relative;margin-top:14px;padding-top:10px;border-top:1px dashed rgba(140,150,160,.3);font-size:10px;letter-spacing:.3px;opacity:.65;text-align:center;}
+  .shareact{display:flex;gap:10px;margin-top:16px;}
+  .shareact button{flex:1;border:0;border-radius:12px;padding:14px;font-family:var(--font);font-size:15px;font-weight:800;cursor:pointer;}
+  .shareact .save{background:var(--card2);color:#eef1f4;}
+  .shareact .post{background:var(--yellow);color:#241a00;}
+  .hyperskin .shareact .post{background:var(--mint);color:#04211b;}
+
+  body.editing [data-edit]{outline:1.5px dashed var(--yellow);outline-offset:3px;border-radius:4px;cursor:text;}
+  .pnlcard.hyper [data-edit]{outline-color:var(--mint);}
+  [data-edit]:focus{outline-style:solid;}
+  .hint{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);color:#666;font-size:12px;text-align:center;max-width:90vw;}
+</style>
+<!-- krypt:phone:start -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PnL">
+<meta name="theme-color" content="#0B0B0F">
+<link rel="manifest" href="../../assets/manifests/crypto-pnl.webmanifest">
+<link rel="apple-touch-icon" href="../../assets/icons/crypto-pnl-180.png">
+<link rel="icon" type="image/png" sizes="512x512" href="../../assets/icons/crypto-pnl-512.png">
+<link rel="stylesheet" href="../../assets/phone.css">
+<!-- krypt:phone:end -->
+</head>
+<body>
+
+<a class="back" href="../../index.html">← Collection</a>
+<div class="toolbar">
+  <button id="editBtn">✎ Edit</button>
+  <button id="resetBtn">↺ Reset</button>
+</div>
+
+<div class="phone">
+  <div class="statusbar">
+    <span>9:41</span>
+    <span class="right">
+      <span class="signal"><b></b><b></b><b></b><b></b></span>
+      <svg width="18" height="14" viewBox="0 0 18 14" fill="none"><path d="M9 3C11.5 3 13.8 4 15.5 5.6M9 7C10.4 7 11.7 7.6 12.7 8.5M4.3 5.6C6 4 8.3 3 9 3M6.3 8.5C7.3 7.6 8 7.4 9 7.4" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/><circle cx="9" cy="11" r="1.2" fill="#fff"/></svg>
+      <span class="battery"><i></i></span>
+    </span>
+  </div>
+
+  <div class="header">
+    <div class="bk" id="backBtn"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="ttl" id="hdrTitle">Positions</div>
+  </div>
+
+  <div class="screen" id="screen">
+
+    <!-- ============ POSITIONS ============ -->
+    <div class="view on" data-view="positions">
+      <div class="equity">
+        <div class="k">Futures Wallet Balance (USDT)</div>
+        <div class="v">$<span class="cu" data-edit="equity" data-count="47820.66" data-fmt="2">47,820.66</span></div>
+        <div class="pnl up">Unrealized PNL <span data-edit="uPnl">+6,564.26</span> (<span data-edit="uRoe">+15.9%</span>)</div>
+      </div>
+      <div id="posList"></div>
+    </div>
+
+    <!-- ============ PnL CARD ============ -->
+    <div class="view" data-view="card">
+      <div class="skin" id="skinToggle"><span data-skin="binance" class="on">Binance</span><span data-skin="hyper">Hyperliquid</span></div>
+      <div id="cardHost"></div>
+      <div class="shareact"><button class="save">Save Image</button><button class="post">Share</button></div>
+      <div class="card-note">Decorative card · the QR encodes nothing &amp; links nowhere · referral code is fictional</div>
+    </div>
+
+  </div>
+</div>
+
+<div class="hint">Positions → tap Share on a position · toggle Binance / Hyperliquid · Toggle Edit to change pair, ROI, prices &amp; referral</div>
+
+<script>
+/* ============================================================
+   DATA — fictional positions. Prices are illustrative samples.
+   ============================================================ */
+const DEFAULT_DATA = {
+  equity:"47,820.66", uPnl:"+6,564.26", uRoe:"+15.9%",
+  skin:"binance", ref:"WRAP4X8Z",
+  positions:[
+    {pair:"BTCUSDT", side:"Long", lev:"20", size:"0.850 BTC", entry:"58,420.0", mark:"63,180.5", pnl:"+4,046.42", roi:"+1284.50", up:true},
+    {pair:"ETHUSDT", side:"Long", lev:"10", size:"12.40 ETH", entry:"1,720.0", mark:"1,904.1", pnl:"+2,282.84", roi:"+107.00", up:true},
+    {pair:"SOLUSDT", side:"Short", lev:"5", size:"120.0 SOL", entry:"82.40", mark:"77.86", pnl:"+544.80", roi:"+27.30", up:true},
+    {pair:"DOGEUSDT", side:"Long", lev:"25", size:"40,000 DOGE", entry:"0.13100", mark:"0.12340", pnl:"-304.00", roi:"-58.00", up:false},
+  ],
+};
+
+const KEY="cryptopnl-dash-v1";
+let DATA=load();
+function load(){try{const s=localStorage.getItem(KEY);if(s)return{...structuredClone(DEFAULT_DATA),...JSON.parse(s)};}catch(e){}return structuredClone(DEFAULT_DATA);}
+function save(){localStorage.setItem(KEY,JSON.stringify(DATA));}
+function editing(){return document.body.classList.contains("editing");}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+let posIdx=0, skin="binance";
+
+/* ---- decorative QR (NON-FUNCTIONAL: 3 finder patterns + deterministic noise) ---- */
+function qr(px,seed,dark){
+  const n=25, cell=px/n;let s=seed;
+  function rnd(){s=(s*9301+49297)%233280;return s/233280;}
+  function finder(r,c){let R,C;if(r<7&&c<7){R=0;C=0;}else if(r<7&&c>=n-7){R=0;C=n-7;}else{R=n-7;C=0;}const rr=r-R,cc=c-C;if(rr===0||rr===6||cc===0||cc===6)return true;if(rr>=2&&rr<=4&&cc>=2&&cc<=4)return true;return false;}
+  function inFinder(r,c){return (r<7&&c<7)||(r<7&&c>=n-7)||(r>=n-7&&c<7);}
+  let rects="";
+  for(let r=0;r<n;r++)for(let c=0;c<n;c++){
+    let on=inFinder(r,c)?finder(r,c):(rnd()>0.52);
+    if(inFinder(r,c)&&((r<8&&c>=6&&c<8)||(c<8&&r>=6&&r<8)||(r<8&&c===7)||(c<8&&r===7)))on=finder(r,c); // keep finder quiet zone
+    if(on)rects+=`<rect x="${(c*cell).toFixed(2)}" y="${(r*cell).toFixed(2)}" width="${(cell+0.3).toFixed(2)}" height="${(cell+0.3).toFixed(2)}" fill="${dark}"/>`;
+  }
+  return `<svg viewBox="0 0 ${px} ${px}"><rect width="${px}" height="${px}" fill="#fff"/>${rects}</svg>`;
+}
+
+/* ---- positions list ---- */
+function renderPositions(){
+  document.getElementById("posList").innerHTML=DATA.positions.map((p,i)=>`
+    <div class="pos" style="animation-delay:${i*55}ms">
+      <div class="p-top"><span class="p-pair">${esc(p.pair)}</span><span class="p-side ${p.side.toLowerCase()}">${esc(p.side)}</span><span class="p-lev">${esc(p.lev)}x</span>
+        <span class="p-roi ${p.up?'up':'down'}" style="margin-left:auto">${esc(p.roi)}%</span></div>
+      <div class="p-grid">
+        <div class="p-cell"><div class="cl">Size</div><div class="cv">${esc(p.size)}</div></div>
+        <div class="p-cell"><div class="cl">Entry</div><div class="cv">${esc(p.entry)}</div></div>
+        <div class="p-cell right"><div class="cl">Mark</div><div class="cv">${esc(p.mark)}</div></div>
+      </div>
+      <div class="p-foot"><div><span class="cl" style="color:var(--muted);font-size:12px">PNL (USDT) </span><span class="p-pnl ${p.up?'up':'down'}">${esc(p.pnl)}</span></div>
+        <div class="share" data-idx="${i}"><svg viewBox="0 0 24 24"><path d="M4 12v7a1 1 0 001 1h14a1 1 0 001-1v-7M12 3v13M8 7l4-4 4 4" stroke-linecap="round" stroke-linejoin="round"/></svg>Share</div></div>
+    </div>`).join("");
+  document.querySelectorAll(".pos .share").forEach(s=>s.addEventListener("click",()=>{if(!editing()){posIdx=+s.dataset.idx;renderCard();showView("card");}}));
+}
+
+/* ---- the flex card ---- */
+function renderCard(){
+  const p=DATA.positions[posIdx];if(!p)return;
+  const dark=skin==="hyper"?"#0a1f1c":"#0c0d10";
+  const brand=skin==="hyper"
+    ? `<span style="width:22px;height:22px;border-radius:6px;background:var(--mint);display:inline-flex;align-items:center;justify-content:center;"><svg viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M6 5v14M18 5v14M6 12h12" stroke="#04211b" stroke-width="2.9" fill="none" stroke-linecap="round"/></svg></span> Hyperliquid`
+    : `<span style="width:22px;height:22px;border-radius:5px;background:var(--yellow);display:inline-flex;align-items:center;justify-content:center;transform:rotate(45deg);"><span style="width:9px;height:9px;background:#0c0d10;transform:rotate(0)"></span></span> BINANCE <span class="bsub">FUTURES</span>`;
+  document.getElementById("cardHost").innerHTML=`
+    <div class="pnlcard ${skin}">
+      <div class="pc-brand">${brand}</div>
+      <div class="pc-pos"><span class="side ${p.side.toLowerCase()}">${esc(p.side)}</span><span class="lev">${esc(p.lev)}x</span><span class="divider">|</span><span data-edit="card-pair">${esc(p.pair)}</span> Perpetual</div>
+      <div class="pc-roi ${p.up?'up':'down'}"><span data-edit="card-roi">${esc(p.roi)}</span>%</div>
+      <div class="pc-sub">Cumulative ROI</div>
+      <div class="pc-prices">
+        <div><div class="pl">Entry Price</div><div class="pv" data-edit="card-entry">${esc(p.entry)}</div></div>
+        <div><div class="pl">Last Price</div><div class="pv" data-edit="card-mark">${esc(p.mark)}</div></div>
+      </div>
+      <div class="pc-foot">
+        <div class="pc-ref"><div class="rl">Referral Code</div><div class="rv" data-edit="ref">${esc(DATA.ref)}</div><div class="rt">Scan to sign up &amp; start trading</div></div>
+        <div class="pc-qr">${qr(78,777,dark)}</div>
+      </div>
+      <div class="pc-note">TEST demo · decorative QR — encodes nothing, links nowhere · fictional referral</div>
+    </div>`;
+  document.getElementById("cardHost").parentElement.classList.toggle("hyperskin",skin==="hyper");
+  bindEdits();
+}
+
+/* ---- count-up ---- */
+function countUp(){document.querySelectorAll(".cu").forEach(el=>{if(el.dataset.done)return;const target=parseFloat(String(el.dataset.count).replace(/,/g,""));if(isNaN(target))return;const dur=1300,start=performance.now();function step(now){const p=Math.min((now-start)/dur,1),e=1-Math.pow(1-p,3);el.textContent=(target*e).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});if(p<1)requestAnimationFrame(step);else{el.textContent=target.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});el.dataset.done="1";}}requestAnimationFrame(step);});}
+function maybeCountUp(){if(document.visibilityState==="visible")countUp();else document.addEventListener("visibilitychange",function h(){if(document.visibilityState==="visible"){countUp();document.removeEventListener("visibilitychange",h);}});}
+
+/* ---- editing ---- */
+function bindEdits(){
+  document.querySelectorAll("[data-edit]").forEach(el=>{
+    el.setAttribute("contenteditable",editing());
+    el.oninput=()=>{
+      const k=el.getAttribute("data-edit"),v=el.textContent;
+      if(k==="card-pair")DATA.positions[posIdx].pair=v;
+      else if(k==="card-roi")DATA.positions[posIdx].roi=v;
+      else if(k==="card-entry")DATA.positions[posIdx].entry=v;
+      else if(k==="card-mark")DATA.positions[posIdx].mark=v;
+      else DATA[k]=v;
+      document.querySelectorAll('[data-edit="'+k+'"]').forEach(o=>{if(o!==el)o.textContent=v;});
+      save();
+    };
+  });
+}
+document.getElementById("editBtn").addEventListener("click",function(){const on=document.body.classList.toggle("editing");this.classList.toggle("on",on);this.textContent=on?"✓ Done":"✎ Edit";bindEdits();});
+document.getElementById("resetBtn").addEventListener("click",()=>{if(confirm("Reset this dashboard to its original values?")){localStorage.removeItem(KEY);DATA=structuredClone(DEFAULT_DATA);skin="binance";document.querySelectorAll("#skinToggle span").forEach(x=>x.classList.toggle("on",x.dataset.skin==="binance"));renderPositions();renderCard();restoreScalars();bindEdits();}});
+function restoreScalars(){document.querySelectorAll("[data-edit]").forEach(el=>{const k=el.getAttribute("data-edit");if(/^card-/.test(k))return;if(DATA[k]!==undefined)el.textContent=DATA[k];});}
+
+/* ---- skin toggle ---- */
+document.getElementById("skinToggle").addEventListener("click",e=>{const s=e.target.closest("span");if(!s||editing())return;skin=s.dataset.skin;DATA.skin=skin;save();document.querySelectorAll("#skinToggle span").forEach(x=>x.classList.toggle("on",x===s));renderCard();});
+
+/* ---- router ---- */
+const TITLES={positions:"Positions",card:"Share Position"};
+function showView(name){
+  document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.dataset.view===name));
+  document.getElementById("hdrTitle").textContent=TITLES[name]||"";
+  document.getElementById("backBtn").style.display=(name==="card")?"flex":"none";
+  document.getElementById("screen").scrollTop=0;bindEdits();
+}
+document.getElementById("backBtn").addEventListener("click",()=>{if(!editing())showView("positions");});
+
+/* ---- init ---- */
+skin=DATA.skin||"binance";
+document.querySelectorAll("#skinToggle span").forEach(x=>x.classList.toggle("on",x.dataset.skin===skin));
+renderPositions();renderCard();restoreScalars();bindEdits();maybeCountUp();
+</script>
+<!-- krypt:app:start -->
+<script src="../../assets/krypt-app.js" data-root="../../" data-label="PnL" defer></script>
+<script src="../../assets/krypt-desktop.js" defer></script>
+<script src="../../assets/push.js" defer></script>
+<!-- krypt:app:end -->
+</body>
+</html>

@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en" data-krypt-status="translucent">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Strava · Learning Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     STRAVA — a learning recreation (TEST demo).
+     Light theme, Strava orange. Bottom nav: Feed (default) · Maps ·
+     Record (center) · Groups · You. Data-driven — see DEFAULT_DATA.
+     Route maps are inline SVG; entrance animations pure CSS;
+     headline figures count up when visible.
+     ============================================================ */
+  :root{
+    --orange:#fc4c02;
+    --bg:#ffffff;
+    --soft:#f4f5f7;
+    --line:#e5e7eb;
+    --text:#141a1f;
+    --muted:#6d7278;
+    --dim:#9aa0a6;
+    --font:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{background:#0a0a0a;font-family:var(--font);color:var(--text);display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;-webkit-font-smoothing:antialiased;}
+
+  .back{position:fixed;top:18px;left:18px;z-index:50;background:#1c1c1e;color:#fff;border:1px solid #333;text-decoration:none;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;font-family:var(--font);transition:.15s;}
+  .back:hover{background:#2a2a2c;}
+  .toolbar{position:fixed;top:18px;right:18px;display:flex;gap:8px;z-index:50;}
+  .toolbar button{background:#1c1c1e;color:#fff;border:1px solid #333;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);transition:.15s;}
+  .toolbar button:hover{background:#2a2a2c;}
+  .toolbar button.on{background:var(--orange);color:#fff;border-color:var(--orange);}
+
+  .phone{position:relative;width:390px;max-width:100%;height:844px;background:var(--bg);border-radius:44px;box-shadow:0 0 0 12px #111,0 40px 90px rgba(0,0,0,.7);overflow:hidden;display:flex;flex-direction:column;}
+
+  .statusbar{display:flex;align-items:center;justify-content:space-between;padding:15px 30px 4px;font-size:15px;font-weight:600;flex:0 0 auto;color:#141a1f;}
+  .statusbar .right{display:flex;align-items:center;gap:7px;}
+  .battery{border:1.5px solid #141a1f;border-radius:4px;width:26px;height:13px;position:relative;display:flex;align-items:center;padding:1.5px;}
+  .battery::after{content:"";position:absolute;right:-4px;top:4px;width:2px;height:5px;background:#141a1f;border-radius:0 2px 2px 0;}
+  .battery i{display:block;height:100%;background:#141a1f;border-radius:1.5px;width:82%;}
+  .signal{display:flex;align-items:flex-end;gap:2px;height:12px;}
+  .signal b{width:3px;background:#141a1f;border-radius:1px;display:block;}
+  .signal b:nth-child(1){height:5px}.signal b:nth-child(2){height:7px}.signal b:nth-child(3){height:9px}.signal b:nth-child(4){height:12px;opacity:.35}
+
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:6px 18px 10px;flex:0 0 auto;border-bottom:1px solid var(--line);}
+  .topbar .brand{font-size:22px;font-weight:800;color:var(--orange);letter-spacing:-.3px;}
+  .topbar .ttl{font-size:20px;font-weight:700;}
+  .topbar .rgt{display:flex;gap:14px;}
+  .topbar .rgt svg{width:24px;height:24px;stroke:#141a1f;fill:none;stroke-width:2;cursor:pointer;}
+
+  .screen{flex:1;overflow-y:auto;scrollbar-width:none;background:var(--soft);}
+  .screen::-webkit-scrollbar{display:none;}
+
+  .view{display:none;padding-bottom:96px;}
+  .view.on{display:block;animation:vfade .22s ease;}
+  @keyframes vfade{from{opacity:0}to{opacity:1}}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+  /* ============ FEED ============ */
+  .acard{background:#fff;margin:10px 0 0;padding:14px 16px 4px;opacity:0;transform:translateY(14px);animation:rise .5s ease forwards;}
+  .ahead{display:flex;align-items:center;gap:11px;}
+  .ahead .av{width:44px;height:44px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px;}
+  .ahead .who{flex:1;min-width:0;}
+  .ahead .nm{font-size:15px;font-weight:700;}
+  .ahead .meta{font-size:12px;color:var(--muted);margin-top:2px;}
+  .ahead .dots{color:var(--dim);font-size:20px;font-weight:700;}
+  .atitle{font-size:19px;font-weight:700;margin:12px 0 8px;}
+  .astats{display:flex;gap:26px;margin-bottom:12px;}
+  .astat .sl{font-size:12px;color:var(--muted);}
+  .astat .sv{font-size:19px;font-weight:700;margin-top:1px;}
+  .map{border-radius:8px;overflow:hidden;background:#e8ebee;height:150px;position:relative;}
+  .map svg{display:block;width:100%;height:100%;}
+  .kudobar{display:flex;align-items:center;gap:20px;padding:12px 2px;border-top:1px solid var(--line);margin-top:10px;}
+  .kudobar .kb{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:14px;font-weight:600;cursor:pointer;}
+  .kudobar .kb svg{width:20px;height:20px;stroke:var(--muted);fill:none;stroke-width:2;}
+  .kudobar .kb.on svg{stroke:var(--orange);fill:var(--orange);}
+  .kudobar .kb.on{color:var(--orange);}
+
+  /* ============ YOU (profile) ============ */
+  .pf-head{background:#fff;padding:20px 18px 16px;display:flex;align-items:center;gap:16px;}
+  .pf-head .av{width:72px;height:72px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:26px;background:linear-gradient(135deg,#fc4c02,#ff8a3d);}
+  .pf-head .nm{font-size:22px;font-weight:800;}
+  .pf-head .loc{font-size:13px;color:var(--muted);margin-top:2px;}
+  .pf-follow{display:flex;gap:24px;margin-top:8px;}
+  .pf-follow .f{font-size:13px;color:var(--muted);}
+  .pf-follow .f b{color:var(--text);font-size:15px;}
+  .week{background:#fff;margin-top:10px;padding:16px 18px;}
+  .week h3{font-size:16px;font-weight:700;margin-bottom:2px;}
+  .week .sub{font-size:12px;color:var(--muted);margin-bottom:14px;}
+  .week-stats{display:flex;justify-content:space-between;margin-bottom:16px;}
+  .week-stats .ws .wl{font-size:12px;color:var(--muted);}
+  .week-stats .ws .wv{font-size:22px;font-weight:800;margin-top:2px;}
+  .week-stats .ws .wv small{font-size:13px;font-weight:600;color:var(--muted);}
+  .wbars{display:flex;align-items:flex-end;gap:10px;height:90px;}
+  .wbars .col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .wbars .bar{width:100%;background:var(--orange);border-radius:4px;min-height:4px;}
+  .wbars .dl{font-size:11px;color:var(--muted);}
+  .sec-h{padding:20px 18px 4px;font-size:13px;font-weight:700;letter-spacing:.4px;color:var(--muted);text-transform:uppercase;}
+  .arow{background:#fff;display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid var(--line);}
+  .arow .ic{width:40px;height:40px;border-radius:50%;background:var(--soft);display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+  .arow .ic svg{width:22px;height:22px;stroke:var(--orange);fill:none;stroke-width:2;}
+  .arow .mid{flex:1;}
+  .arow .t1{font-size:15px;font-weight:700;}
+  .arow .t2{font-size:12px;color:var(--muted);margin-top:2px;}
+  .arow .rt{text-align:right;font-size:14px;font-weight:700;}
+
+  /* ============ RECORD ============ */
+  .view[data-view="record"]{padding-bottom:0;}
+  .record{height:672px;position:relative;background:#dfe4e8;overflow:hidden;}
+  .record .rmap{position:absolute;inset:0;}
+  .record .rmap svg{width:100%;height:100%;}
+  .record .rtop{position:absolute;top:14px;left:0;right:0;display:flex;justify-content:center;gap:10px;z-index:2;}
+  .record .chip{background:#fff;border-radius:20px;padding:9px 16px;font-size:14px;font-weight:700;box-shadow:0 4px 12px rgba(0,0,0,.12);}
+  .record .rbottom{position:absolute;bottom:110px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:18px;z-index:2;}
+  .record .rstats{display:flex;gap:30px;background:rgba(255,255,255,.94);border-radius:16px;padding:14px 26px;box-shadow:0 6px 18px rgba(0,0,0,.14);}
+  .record .rstats .rl{font-size:11px;color:var(--muted);text-align:center;}
+  .record .rstats .rv{font-size:22px;font-weight:800;text-align:center;margin-top:2px;}
+  .record .startbtn{width:82px;height:82px;border-radius:50%;background:var(--orange);color:#fff;border:0;font-family:var(--font);font-size:18px;font-weight:800;cursor:pointer;box-shadow:0 8px 22px rgba(252,76,2,.5);transition:.12s;}
+  .record .startbtn:active{transform:scale(.94);}
+
+  /* ============ list views (Maps / Groups) ============ */
+  .simple{padding:4px 0;}
+  .simple h1{font-size:26px;font-weight:800;padding:16px 18px 2px;}
+  .lrow{background:#fff;display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid var(--line);opacity:0;transform:translateY(10px);animation:rise .45s ease forwards;}
+  .lrow .thumb{width:64px;height:48px;border-radius:8px;overflow:hidden;flex:0 0 auto;background:#e8ebee;}
+  .lrow .thumb svg{width:100%;height:100%;}
+  .lrow .mid{flex:1;min-width:0;}
+  .lrow .t1{font-size:15px;font-weight:700;}
+  .lrow .t2{font-size:12px;color:var(--muted);margin-top:3px;}
+  .lrow .badge{background:var(--soft);border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;color:var(--muted);}
+
+  /* ============ bottom nav ============ */
+  .nav{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-around;align-items:center;padding:9px 6px 24px;background:#fff;border-top:1px solid var(--line);z-index:20;}
+  .nb{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;flex:1;}
+  .nb svg{width:25px;height:25px;stroke:#8a9095;fill:none;stroke-width:2;}
+  .nb .nlab{font-size:10px;font-weight:700;color:#8a9095;}
+  .nb.on svg{stroke:#141a1f;}
+  .nb.on .nlab{color:#141a1f;}
+  .nb.rec{flex:0 0 auto;}
+  .nb.rec .rc{width:54px;height:38px;border-radius:12px;background:var(--orange);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(252,76,2,.4);}
+  .nb.rec .rc svg{width:24px;height:24px;stroke:#fff;stroke-width:2.6;}
+
+  body.editing [data-edit]{outline:1.5px dashed var(--orange);outline-offset:3px;border-radius:4px;cursor:text;}
+  [data-edit]:focus{outline:1.5px solid var(--orange);}
+  .hint{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);color:#666;font-size:12px;text-align:center;max-width:90vw;}
+</style>
+<!-- krypt:phone:start -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Strava">
+<meta name="theme-color" content="#FC4C02">
+<link rel="manifest" href="../../assets/manifests/strava.webmanifest">
+<link rel="apple-touch-icon" href="../../assets/icons/strava-180.png">
+<link rel="icon" type="image/png" sizes="512x512" href="../../assets/icons/strava-512.png">
+<link rel="stylesheet" href="../../assets/phone.css">
+<!-- krypt:phone:end -->
+</head>
+<body>
+
+<a class="back" href="../../index.html">← Collection</a>
+<div class="toolbar">
+  <button id="editBtn">✎ Edit</button>
+  <button id="resetBtn">↺ Reset</button>
+</div>
+
+<div class="phone">
+  <div class="statusbar">
+    <span>9:41</span>
+    <span class="right">
+      <span class="signal"><b></b><b></b><b></b><b></b></span>
+      <svg width="18" height="14" viewBox="0 0 18 14" fill="none"><path d="M9 3C11.5 3 13.8 4 15.5 5.6M9 7C10.4 7 11.7 7.6 12.7 8.5M4.3 5.6C6 4 8.3 3 9 3M6.3 8.5C7.3 7.6 8 7.4 9 7.4" stroke="#141a1f" stroke-width="1.6" stroke-linecap="round"/><circle cx="9" cy="11" r="1.2" fill="#141a1f"/></svg>
+      <span class="battery"><i></i></span>
+    </span>
+  </div>
+
+  <div class="topbar">
+    <div class="brand" id="brandEl">STRAVA</div>
+    <div class="rgt">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2" stroke-linecap="round"/></svg>
+      <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+  </div>
+
+  <div class="screen" id="screen">
+
+    <!-- ============ FEED ============ -->
+    <div class="view on" data-view="feed">
+      <div id="feedList"></div>
+    </div>
+
+    <!-- ============ MAPS / EXPLORE ============ -->
+    <div class="view" data-view="maps">
+      <div class="simple">
+        <h1>Explore</h1>
+        <div class="sec-h">Popular segments near you</div>
+        <div id="segList"></div>
+      </div>
+    </div>
+
+    <!-- ============ YOU (profile) ============ -->
+    <div class="view" data-view="you">
+      <div class="pf-head">
+        <div class="av" data-edit="avInit">JR</div>
+        <div>
+          <div class="nm" data-edit="athlete">Jordan Rivera</div>
+          <div class="loc" data-edit="loc">Boulder, Colorado</div>
+          <div class="pf-follow">
+            <span class="f"><b data-edit="followers">1,204</b> Followers</span>
+            <span class="f"><b data-edit="following">318</b> Following</span>
+          </div>
+        </div>
+      </div>
+      <div class="week">
+        <h3>This Week</h3>
+        <div class="sub" data-edit="weekRange">Jul 14 – Jul 20</div>
+        <div class="week-stats">
+          <div class="ws"><div class="wl">Distance</div><div class="wv"><span class="cu" data-edit="wkDist" data-count="42.6" data-fmt="1">42.6</span><small> mi</small></div></div>
+          <div class="ws"><div class="wl">Time</div><div class="wv" data-edit="wkTime">6h 12m</div></div>
+          <div class="ws"><div class="wl">Elev</div><div class="wv"><span data-edit="wkElev">3,180</span><small> ft</small></div></div>
+        </div>
+        <div class="wbars" id="wbars"></div>
+      </div>
+      <div class="sec-h">Recent Activities</div>
+      <div id="recentList"></div>
+      <div class="sec-h">Trophy Case</div>
+      <div id="trophyList"></div>
+    </div>
+
+    <!-- ============ RECORD ============ -->
+    <div class="view" data-view="record">
+      <div class="record">
+        <div class="rmap" id="recMap"></div>
+        <div class="rtop"><div class="chip">🏃 Run</div><div class="chip">GPS ●</div></div>
+        <div class="rbottom">
+          <div class="rstats">
+            <div><div class="rl">Distance</div><div class="rv">0.00</div></div>
+            <div><div class="rl">Time</div><div class="rv">0:00</div></div>
+            <div><div class="rl">Pace</div><div class="rv">--:--</div></div>
+          </div>
+          <button class="startbtn" id="startBtn">Start</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ GROUPS ============ -->
+    <div class="view" data-view="groups">
+      <div class="simple">
+        <h1>Groups</h1>
+        <div class="sec-h">Your clubs</div>
+        <div id="clubList"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- bottom nav -->
+  <div class="nav">
+    <div class="nb on" data-tab="feed"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7M5 10v10h14V10" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="nlab">Home</span></div>
+    <div class="nb" data-tab="maps"><svg viewBox="0 0 24 24"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="nlab">Maps</span></div>
+    <div class="nb rec" data-tab="record"><div class="rc"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg></div></div>
+    <div class="nb" data-tab="groups"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3 19c0-3 2.7-5 6-5s6 2 6 5M15.5 14c2.5 0 5 1.6 5 4.5" stroke-linecap="round"/></svg><span class="nlab">Groups</span></div>
+    <div class="nb" data-tab="you"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6" stroke-linecap="round"/></svg><span class="nlab">You</span></div>
+  </div>
+</div>
+
+<div class="hint">Bottom nav switches screens · tap kudos · Toggle Edit (top-right) to change values</div>
+
+<script>
+/* ============================================================
+   DATA — fictional athletes, routes & stats. Edit freely.
+   ============================================================ */
+const DEFAULT_DATA = {
+  avInit:"JR", athlete:"Jordan Rivera", loc:"Boulder, Colorado",
+  followers:"1,204", following:"318",
+  weekRange:"Jul 14 – Jul 20", wkDist:"42.6", wkTime:"6h 12m", wkElev:"3,180",
+  week:[6,10,0,8,4,14,0.6],
+
+  feed:[
+    {av:"MC", bg:"#3b82f6", nm:"Maya Chen", meta:"Today at 6:42 AM · Boulder, CO", title:"Morning Run", sport:"run",
+      stats:[["Distance","6.21 mi"],["Pace","7:48 /mi"],["Time","48m 27s"]], seed:7, kudos:"38", comments:"5", liked:true},
+    {av:"DK", bg:"#10b981", nm:"Dana Kim", meta:"Yesterday at 5:10 PM · Left Hand Canyon", title:"Evening Ride 🚴", sport:"ride",
+      stats:[["Distance","24.8 mi"],["Elev","1,842 ft"],["Time","1h 32m"]], seed:14, kudos:"52", comments:"9", liked:false},
+    {av:"SP", bg:"#8b5cf6", nm:"Sam Patel", meta:"2 days ago · Chautauqua", title:"Flatirons Trail Run", sport:"run",
+      stats:[["Distance","9.4 mi"],["Elev","2,210 ft"],["Time","1h 18m"]], seed:21, kudos:"71", comments:"12", liked:true},
+  ],
+
+  recent:[
+    {t1:"Morning Run", t2:"Today · 6.21 mi · 48m", rt:"7:48 /mi", sport:"run", seed:3},
+    {t1:"Tempo Ride", t2:"Wed · 24.8 mi · 1h 32m", rt:"16.1 mph", sport:"ride", seed:9},
+    {t1:"Recovery Jog", t2:"Tue · 3.1 mi · 27m", rt:"8:42 /mi", sport:"run", seed:31},
+  ],
+  trophies:[
+    {t1:"Local Legend", t2:"Mesa Trail · 42 efforts", rt:"👑", sport:"trophy"},
+    {t1:"2nd Fastest", t2:"Canyon Sprint segment", rt:"🥈", sport:"trophy"},
+  ],
+  segments:[
+    {t1:"Mesa Trail Climb", t2:"2.4 mi · 4.1% · 1,204 attempts", seed:5, badge:"CR"},
+    {t1:"Canyon Sprint", t2:"0.8 mi · 2.0% · 892 attempts", seed:12, badge:"PR"},
+    {t1:"Reservoir Loop", t2:"5.6 mi · flat · 3,410 attempts", seed:19, badge:""},
+  ],
+  clubs:[
+    {t1:"Boulder Trail Runners", t2:"4,281 members · Running", seed:2},
+    {t1:"Front Range Cyclists", t2:"2,109 members · Cycling", seed:8},
+    {t1:"Sunrise 6AM Crew", t2:"312 members · Running", seed:27},
+  ],
+};
+
+const KEY="strava-dash-v1";
+let DATA=load();
+function load(){try{const s=localStorage.getItem(KEY);if(s)return{...structuredClone(DEFAULT_DATA),...JSON.parse(s)};}catch(e){}return structuredClone(DEFAULT_DATA);}
+function save(){localStorage.setItem(KEY,JSON.stringify(DATA));}
+function editing(){return document.body.classList.contains("editing");}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+/* ---- route map generator (deterministic squiggly path over a faint street grid) ---- */
+function routeSvg(seed,w,h){
+  let s=seed*997+13;
+  function rnd(){s=(s*9301+49297)%233280;return s/233280;}
+  // faint street grid
+  let grid="";
+  for(let x=0;x<w;x+=26) grid+=`<line x1="${x}" y1="0" x2="${x}" y2="${h}" stroke="#d6dbdf" stroke-width="1"/>`;
+  for(let y=0;y<h;y+=26) grid+=`<line x1="0" y1="${y}" x2="${w}" y2="${y}" stroke="#d6dbdf" stroke-width="1"/>`;
+  // a couple thicker "roads"
+  grid+=`<line x1="0" y1="${(0.4*h).toFixed(0)}" x2="${w}" y2="${(0.55*h).toFixed(0)}" stroke="#c6ccd1" stroke-width="4"/>`;
+  grid+=`<line x1="${(0.35*w).toFixed(0)}" y1="0" x2="${(0.45*w).toFixed(0)}" y2="${h}" stroke="#c6ccd1" stroke-width="4"/>`;
+  // route: random walk, smoothed
+  let px=w*0.18, py=h*0.7, pts=[[px,py]];
+  for(let i=0;i<9;i++){px+=(rnd()*0.7+0.05)*w*0.09;py+=(rnd()-0.5)*h*0.4;px=Math.max(10,Math.min(w-10,px));py=Math.max(12,Math.min(h-12,py));pts.push([px,py]);}
+  const path=pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(0)+" "+p[1].toFixed(0)).join(" ");
+  const a=pts[0], b=pts[pts.length-1];
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><rect width="${w}" height="${h}" fill="#e8ebee"/>${grid}
+    <path d="${path}" fill="none" stroke="#fc4c02" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="${a[0].toFixed(0)}" cy="${a[1].toFixed(0)}" r="5" fill="#fff" stroke="#fc4c02" stroke-width="3"/>
+    <circle cx="${b[0].toFixed(0)}" cy="${b[1].toFixed(0)}" r="5" fill="#fc4c02"/></svg>`;
+}
+const SPORT_ICON={
+  run:`<path d="M13 4a2 2 0 100 .01M7 20l3-5 2-3 4 2 1 4M8 11l3-2 4 1 2 3" stroke-linecap="round" stroke-linejoin="round"/>`,
+  ride:`<circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><path d="M6 17l4-8h4l3 8M10 9l2 5" stroke-linecap="round" stroke-linejoin="round"/>`,
+  trophy:`<path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 01-10 0V4z" stroke-linecap="round" stroke-linejoin="round"/>`,
+};
+
+/* ---- render feed ---- */
+function renderFeed(){
+  document.getElementById("feedList").innerHTML=DATA.feed.map((a,i)=>`
+    <div class="acard" style="animation-delay:${i*70}ms">
+      <div class="ahead">
+        <div class="av" style="background:${a.bg}">${esc(a.av)}</div>
+        <div class="who"><div class="nm">${esc(a.nm)}</div><div class="meta">${esc(a.meta)}</div></div>
+        <div class="dots">···</div>
+      </div>
+      <div class="atitle">${esc(a.title)}</div>
+      <div class="astats">${a.stats.map(s=>`<div class="astat"><div class="sl">${esc(s[0])}</div><div class="sv">${esc(s[1])}</div></div>`).join("")}</div>
+      <div class="map">${routeSvg(a.seed,360,150)}</div>
+      <div class="kudobar">
+        <div class="kb ${a.liked?"on":""}"><svg viewBox="0 0 24 24"><path d="M7 11v9H4v-9h3zM7 11l4-8a2 2 0 013 2l-1 5h5a2 2 0 012 2l-2 7a2 2 0 01-2 1H7" stroke-linejoin="round"/></svg>${esc(a.kudos)}</div>
+        <div class="kb"><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 01-11 7l-5 1 1-4a8 8 0 1115-4z" stroke-linejoin="round"/></svg>${esc(a.comments)}</div>
+      </div>
+    </div>`).join("");
+  document.querySelectorAll(".kudobar .kb").forEach(kb=>kb.addEventListener("click",()=>{if(!editing())kb.classList.toggle("on");}));
+}
+
+/* ---- weekly bars ---- */
+/* Fixed scale, not max-normalised. Dividing by the series' own peak
+   would redraw an identical chart at every distance — a 90-mile week
+   and a 9-mile week would look the same. DAY_SCALE is a bit above the
+   default week's biggest day, so a heavier week visibly fills the box
+   (and tops out) while a lighter one visibly shrinks. */
+const DAY_SCALE=18;   // miles in a day that fills the bar
+function renderWeekBars(){
+  const days=["M","T","W","T","F","S","S"];
+  document.getElementById("wbars").innerHTML=DATA.week.map((v,i)=>
+    `<div class="col"><div class="bar" style="height:${Math.min(70,Math.max(4,v/DAY_SCALE*70)).toFixed(1)}px"></div><div class="dl">${days[i]}</div></div>`).join("");
+}
+
+/* ---- list renderers ---- */
+function actRow(a){return `<div class="arow"><div class="ic"><svg viewBox="0 0 24 24">${SPORT_ICON[a.sport]||SPORT_ICON.run}</svg></div><div class="mid"><div class="t1">${esc(a.t1)}</div><div class="t2">${esc(a.t2)}</div></div><div class="rt">${esc(a.rt)}</div></div>`;}
+function renderRecent(){document.getElementById("recentList").innerHTML=DATA.recent.map(actRow).join("");}
+function renderTrophies(){document.getElementById("trophyList").innerHTML=DATA.trophies.map(actRow).join("");}
+function lrow(x,i){return `<div class="lrow" style="animation-delay:${i*50}ms"><div class="thumb">${routeSvg(x.seed,64,48)}</div><div class="mid"><div class="t1">${esc(x.t1)}</div><div class="t2">${esc(x.t2)}</div></div>${x.badge?`<div class="badge">${esc(x.badge)}</div>`:""}</div>`;}
+function renderSegs(){document.getElementById("segList").innerHTML=DATA.segments.map(lrow).join("");}
+function renderClubs(){document.getElementById("clubList").innerHTML=DATA.clubs.map(lrow).join("");}
+function renderRecMap(){document.getElementById("recMap").innerHTML=routeSvg(99,390,600).replace('viewBox="0 0 390 600"','viewBox="0 0 390 600" style="width:100%;height:100%"');}
+
+/* ---- count-up (visible-only) ---- */
+function fmtNum(v,fmt){if(fmt==="1")return v.toFixed(1);return Math.round(v).toLocaleString("en-US");}
+function countUp(){
+  document.querySelectorAll(".cu").forEach(el=>{
+    if(el.dataset.done) return;
+    const target=parseFloat(String(el.dataset.count).replace(/,/g,"")); if(isNaN(target)) return;
+    const fmt=el.dataset.fmt||"n", dur=1100, start=performance.now();
+    function step(now){const p=Math.min((now-start)/dur,1),e=1-Math.pow(1-p,3);el.textContent=fmtNum(target*e,fmt);if(p<1)requestAnimationFrame(step);else{el.textContent=fmtNum(target,fmt);el.dataset.done="1";}}
+    requestAnimationFrame(step);
+  });
+}
+function maybeCountUp(){if(document.visibilityState==="visible")countUp();else document.addEventListener("visibilitychange",function h(){if(document.visibilityState==="visible"){countUp();document.removeEventListener("visibilitychange",h);}});}
+
+/* ---- editing ---- */
+/* The weekly bars sum to the Distance figure beside them, so editing
+   that figure rescales the week — same shape, new volume. */
+function rescaleWeek(){
+  const target=parseFloat(String(DATA.wkDist).replace(/[^\d.]/g,""))||0;
+  const sum=DATA.week.reduce((a,b)=>a+b,0);
+  DATA.week = sum>0 ? DATA.week.map(v=>v*(target/sum)) : DATA.week.map(()=>target/DATA.week.length);
+  save();
+}
+function bindEdits(){document.querySelectorAll("[data-edit]").forEach(el=>{el.setAttribute("contenteditable",editing());el.oninput=()=>{
+  const k=el.getAttribute("data-edit");DATA[k]=el.textContent;save();
+  if(k==="wkDist"){rescaleWeek();renderWeekBars();}
+};});}
+document.getElementById("editBtn").addEventListener("click",function(){const on=document.body.classList.toggle("editing");this.classList.toggle("on",on);this.textContent=on?"✓ Done":"✎ Edit";bindEdits();});
+document.getElementById("resetBtn").addEventListener("click",()=>{if(confirm("Reset this dashboard to its original values?")){localStorage.removeItem(KEY);DATA=structuredClone(DEFAULT_DATA);renderAll();restoreScalars();bindEdits();}});
+function restoreScalars(){document.querySelectorAll("[data-edit]").forEach(el=>{const k=el.getAttribute("data-edit");if(DATA[k]!==undefined)el.textContent=DATA[k];});}
+
+/* ---- router ---- */
+const TITLES={feed:"STRAVA",maps:"Maps",you:"You",record:"Record",groups:"Groups"};
+function showView(name){
+  document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.dataset.view===name));
+  document.querySelectorAll(".nb").forEach(b=>b.classList.toggle("on",b.dataset.tab===name));
+  const brand=document.getElementById("brandEl");
+  if(name==="feed"){brand.classList.remove("ttl");brand.classList.add("brand");brand.textContent="STRAVA";}
+  else{brand.classList.remove("brand");brand.classList.add("ttl");brand.textContent=TITLES[name]||"";}
+  document.getElementById("screen").scrollTop=0;bindEdits();
+}
+document.querySelectorAll(".nb").forEach(b=>b.addEventListener("click",()=>{if(!editing())showView(b.dataset.tab);}));
+
+/* ---- init ---- */
+function renderAll(){renderFeed();renderWeekBars();renderRecent();renderTrophies();renderSegs();renderClubs();renderRecMap();}
+renderAll();restoreScalars();bindEdits();maybeCountUp();
+</script>
+<!-- krypt:app:start -->
+<script src="../../assets/krypt-app.js" data-root="../../" data-label="Strava" defer></script>
+<script src="../../assets/krypt-desktop.js" defer></script>
+<script src="../../assets/push.js" defer></script>
+<!-- krypt:app:end -->
+</body>
+</html>

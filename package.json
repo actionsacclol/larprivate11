@@ -1,0 +1,122 @@
+{
+  "name": "krypt-larp",
+  "productName": "Krypt LARP",
+  "version": "1.1.0",
+  "description": "A collection of faithful, editable, animated recreations of app UIs — 31 screens rebuilt from scratch, browsable on your desktop and servable to your phone over your own Wi-Fi. Part of the Krypt free tools suite.",
+  "main": "electron/main.js",
+  "author": {
+    "name": "Krypt",
+    "email": "hi@krypt.cc",
+    "url": "https://krypt.cc"
+  },
+  "homepage": "https://krypt.cc/tools/larp",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "serve": "node tools/serve.js",
+    "icons": "node tools/make-icons.js && node tools/make-app-icons.js",
+    "images": "electron tools/import-images.js",
+    "patch": "node tools/patch-dashboards.js",
+    "build": "npm run icons && npm run patch",
+    "dist": "npm run icons && npm run patch && electron-builder"
+  },
+  "dependencies": {
+    "discord-rpc": "^4.0.1"
+  },
+  "devDependencies": {
+    "electron": "^30.0.1",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "cc.krypt.larp",
+    "productName": "Krypt LARP",
+    "files": [
+      "electron/**",
+      "index.html",
+      "dashboards/**",
+      "assets/**",
+      "tools/lan-server.js",
+      "tools/vendor/**",
+      "tools/allow-firewall.cmd",
+      "resources/**",
+      "PHONE.md",
+      "README.md",
+      "LICENSE",
+      "!appicons/**",
+      "!release/**"
+    ],
+    "asarUnpack": [
+      "**/node_modules/discord-rpc/**",
+      "resources/**",
+      "tools/allow-firewall.cmd"
+    ],
+    "directories": {
+      "buildResources": "build",
+      "output": "release"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "resources/krypt.ico",
+      "artifactName": "${productName}-Setup-${version}.${ext}"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "build/icon.png",
+      "category": "Graphics",
+      "maintainer": "Krypt <hi@krypt.cc>",
+      "desktop": {
+        "Name": "Krypt LARP",
+        "Comment": "A collection of editable app-UI recreations"
+      },
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "category": "public.app-category.developer-tools",
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
+      "darkModeSupport": true,
+      "identity": null
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "menuCategory": false,
+      "runAfterFinish": true,
+      "installerIcon": "resources/krypt.ico",
+      "uninstallerIcon": "resources/krypt.ico",
+      "uninstallDisplayName": "Krypt LARP",
+      "include": "build/installer.nsh",
+      "shortcutName": "Krypt LARP"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "scripflipped",
+      "repo": "krypt-larp",
+      "releaseType": "draft"
+    }
+  }
+}

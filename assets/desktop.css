@@ -1,0 +1,72 @@
+/* ============================================================
+   desktop.css — lets the desktop-mode dashboards fill the window.
+
+   The desktop mocks are drawn inside a fake browser window: a 1200px
+   card with rounded corners, a drop shadow, traffic lights and a URL
+   bar, floating on a dark page. That reads well as a *thumbnail* —
+   it's how the gallery shows what a desktop dashboard is — but once
+   you actually open one, you are looking at a fake browser inside
+   your real browser, with dark bars either side of it.
+
+   So on a real desktop viewport the frame comes off and the app runs
+   edge to edge, the same way phone.css drops the phone bezel on a
+   real phone. Below 700px nothing here applies, and the mock keeps
+   its frame.
+
+   Loaded by every desktop dashboard via a <link> in its <head>.
+   ============================================================ */
+
+@media (min-width: 700px) {
+
+  html, body {
+    height: 100%;
+  }
+
+  /* The page centres the frame in dark space — no longer wanted. */
+  body {
+    padding: 0 !important;
+    margin: 0 !important;
+    display: block !important;
+  }
+
+  .browser {
+    width: 100% !important;
+    max-width: none !important;
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    /* .btop sits above .app, so the frame is a column — state it rather
+       than depend on the value each dashboard happened to set. */
+    flex-direction: column !important;
+  }
+
+  /* Traffic lights + fake URL bar. Your real browser already has these. */
+  .btop {
+    display: none !important;
+  }
+
+  /* Authored at a fixed 640–720px so it fit the card. Let it take
+     whatever is left instead; every one of these has its own
+     internally scrolling panes, so nothing gets clipped. */
+  .app {
+    height: auto !important;
+    min-height: 0 !important;
+    flex: 1 1 auto !important;
+  }
+
+  /* ---- Authoring chrome ----
+     The Collection link and the Edit/Reset toolbar used to sit in the
+     dark margin around the card. There is no margin now, so they would
+     land on top of the app's own header. krypt-app.js moves both into
+     the corner control instead. */
+  .back,
+  .toolbar,
+  .hint { display: none !important; }
+
+  /* Safety net for a dashboard whose toolbar is named something else. */
+  body > *:has(> #editBtn),
+  body > *:has(> #resetBtn) { display: none !important; }
+  #editBtn, #resetBtn { display: none !important; }
+}

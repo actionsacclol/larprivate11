@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en" data-krypt-status="translucent">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kalshi Terminal · Desktop · Learning Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     KALSHI DESKTOP TRADING TERMINAL — TEST learning demo.
+     Teaches the trading-terminal pattern: market list + price
+     chart + ORDER BOOK ladder + trade ticket. Dark theme, Kalshi
+     mint for Yes, blue for No. Two-face type system: UI text in
+     Space Grotesk (max weight 700 — it ships nothing heavier),
+     ALL numerals in Roboto Mono (diagonal slashed zero) via --num.
+     Built from general knowledge — all markets are fictional.
+     (Veil watermark uses weight 700, not the template's 800, to
+     honor the no-weight-above-700 house rule for this file.)
+     ============================================================ */
+  :root{
+    --green:#00D68A;          /* Kalshi mint — the Yes side */
+    --green-d:#0b3a2b;
+    --blue:#4b7bec;           /* the No side */
+    --blue-d:#12233f;
+    --red:#ff5470;
+    --bg:#000000;
+    --card:#121214;
+    --card2:#17171a;
+    --line:#242428;
+    --text:#f4f4f5;
+    --muted:#8a8a90;
+    --dim:#5b5b60;
+    --font:'Space Grotesk',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    /* Kalshi's real face (Basis Grotesque) has a diagonal SLASHED ZERO.
+       Roboto Mono is the numeric face here because its zero carries a
+       true diagonal slash (Space Mono's is only a center dot). */
+    --num:'Roboto Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{background:#0a0a0a;font-family:var(--font);color:var(--text);display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;-webkit-font-smoothing:antialiased;}
+
+  .back{position:fixed;top:18px;left:18px;z-index:50;background:#1c1c1e;color:#fff;border:1px solid #333;text-decoration:none;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;font-family:var(--font);transition:.15s;}
+  .back:hover{background:#2a2a2c;}
+  .toolbar{position:fixed;top:18px;right:18px;display:flex;gap:8px;z-index:50;}
+  .toolbar button{background:#1c1c1e;color:#fff;border:1px solid #333;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);transition:.15s;}
+  .toolbar button:hover{background:#2a2a2c;}
+  .toolbar button.on{background:var(--green);color:#00230f;border-color:var(--green);}
+
+  /* ============ browser window frame ============ */
+  .browser{width:1200px;max-width:100%;border-radius:14px;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.08),0 40px 90px rgba(0,0,0,.65);display:flex;flex-direction:column;background:var(--bg);}
+  .btop{display:flex;align-items:center;gap:8px;background:#1a1a1d;padding:10px 14px;flex:0 0 auto;}
+  .lights{display:flex;gap:7px;margin-right:8px;}
+  .lights i{width:12px;height:12px;border-radius:50%;display:block;}
+  .lights i:nth-child(1){background:#ff5f57}.lights i:nth-child(2){background:#febc2e}.lights i:nth-child(3){background:#28c840}
+  .urlbar{flex:1;max-width:460px;background:#0d0d0f;border-radius:8px;padding:6px 14px;font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:7px;}
+  .urlbar svg{width:11px;height:11px;stroke:#6a6a70;fill:none;stroke-width:2;}
+
+  /* ============ top navbar ============ */
+  .navbar{display:flex;align-items:center;gap:18px;padding:12px 22px;border-bottom:1px solid var(--line);flex:0 0 auto;}
+  .wordmark{font-size:22px;font-weight:700;letter-spacing:-.5px;color:var(--green);}
+  .navlinks{display:flex;gap:4px;}
+  .nl{font-size:13.5px;font-weight:600;color:var(--muted);padding:7px 12px;border-radius:8px;cursor:pointer;transition:.15s;}
+  .nl:hover{color:var(--text);background:#161618;}
+  .nl.on{color:var(--text);background:#1c1c1f;}
+  .searchpill{flex:1;max-width:340px;display:flex;align-items:center;gap:9px;background:#141416;border:1px solid var(--line);border-radius:10px;padding:8px 13px;font-size:13px;color:var(--dim);}
+  .searchpill svg{width:14px;height:14px;stroke:#6a6a70;fill:none;stroke-width:2;}
+  .navbar .sp{flex:1;}
+  .balpill{display:flex;align-items:center;gap:6px;background:#141416;border:1px solid var(--line);border-radius:10px;padding:8px 14px;font-size:13.5px;font-weight:700;font-family:var(--num);}
+  .depositbtn{background:var(--green);color:#00230f;border:0;font-family:var(--font);font-size:13.5px;font-weight:700;padding:9px 18px;border-radius:10px;cursor:pointer;transition:.15s;}
+  .depositbtn:hover{filter:brightness(1.1);}
+  .avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#2c6a4a,#16324a);color:#eafff5;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto;}
+
+  /* ============ 2-panel app ============ */
+  .app{display:flex;height:700px;min-height:0;}
+
+  /* ---- left: market list ---- */
+  .left{width:380px;flex:0 0 auto;border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;}
+  .cattabs{display:flex;gap:4px;padding:12px 14px 10px;border-bottom:1px solid var(--line);flex:0 0 auto;}
+  .ct{font-size:12.5px;font-weight:600;color:var(--muted);padding:6px 11px;border-radius:16px;cursor:pointer;border:1px solid transparent;transition:.15s;white-space:nowrap;}
+  .ct:hover{color:var(--text);}
+  .ct.on{color:var(--green);border-color:#1c4a38;background:var(--green-d);}
+  .mlist{flex:1;overflow-y:auto;min-height:0;scrollbar-width:thin;scrollbar-color:#2a2a2e transparent;}
+  .mlist::-webkit-scrollbar{width:8px;}
+  .mlist::-webkit-scrollbar-thumb{background:#2a2a2e;border-radius:4px;}
+  .mrow{display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;border-bottom:1px solid #18181b;border-left:2px solid transparent;transition:background .15s;
+    opacity:0;animation:rise .45s ease forwards;animation-delay:var(--d,0ms);}
+  .mrow:hover{background:#0e0e10;}
+  .mrow.sel{background:var(--card);border-left-color:var(--green);}
+  .mrow.hide{display:none;}
+  .mrow .mm{flex:1;min-width:0;}
+  .mrow .mt{font-size:14px;font-weight:600;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .mrow .mvol{font-size:11.5px;color:var(--dim);margin-top:4px;font-family:var(--num);}
+  .mrow .mchips{display:flex;gap:6px;flex:0 0 auto;}
+  .pchip{font-family:var(--num);font-size:12.5px;font-weight:700;padding:6px 9px;border-radius:8px;min-width:46px;text-align:center;}
+  .pchip.yes{background:var(--green-d);color:var(--green);}
+  .pchip.no{background:var(--blue-d);color:var(--blue);}
+
+  /* ---- right: market detail ---- */
+  .right{flex:1;overflow-y:auto;min-width:0;padding:20px 24px 30px;scrollbar-width:thin;scrollbar-color:#2a2a2e transparent;}
+  .right::-webkit-scrollbar{width:8px;}
+  .right::-webkit-scrollbar-thumb{background:#2a2a2e;border-radius:4px;}
+
+  .dhead{opacity:0;animation:rise .45s ease forwards;}
+  .catchip{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:4px 9px;margin-bottom:10px;}
+  .dhead h1{font-size:24px;font-weight:700;letter-spacing:-.5px;line-height:1.15;}
+  .dmeta{font-size:12.5px;color:var(--muted);margin-top:7px;}
+  .dmeta .n{font-family:var(--num);}
+
+  .dprice{display:flex;align-items:baseline;gap:16px;margin:16px 0 4px;opacity:0;animation:rise .45s .08s ease forwards;}
+  .bignum{font-family:var(--num);font-size:52px;font-weight:700;letter-spacing:-2px;color:var(--green);line-height:1;}
+  .yeslab{font-size:16px;font-weight:700;color:var(--green);}
+  .nonum{font-size:16px;font-weight:700;color:var(--blue);}
+  .nonum .n{font-family:var(--num);}
+  .dchg{font-size:13px;font-weight:700;font-family:var(--num);}
+  .dchg.up{color:var(--green);}
+  .dchg.down{color:var(--red);}
+
+  /* chart */
+  .chartcard{margin-top:14px;opacity:0;animation:rise .45s .14s ease forwards;}
+  .chartwrap{display:flex;gap:10px;align-items:stretch;height:210px;}
+  .chartwrap svg{flex:1;height:100%;display:block;overflow:visible;min-width:0;}
+  .yax{width:38px;display:flex;flex-direction:column;justify-content:space-between;text-align:right;font-family:var(--num);font-size:10.5px;color:var(--dim);padding:0 0 0 2px;flex:0 0 auto;}
+  .xaxis{display:flex;justify-content:space-between;font-family:var(--num);font-size:10.5px;color:var(--dim);margin-top:8px;padding-right:48px;}
+  .gline{stroke:#1c1c1f;stroke-width:1;}
+  .cline{stroke-dasharray:1500;stroke-dashoffset:1500;animation:draw 1.1s .2s ease forwards;}
+  .carea{opacity:0;animation:fin .6s .75s ease forwards;}
+  .cdot{opacity:0;animation:fin .3s 1.15s ease forwards;}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  @keyframes fin{to{opacity:1}}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+  /* ---- lower grid: order book + trade ticket ---- */
+  .lower{display:flex;gap:18px;margin-top:22px;align-items:flex-start;}
+
+  .bookcard{flex:1.35;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;min-width:0;
+    opacity:0;animation:rise .45s .2s ease forwards;}
+  .bookhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .bookhead .bt{font-size:14px;font-weight:700;}
+  .spreadpill{font-size:11.5px;font-weight:700;font-family:var(--num);color:var(--muted);border:1px solid var(--line);border-radius:12px;padding:4px 11px;}
+  .bookcols{display:flex;gap:14px;}
+  .bookcol{flex:1;min-width:0;}
+  .bookcol .ch{display:flex;justify-content:space-between;font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--dim);padding:0 8px 7px;}
+  .bookcol.yes .ch b{color:var(--green);}
+  .bookcol.no .ch b{color:var(--blue);}
+  .obrow{position:relative;display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-radius:6px;overflow:hidden;font-family:var(--num);font-size:12.5px;margin-bottom:2px;}
+  .obrow .obp{font-weight:700;position:relative;z-index:1;}
+  .obrow .obq{color:var(--muted);position:relative;z-index:1;}
+  .bookcol.yes .obp{color:var(--green);}
+  .bookcol.no .obp{color:var(--blue);}
+  .depth{position:absolute;inset:0 auto 0 0;border-radius:6px;
+    transform:scaleX(0);animation:barGrow .6s cubic-bezier(.2,.7,.3,1) forwards;}
+  .bookcol.yes .depth{background:rgba(0,214,138,.12);transform-origin:left center;}
+  .bookcol.no .depth{background:rgba(75,123,236,.14);left:auto;right:0;transform-origin:right center;}
+  @keyframes barGrow{to{transform:scaleX(1)}}
+
+  /* trade ticket */
+  .ticket{flex:1;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;min-width:280px;
+    opacity:0;animation:rise .45s .26s ease forwards;}
+  .seg{display:flex;background:#0d0d0f;border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px;}
+  .seg button{flex:1;background:transparent;border:0;color:var(--muted);font-family:var(--font);font-size:13.5px;font-weight:700;padding:8px 0;border-radius:8px;cursor:pointer;transition:.15s;}
+  .seg.side button.on.yes{background:var(--green);color:#00230f;}
+  .seg.side button.on.no{background:var(--blue);color:#eaf1ff;}
+  .seg.otype{margin-top:10px;}
+  .seg.otype button.on{background:#242428;color:var(--text);}
+  .trow{display:flex;align-items:center;justify-content:space-between;margin-top:14px;font-size:13px;color:var(--muted);}
+  .trow b{font-family:var(--num);font-size:14px;font-weight:700;color:var(--text);}
+  .stepper{display:flex;align-items:center;gap:2px;background:#0d0d0f;border:1px solid var(--line);border-radius:10px;padding:3px;}
+  .stepper button{width:32px;height:30px;background:transparent;border:0;color:var(--text);font-family:var(--num);font-size:16px;font-weight:700;cursor:pointer;border-radius:7px;transition:.15s;}
+  .stepper button:hover{background:#1c1c1f;}
+  .stepper .cnt{min-width:44px;text-align:center;font-family:var(--num);font-size:14px;font-weight:700;}
+  .tdiv{height:1px;background:var(--line);margin:16px 0 2px;}
+  .placebtn{width:100%;margin-top:18px;background:var(--green);color:#00230f;border:0;font-family:var(--font);font-size:15px;font-weight:700;padding:13px 0;border-radius:11px;cursor:pointer;transition:.15s;}
+  .placebtn:hover{filter:brightness(1.1);}
+  .placebtn:active{transform:scale(.98);}
+  .placebtn.noSide{background:var(--blue);color:#eaf1ff;}
+  .placebtn.shake{animation:shake .35s ease;}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
+  .tnote{font-size:11px;color:var(--dim);text-align:center;margin-top:10px;}
+
+  body.editing [data-edit]{outline:1.5px dashed var(--green);outline-offset:2px;border-radius:3px;cursor:text;}
+  [data-edit]:focus{outline:1.5px solid var(--green);}
+  .hint{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);color:#666;font-size:12px;text-align:center;max-width:90vw;}
+  /* Portfolio / Activity screens (the nav links used to be inert) */
+  .screen2{display:block;}
+  .pfwrap{width:100%;padding:26px 30px 40px;}
+  .pfhead{display:flex;gap:44px;margin-bottom:8px;}
+  .pfl{font-size:12px;color:var(--dim);letter-spacing:.3px;text-transform:uppercase;}
+  .pfv{font:700 30px/1.2 var(--num,inherit);margin-top:4px;letter-spacing:-.5px;}
+  .pfv.up{color:var(--green);}
+  .pftitle{font-size:16px;font-weight:700;margin:28px 0 12px;}
+  .pftable{width:100%;border-collapse:collapse;font-size:13.5px;}
+  .pftable th{text-align:left;font-size:11px;letter-spacing:.5px;text-transform:uppercase;
+    color:var(--dim);font-weight:600;padding:0 12px 9px 0;border-bottom:1px solid var(--line,#23262b);}
+  .pftable td{padding:12px 12px 12px 0;border-bottom:1px solid var(--line,#23262b);}
+  .pftable td.num{font-family:var(--num,inherit);}
+  .pftable .yes{color:var(--green);font-weight:700;}
+  .pftable .no{color:var(--blue);font-weight:700;}
+</style>
+<!-- krypt:phone:start -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kalshi Web">
+<meta name="theme-color" content="#00D082">
+<link rel="manifest" href="../../assets/manifests/kalshi-desktop.webmanifest">
+<link rel="apple-touch-icon" href="../../assets/icons/kalshi-desktop-180.png">
+<link rel="icon" type="image/png" sizes="512x512" href="../../assets/icons/kalshi-desktop-512.png">
+<link rel="stylesheet" href="../../assets/desktop.css">
+<!-- krypt:phone:end -->
+</head>
+<body>
+
+<a class="back" href="../../index.html">← Collection</a>
+<div class="toolbar">
+  <button id="editBtn">✎ Edit</button>
+  <button id="resetBtn">↺ Reset</button>
+</div>
+
+<div class="browser">
+  <div class="btop">
+    <span class="lights"><i></i><i></i><i></i></span>
+    <span class="urlbar"><svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>kalshi.com/markets/demo</span>
+  </div>
+
+  <!-- ============ navbar ============ -->
+  <div class="navbar">
+    <span class="wordmark">Kalshi</span>
+    <div class="navlinks">
+      <span class="nl on" data-nl="markets">Markets</span>
+      <span class="nl" data-nl="portfolio">Portfolio</span>
+      <span class="nl" data-nl="activity">Activity</span>
+    </div>
+    <span class="searchpill"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21" stroke-linecap="round"/></svg>Search markets</span>
+    <span class="sp"></span>
+    <span class="balpill">$<span class="cu" data-edit="bal" data-count="1240.55">1,240.55</span></span>
+    <button class="depositbtn" type="button">Deposit</button>
+    <span class="avatar" data-edit="avatar">MK</span>
+  </div>
+
+  <div class="app" id="scrMarkets">
+
+    <!-- ============ LEFT: market list ============ -->
+    <div class="left">
+      <div class="cattabs" id="catTabs">
+        <span class="ct on" data-cat="All">All</span>
+        <span class="ct" data-cat="Sports">Sports</span>
+        <span class="ct" data-cat="Politics">Politics</span>
+        <span class="ct" data-cat="Economics">Economics</span>
+        <span class="ct" data-cat="Crypto">Crypto</span>
+      </div>
+      <div class="mlist" id="mlist"></div>
+    </div>
+
+    <!-- ============ RIGHT: market detail ============ -->
+    <div class="right">
+      <div class="dhead" id="dHead"></div>
+      <div class="dprice" id="dPrice"></div>
+
+      <div class="chartcard">
+        <div class="chartwrap" id="chartWrap"></div>
+        <div class="xaxis"><span>Apr</span><span>May</span><span>Jun</span><span>Jul</span></div>
+      </div>
+
+      <div class="lower">
+        <!-- order book -->
+        <div class="bookcard">
+          <div class="bookhead"><span class="bt">Order book</span><span class="spreadpill">Spread 1¢</span></div>
+          <div class="bookcols" id="bookCols"></div>
+        </div>
+
+        <!-- trade ticket -->
+        <div class="ticket">
+          <div class="seg side" id="sideSeg">
+            <button type="button" class="yes on" data-side="yes">Yes</button>
+            <button type="button" class="no" data-side="no">No</button>
+          </div>
+          <div class="seg otype" id="typeSeg">
+            <button type="button" class="on" data-ot="limit">Limit</button>
+            <button type="button" data-ot="market">Market</button>
+          </div>
+          <div class="trow"><span>Contracts</span>
+            <span class="stepper"><button type="button" id="stMinus">−</button><span class="cnt" id="stCnt">10</span><button type="button" id="stPlus">+</button></span>
+          </div>
+          <div class="trow"><span>Limit price</span><b id="tkPrice">46¢</b></div>
+          <div class="tdiv"></div>
+          <div class="trow"><span>Total cost</span><b id="tkTotal">$4.60</b></div>
+          <div class="trow"><span id="tkPayLab">Payout if Yes</span><b id="tkPay">$10.00</b></div>
+          <button class="placebtn" id="placeBtn" type="button">Place order</button>
+          <div class="tnote">Demo ticket — no real orders, ever.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============ PORTFOLIO ============ -->
+  <div class="app screen2" id="scrPortfolio" style="display:none;">
+    <div class="pfwrap">
+      <div class="pfhead">
+        <div><div class="pfl">Portfolio value</div><div class="pfv">$<span data-edit="pf-val">3,418.20</span></div></div>
+        <div><div class="pfl">Unrealised P&amp;L</div><div class="pfv up">+$<span data-edit="pf-pnl">286.40</span></div></div>
+        <div><div class="pfl">Open positions</div><div class="pfv"><span data-edit="pf-open">6</span></div></div>
+      </div>
+      <div class="pftitle">Open positions</div>
+      <table class="pftable">
+        <thead><tr><th>Market</th><th>Side</th><th>Contracts</th><th>Avg price</th><th style="text-align:right;">Value</th></tr></thead>
+        <tbody id="posRows"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ============ ACTIVITY ============ -->
+  <div class="app screen2" id="scrActivity" style="display:none;">
+    <div class="pfwrap">
+      <div class="pftitle" style="margin-top:0;">Recent activity</div>
+      <table class="pftable">
+        <thead><tr><th>Time</th><th>Action</th><th>Market</th><th>Side</th><th style="text-align:right;">Amount</th></tr></thead>
+        <tbody id="actRows"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<div class="hint">Click a market row to load it · category tabs filter the list · stepper recomputes the ticket · Toggle Edit (top-right) to change values · fictional test data only</div>
+
+<script>
+/* ============================================================
+   DATA — all fictional markets, prices, and volumes. Edit freely.
+   Yes/No prices are stored as bare cent numbers so the same
+   data-edit key can render as "46¢" in the list and "46%" in the
+   big readout (duplicate keys mirror-sync while editing).
+   ============================================================ */
+const DEFAULT_DATA = {
+  bal:"1,240.55", avatar:"MK",
+  markets:[
+    {cat:"Sports",    t:"Finals MVP 2026: North Bay",     yes:46, no:54, vol:"$2,410,882", exp:"Oct 22, 2026", chg:"+4¢"},
+    {cat:"Sports",    t:"Lakeview to reach the Finals",   yes:24, no:76, vol:"$981,204",   exp:"Oct 18, 2026", chg:"-2¢"},
+    {cat:"Sports",    t:"Harper wins Player of the Year", yes:61, no:39, vol:"$624,118",   exp:"Nov 3, 2026",  chg:"+1¢"},
+    {cat:"Crypto",    t:"BTC above $120k by Dec 31",      yes:63, no:37, vol:"$5,820,411", exp:"Dec 31, 2026", chg:"+3¢"},
+    {cat:"Crypto",    t:"ETH above $2,500 by Oct 1",      yes:41, no:59, vol:"$1,204,552", exp:"Oct 1, 2026",  chg:"-5¢"},
+    {cat:"Economics", t:"Fed cuts rates in September",    yes:72, no:28, vol:"$3,388,902", exp:"Sep 17, 2026", chg:"+6¢"},
+    {cat:"Economics", t:"CPI above 3.0% in July",         yes:33, no:67, vol:"$842,270",   exp:"Aug 12, 2026", chg:"-1¢"},
+    {cat:"Politics",  t:"Midterm turnout above 60%",      yes:44, no:56, vol:"$1,733,415", exp:"Nov 3, 2026",  chg:"+2¢"},
+  ],
+  /* order-book ladder quantities (contracts resting at each level) */
+  bookYes:[1240, 860, 1420, 610, 980, 1530],
+  bookNo: [1080, 1360, 740, 1190, 560, 1450],
+
+  /* rows for the Portfolio and Activity screens */
+  positions:[
+    {mk:"Fed cuts rates in September",   sd:"Yes", ct:"120", px:"63c", vl:"$75.60"},
+    {mk:"Home team wins the division",   sd:"Yes", ct:"200", px:"41c", vl:"$82.00"},
+    {mk:"CPI above 3.0% this print",     sd:"No",  ct:"150", px:"28c", vl:"$42.00"},
+    {mk:"Bitcoin above $90k by Dec 31",  sd:"Yes", ct:"90",  px:"72c", vl:"$64.80"},
+    {mk:"Government shutdown this year", sd:"No",  ct:"300", px:"12c", vl:"$36.00"},
+    {mk:"Named storm makes landfall",    sd:"Yes", ct:"75",  px:"54c", vl:"$40.50"},
+  ],
+  activity:[
+    {tm:"1:52 PM", ac:"Bought",   mk:"Fed cuts rates in September",  sd:"Yes", am:"$75.60"},
+    {tm:"1:20 PM", ac:"Sold",     mk:"CPI above 3.0% this print",    sd:"No",  am:"$42.00"},
+    {tm:"11:47 AM",ac:"Bought",   mk:"Bitcoin above $90k by Dec 31", sd:"Yes", am:"$64.80"},
+    {tm:"10:02 AM",ac:"Deposited",mk:"Bank transfer",                sd:"",    am:"$500.00"},
+    {tm:"9:15 AM", ac:"Bought",   mk:"Home team wins the division",  sd:"Yes", am:"$82.00"},
+  ],
+};
+
+const KEY="kalshi-desktop-dash-v1";
+let DATA=load();
+let sel=0, side="yes", contracts=10;
+function load(){try{const s=localStorage.getItem(KEY);if(s)return{...structuredClone(DEFAULT_DATA),...JSON.parse(s)};}catch(e){}return structuredClone(DEFAULT_DATA);}
+function save(){localStorage.setItem(KEY,JSON.stringify(DATA));}
+function editing(){return document.body.classList.contains("editing");}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+/* val(): flat edited key wins over the array default */
+function val(k,fb){return DATA[k]!==undefined?DATA[k]:fb;}
+function num(v){const n=parseFloat(String(v).replace(/[^0-9.\-]/g,""));return isNaN(n)?0:n;}
+function yesOf(i){return Math.min(99,Math.max(1,Math.round(num(val("m-"+i+"-yes",DATA.markets[i].yes)))))||1;}
+function noOf(i){return Math.min(99,Math.max(1,Math.round(num(val("m-"+i+"-no",DATA.markets[i].no)))))||1;}
+function qtyOf(sideKey,i){const arr=sideKey==="y"?DATA.bookYes:DATA.bookNo;return Math.max(0,Math.round(num(val("ob-"+sideKey+"-"+i,arr[i]))));}
+
+/* ---- seeded PRNG (deterministic per-market charts) ---- */
+function rnd(seed){let s=seed;return function(){s=(s*9301+49297)%233280;return s/233280;};}
+
+/* ============ render: left market list ============ */
+function renderList(){
+  document.getElementById("mlist").innerHTML=DATA.markets.map((m,i)=>`
+    <div class="mrow${i===sel?" sel":""}" data-i="${i}" data-cat="${esc(m.cat)}" style="--d:${i*40}ms">
+      <div class="mm">
+        <div class="mt"><span data-edit="m-${i}-t">${esc(val("m-"+i+"-t",m.t))}</span></div>
+        <div class="mvol"><span data-edit="m-${i}-vol">${esc(val("m-"+i+"-vol",m.vol))}</span> · 24h vol</div>
+      </div>
+      <div class="mchips">
+        <span class="pchip yes"><span data-edit="m-${i}-yes">${esc(val("m-"+i+"-yes",m.yes))}</span>¢</span>
+        <span class="pchip no"><span data-edit="m-${i}-no">${esc(val("m-"+i+"-no",m.no))}</span>¢</span>
+      </div>
+    </div>`).join("");
+  applyFilter();
+}
+let curCat="All";
+function applyFilter(){
+  document.querySelectorAll(".mrow").forEach(r=>{
+    r.classList.toggle("hide",curCat!=="All"&&r.dataset.cat!==curCat);
+  });
+}
+
+/* ============ render: detail header + big price ============ */
+function renderDetail(){
+  const m=DATA.markets[sel], i=sel;
+  const chg=String(val("m-"+i+"-chg",m.chg));
+  const dir=chg.trim().startsWith("-")?"down":"up";
+  document.getElementById("dHead").innerHTML=`
+    <span class="catchip">${esc(m.cat)}</span>
+    <h1><span data-edit="m-${i}-t">${esc(val("m-"+i+"-t",m.t))}</span></h1>
+    <div class="dmeta">Expires <span class="n" data-edit="m-${i}-exp">${esc(val("m-"+i+"-exp",m.exp))}</span> · <span class="n" data-edit="m-${i}-vol">${esc(val("m-"+i+"-vol",m.vol))}</span> traded</div>`;
+  document.getElementById("dPrice").innerHTML=`
+    <span class="bignum"><span data-edit="m-${i}-yes">${esc(val("m-"+i+"-yes",m.yes))}</span>%</span>
+    <span class="yeslab">Yes</span>
+    <span class="nonum">No <span class="n" data-edit="m-${i}-no">${esc(val("m-"+i+"-no",m.no))}</span>%</span>
+    <span class="dchg ${dir}"><span data-edit="m-${i}-chg">${esc(chg)}</span> today</span>`;
+  renderChart();
+}
+
+/* ============ render: SVG price-history chart ============ */
+/* Fixed large stroke-dasharray + CSS keyframes for the draw-in. */
+function renderChart(){
+  const p=yesOf(sel), r=rnd(sel*77+13), n=25, W=560, H=200;
+  let v=Math.min(94,Math.max(6,p+(r()-0.5)*36));
+  const pts=[];
+  for(let k=0;k<n;k++){
+    pts.push(v);
+    v=Math.min(96,Math.max(4,v+(r()-0.5)*14+(p-v)*0.22));
+  }
+  pts[n-1]=p;
+  const xy=pts.map((q,k)=>((k*(W/(n-1))).toFixed(1))+","+((H-4-q*1.92).toFixed(1)));
+  const line="M"+xy.join(" L");
+  const area=line+" L"+W+","+H+" L0,"+H+" Z";
+  const lastY=(H-4-p*1.92).toFixed(1);
+  document.getElementById("chartWrap").innerHTML=`
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+      <defs><linearGradient id="mintFade" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#00D68A" stop-opacity=".18"/>
+        <stop offset="1" stop-color="#00D68A" stop-opacity="0"/>
+      </linearGradient></defs>
+      <line class="gline" x1="0" y1="4" x2="${W}" y2="4"/>
+      <line class="gline" x1="0" y1="${H/2}" x2="${W}" y2="${H/2}"/>
+      <line class="gline" x1="0" y1="${H-4}" x2="${W}" y2="${H-4}"/>
+      <path class="carea" d="${area}" fill="url(#mintFade)"/>
+      <path class="cline" d="${line}" fill="none" stroke="#00D68A" stroke-width="2.4" stroke-linejoin="round"/>
+      <circle class="cdot" cx="${W}" cy="${lastY}" r="4.5" fill="#00D68A"/>
+    </svg>
+    <div class="yax"><span>100%</span><span>50%</span><span>0%</span></div>`;
+}
+
+/* ============ render: order book ladder ============ */
+/* Yes ladder walks down from the Yes price, No ladder from 99−Yes,
+   so the top-of-book pair always shows a 1¢ spread. Depth bars get
+   an inline width plus a CSS scaleX grow with inline per-row delay.
+   raw=true (edit mode) shows resting quantities untouched; otherwise
+   the best level on the ticket's side is reduced by your contracts. */
+function renderBook(raw){
+  const p=yesOf(sel);
+  const rows=6;
+  const yesP=[], noP=[];
+  for(let i=0;i<rows;i++){yesP.push(Math.max(1,p-i));noP.push(Math.max(1,(99-p)-i));}
+  let maxQ=1;
+  for(let i=0;i<rows;i++){maxQ=Math.max(maxQ,qtyOf("y",i),qtyOf("n",i));}
+  function col(sk,prices){
+    return prices.map((pr,i)=>{
+      let q=qtyOf(sk,i);
+      if(!raw&&i===0&&((sk==="y"&&side==="yes")||(sk==="n"&&side==="no")))q=Math.max(0,q-contracts);
+      const w=Math.max(4,Math.round(q/maxQ*100));
+      return `<div class="obrow">
+        <i class="depth" style="width:${w}%;animation-delay:${i*70}ms"></i>
+        <span class="obp">${pr}¢</span>
+        <span class="obq" data-edit="ob-${sk}-${i}">${q.toLocaleString("en-US")}</span>
+      </div>`;
+    }).join("");
+  }
+  document.getElementById("bookCols").innerHTML=`
+    <div class="bookcol yes"><div class="ch"><b>Yes</b><span>Qty</span></div>${col("y",yesP)}</div>
+    <div class="bookcol no"><div class="ch"><b>No</b><span>Qty</span></div>${col("n",noP)}</div>`;
+}
+
+/* ============ trade ticket (mini calculator) ============ */
+function updateTicket(){
+  const p=side==="yes"?yesOf(sel):noOf(sel);
+  document.getElementById("stCnt").textContent=contracts;
+  document.getElementById("tkPrice").textContent=p+"¢";
+  document.getElementById("tkTotal").textContent="$"+(contracts*p/100).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById("tkPay").textContent="$"+contracts.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById("tkPayLab").textContent=side==="yes"?"Payout if Yes":"Payout if No";
+  document.getElementById("placeBtn").classList.toggle("noSide",side==="no");
+}
+
+/* ---- count-up (visible-only guard; real value already in DOM) ---- */
+function countUp(){
+  document.querySelectorAll(".cu").forEach(el=>{
+    if(el.dataset.done) return;
+    const target=parseFloat(String(el.dataset.count).replace(/[$,]/g,"")); if(isNaN(target)) return;
+    const dur=1100, start=performance.now();
+    function step(now){const p=Math.min((now-start)/dur,1),e=1-Math.pow(1-p,3);
+      el.textContent=(target*e).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+      if(p<1)requestAnimationFrame(step);else{el.textContent=target.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});el.dataset.done="1";}}
+    requestAnimationFrame(step);
+  });
+}
+function maybeCountUp(){if(document.visibilityState==="visible")countUp();else document.addEventListener("visibilitychange",function h(){if(document.visibilityState==="visible"){countUp();document.removeEventListener("visibilitychange",h);}});}
+
+/* ---- editing (duplicate keys mirror-sync; ticket follows edits) ---- */
+function bindEdits(){document.querySelectorAll("[data-edit]").forEach(el=>{
+  el.setAttribute("contenteditable",editing());
+  el.oninput=()=>{const k=el.getAttribute("data-edit");DATA[k]=el.textContent;save();
+    document.querySelectorAll(`[data-edit="${k}"]`).forEach(o=>{if(o!==el)o.textContent=el.textContent;});
+    // the price chart's last point IS the Yes price, so a retyped price
+    // has to redraw it or the line contradicts the number
+    updateTicket();
+    if(/^m-\d+-(yes|no)$/.test(k)){renderChart();renderBook();}};
+});}
+document.getElementById("editBtn").addEventListener("click",function(){
+  const on=document.body.classList.toggle("editing");
+  this.classList.toggle("on",on);this.textContent=on?"✓ Done":"✎ Edit";
+  renderBook(on);updateTicket();bindEdits();
+});
+document.getElementById("resetBtn").addEventListener("click",()=>{
+  if(confirm("Reset this dashboard to its original values?")){
+    localStorage.removeItem(KEY);DATA=structuredClone(DEFAULT_DATA);
+    sel=0;side="yes";contracts=10;curCat="All";
+    document.querySelectorAll("#catTabs .ct").forEach(c=>c.classList.toggle("on",c.dataset.cat==="All"));
+    document.querySelectorAll("#sideSeg button").forEach(b=>b.classList.toggle("on",b.dataset.side==="yes"));
+    renderAll();restoreScalars();renderBook(editing());updateTicket();bindEdits();
+  }
+});
+function restoreScalars(){document.querySelectorAll("[data-edit]").forEach(el=>{
+  const k=el.getAttribute("data-edit");if(DATA[k]!==undefined)el.textContent=DATA[k];
+});}
+
+/* ---- router: category tabs + market-row selection (gated in edit mode) ---- */
+
+/* ---- top-nav screens: Markets / Portfolio / Activity ----
+   Markets is the original trading layout; the other two used to be
+   inert labels in the navbar. */
+function renderNavScreens(){
+  const pr=document.getElementById("posRows");
+  if(pr)pr.innerHTML=DATA.positions.map((r,i)=>`
+    <tr><td data-edit="ps-${i}-mk">${esc(r.mk)}</td>
+    <td class="${r.sd==="Yes"?"yes":"no"}" data-edit="ps-${i}-sd">${esc(r.sd)}</td>
+    <td class="num" data-edit="ps-${i}-ct">${esc(r.ct)}</td>
+    <td class="num" data-edit="ps-${i}-px">${esc(r.px)}</td>
+    <td class="num" style="text-align:right;" data-edit="ps-${i}-vl">${esc(r.vl)}</td></tr>`).join("");
+  const ar=document.getElementById("actRows");
+  if(ar)ar.innerHTML=DATA.activity.map((r,i)=>`
+    <tr><td class="num" data-edit="ac-${i}-tm">${esc(r.tm)}</td>
+    <td data-edit="ac-${i}-ac">${esc(r.ac)}</td>
+    <td data-edit="ac-${i}-mk">${esc(r.mk)}</td>
+    <td class="${r.sd==="Yes"?"yes":(r.sd?"no":"")}" data-edit="ac-${i}-sd">${esc(r.sd)}</td>
+    <td class="num" style="text-align:right;" data-edit="ac-${i}-am">${esc(r.am)}</td></tr>`).join("");
+}
+document.querySelector(".navlinks").addEventListener("click", e => {
+  const l = e.target.closest(".nl"); if(!l || !l.dataset.nl || editing()) return;
+  document.querySelectorAll(".navlinks .nl").forEach(x => x.classList.toggle("on", x === l));
+  const map = {markets:"scrMarkets", portfolio:"scrPortfolio", activity:"scrActivity"};
+  Object.entries(map).forEach(([k,id]) => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = (k === l.dataset.nl) ? "" : "none";
+  });
+  bindEdits();
+});
+renderNavScreens();
+document.getElementById("catTabs").addEventListener("click",e=>{
+  const c=e.target.closest(".ct"); if(!c||editing())return;
+  curCat=c.dataset.cat;
+  document.querySelectorAll("#catTabs .ct").forEach(x=>x.classList.toggle("on",x===c));
+  applyFilter();
+});
+document.getElementById("mlist").addEventListener("click",e=>{
+  const r=e.target.closest(".mrow"); if(!r||editing())return;
+  sel=+r.dataset.i;
+  document.querySelectorAll(".mrow").forEach(x=>x.classList.toggle("sel",x===r));
+  renderDetail();restoreScalars();renderBook(false);updateTicket();bindEdits();
+});
+
+/* ---- ticket interactions (all gated in edit mode) ---- */
+document.getElementById("stMinus").addEventListener("click",()=>{
+  if(editing())return;contracts=Math.max(1,contracts-1);renderBook(false);updateTicket();bindEdits();
+});
+document.getElementById("stPlus").addEventListener("click",()=>{
+  if(editing())return;contracts=Math.min(500,contracts+1);renderBook(false);updateTicket();bindEdits();
+});
+document.getElementById("sideSeg").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b||editing())return;
+  side=b.dataset.side;
+  document.querySelectorAll("#sideSeg button").forEach(x=>x.classList.toggle("on",x===b));
+  renderBook(false);updateTicket();bindEdits();
+});
+document.getElementById("typeSeg").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b||editing())return;
+  document.querySelectorAll("#typeSeg button").forEach(x=>x.classList.toggle("on",x===b));
+});
+/* inert by design: press feedback only, never places anything */
+document.getElementById("placeBtn").addEventListener("click",function(){
+  if(editing())return;
+  this.classList.remove("shake");void this.offsetWidth;this.classList.add("shake");
+});
+document.getElementById("placeBtn").addEventListener("animationend",function(){this.classList.remove("shake");});
+
+/* ---- init ---- */
+function renderAll(){renderList();renderDetail();}
+renderAll();restoreScalars();renderBook(false);updateTicket();bindEdits();
+const balEl=document.querySelector('[data-edit="bal"]');
+if(DATA.bal!==undefined)balEl.dataset.count=String(DATA.bal).replace(/[$,]/g,"");
+maybeCountUp();
+</script>
+<!-- krypt:app:start -->
+<script src="../../assets/krypt-app.js" data-root="../../" data-label="Kalshi Web" defer></script>
+<script src="../../assets/krypt-desktop.js" defer></script>
+<script src="../../assets/push.js" defer></script>
+<!-- krypt:app:end -->
+</body>
+</html>

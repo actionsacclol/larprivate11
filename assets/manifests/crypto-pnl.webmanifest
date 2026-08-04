@@ -1,0 +1,30 @@
+{
+  "name": "Futures PnL — Krypt LARP",
+  "short_name": "PnL",
+  "description": "Futures PnL, recreated. Part of the Krypt LARP collection.",
+  "start_url": "../../dashboards/crypto-pnl/index.html",
+  "scope": "../../",
+  "display": "standalone",
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
+  "background_color": "#0B0B0F",
+  "theme_color": "#0B0B0F",
+  "icons": [
+    {
+      "src": "../icons/crypto-pnl-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../icons/crypto-pnl-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

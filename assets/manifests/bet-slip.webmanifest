@@ -1,0 +1,30 @@
+{
+  "name": "Bet Slip — Krypt LARP",
+  "short_name": "Bet Slip",
+  "description": "Bet Slip, recreated. Part of the Krypt LARP collection.",
+  "start_url": "../../dashboards/bet-slip/index.html",
+  "scope": "../../",
+  "display": "standalone",
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
+  "background_color": "#0B1F16",
+  "theme_color": "#0E2A1E",
+  "icons": [
+    {
+      "src": "../icons/bet-slip-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../icons/bet-slip-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

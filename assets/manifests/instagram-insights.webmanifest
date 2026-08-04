@@ -1,0 +1,30 @@
+{
+  "name": "Instagram Insights — Krypt LARP",
+  "short_name": "IG Insights",
+  "description": "Instagram Insights, recreated. Part of the Krypt LARP collection.",
+  "start_url": "../../dashboards/instagram-insights/index.html",
+  "scope": "../../",
+  "display": "standalone",
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
+  "background_color": "#000000",
+  "theme_color": "#C13584",
+  "icons": [
+    {
+      "src": "../icons/instagram-insights-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../icons/instagram-insights-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

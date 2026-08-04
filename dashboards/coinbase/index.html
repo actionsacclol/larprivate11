@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en" data-krypt-status="translucent">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Coinbase · Learning Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     COINBASE — a learning recreation (TEST demo).
+     Light theme, Coinbase Blue. Bottom nav: Home (default) ·
+     Prices · Trade (center) · Assets · More. Data-driven — see
+     DEFAULT_DATA. Edit toggle = click values; saved to browser.
+     Entrance animations are pure CSS; balance counts up (only
+     when visible, so previews never show a blank 0).
+     ============================================================ */
+  :root{
+    --blue:#0052FF;
+    --up:#05854D;
+    --down:#CF202F;
+    --bg:#ffffff;
+    --soft:#f5f6f8;
+    --soft2:#eff1f4;
+    --line:#eceef1;
+    --text:#0a0b0d;
+    --muted:#5b616e;
+    --dim:#8a919e;
+    --font:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{background:#0a0a0a;font-family:var(--font);color:var(--text);display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;-webkit-font-smoothing:antialiased;}
+
+  /* shared chrome — only .back is fixed; toolbar buttons flow inside .toolbar */
+  .back{position:fixed;top:18px;left:18px;z-index:50;background:#1c1c1e;color:#fff;border:1px solid #333;text-decoration:none;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;font-family:var(--font);transition:.15s;}
+  .back:hover{background:#2a2a2c;}
+  .toolbar{position:fixed;top:18px;right:18px;display:flex;gap:8px;z-index:50;}
+  .toolbar button{background:#1c1c1e;color:#fff;border:1px solid #333;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);transition:.15s;}
+  .toolbar button:hover{background:#2a2a2c;}
+  .toolbar button.on{background:var(--blue);color:#fff;border-color:var(--blue);}
+
+  .phone{position:relative;width:390px;max-width:100%;height:844px;background:var(--bg);border-radius:44px;box-shadow:0 0 0 12px #111,0 40px 90px rgba(0,0,0,.7);overflow:hidden;display:flex;flex-direction:column;}
+
+  .statusbar{display:flex;align-items:center;justify-content:space-between;padding:15px 30px 4px;font-size:15px;font-weight:600;flex:0 0 auto;color:#0a0b0d;}
+  .statusbar .right{display:flex;align-items:center;gap:7px;}
+  .battery{border:1.5px solid #0a0b0d;border-radius:4px;width:26px;height:13px;position:relative;display:flex;align-items:center;padding:1.5px;}
+  .battery::after{content:"";position:absolute;right:-4px;top:4px;width:2px;height:5px;background:#0a0b0d;border-radius:0 2px 2px 0;}
+  .battery i{display:block;height:100%;background:#0a0b0d;border-radius:1.5px;width:82%;}
+  .signal{display:flex;align-items:flex-end;gap:2px;height:12px;}
+  .signal b{width:3px;background:#0a0b0d;border-radius:1px;display:block;}
+  .signal b:nth-child(1){height:5px}.signal b:nth-child(2){height:7px}.signal b:nth-child(3){height:9px}.signal b:nth-child(4){height:12px;opacity:.35}
+
+  /* top bar */
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:6px 18px 8px;flex:0 0 auto;}
+  .avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#0052FF,#00C2FF);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;cursor:pointer;}
+  .topbar .rgt{display:flex;align-items:center;gap:8px;}
+  .icobtn{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.15s;}
+  .icobtn:hover{background:var(--soft);}
+  .icobtn svg{width:22px;height:22px;stroke:#0a0b0d;fill:none;stroke-width:2;}
+  .icobtn .dot{position:absolute;}
+
+  .screen{flex:1;overflow-y:auto;scrollbar-width:none;}
+  .screen::-webkit-scrollbar{display:none;}
+
+  .view{display:none;padding:0 0 96px;}
+  .view.on{display:block;animation:vfade .22s ease;}
+  @keyframes vfade{from{opacity:0}to{opacity:1}}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  @keyframes draw{to{stroke-dashoffset:0;}}
+
+  /* ============ HOME ============ */
+  .bal-wrap{padding:6px 22px 0;opacity:0;transform:translateY(12px);animation:rise .5s ease forwards;}
+  .bal-lbl{font-size:15px;color:var(--muted);font-weight:500;}
+  .bal-big{font-size:46px;font-weight:800;letter-spacing:-1.6px;margin:4px 0 6px;line-height:1;}
+  .bal-chg{display:inline-flex;align-items:center;gap:6px;font-size:15px;font-weight:600;}
+  .bal-chg .tri{font-size:11px;}
+  .bal-chg.up{color:var(--up);}
+  .bal-chg.down{color:var(--down);}
+  .bal-chg .per{color:var(--dim);font-weight:500;}
+
+  .chart{padding:14px 0 2px;opacity:0;animation:vfade .6s .1s ease forwards;}
+  .chart svg{display:block;width:100%;height:150px;}
+  .chart .cline{fill:none;stroke:var(--up);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;
+    stroke-dasharray:900;stroke-dashoffset:900;animation:draw 1.4s .15s cubic-bezier(.4,0,.2,1) forwards;}
+  .tf{display:flex;justify-content:space-between;padding:6px 20px 4px;}
+  .tf span{flex:1;text-align:center;font-size:13px;font-weight:700;color:var(--muted);padding:7px 0;border-radius:8px;cursor:pointer;transition:.15s;}
+  .tf span.on{background:var(--soft);color:var(--blue);}
+
+  .actions{display:flex;gap:10px;padding:16px 18px 6px;}
+  .actions .act{flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;}
+  .actions .ai{width:52px;height:52px;border-radius:50%;background:var(--soft);display:flex;align-items:center;justify-content:center;transition:.15s;}
+  .actions .act:active .ai{background:var(--soft2);}
+  .actions .ai svg{width:22px;height:22px;stroke:var(--blue);fill:none;stroke-width:2;}
+  .actions .al{font-size:13px;font-weight:600;}
+
+  .sec-h{display:flex;align-items:center;justify-content:space-between;padding:26px 20px 6px;}
+  .sec-h h2{font-size:20px;font-weight:700;letter-spacing:-.3px;}
+  .sec-h .see{font-size:14px;font-weight:600;color:var(--blue);cursor:pointer;}
+
+  .asset{display:flex;align-items:center;gap:14px;padding:12px 20px;cursor:pointer;
+    opacity:0;transform:translateY(10px);animation:rise .5s ease forwards;}
+  .asset:active{background:var(--soft);}
+  .asset .ci{width:40px;height:40px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px;}
+  .asset .mid{flex:1;min-width:0;}
+  .asset .nm{font-size:16px;font-weight:600;}
+  .asset .sub{font-size:13px;color:var(--muted);margin-top:2px;}
+  .asset .spark{width:56px;height:26px;flex:0 0 auto;}
+  .asset .spark svg{display:block;width:56px;height:26px;}
+  .asset .rgt{text-align:right;flex:0 0 auto;min-width:88px;}
+  .asset .pr{font-size:16px;font-weight:600;}
+  .asset .chg{font-size:13px;font-weight:600;margin-top:2px;}
+  .up{color:var(--up);}.down{color:var(--down);}
+
+  /* ============ PRICES ============ */
+  .searchbar{display:flex;align-items:center;gap:10px;background:var(--soft);border-radius:14px;padding:12px 15px;margin:8px 18px 6px;}
+  .searchbar svg{width:20px;height:20px;stroke:var(--muted);fill:none;stroke-width:2;}
+  .searchbar input{background:transparent;border:0;outline:none;font-family:var(--font);font-size:16px;flex:1;color:var(--text);}
+  .segs{display:flex;gap:8px;padding:8px 18px 4px;overflow-x:auto;scrollbar-width:none;}
+  .segs::-webkit-scrollbar{display:none;}
+  .seg{border:1px solid var(--line);border-radius:20px;padding:8px 15px;font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap;transition:.15s;}
+  .seg.on{background:var(--text);color:#fff;border-color:var(--text);}
+  .prow{display:flex;align-items:center;gap:14px;padding:11px 20px;cursor:pointer;
+    opacity:0;transform:translateY(8px);animation:rise .45s ease forwards;}
+  .prow:active{background:var(--soft);}
+  .prow .rank{font-size:13px;color:var(--dim);width:16px;flex:0 0 auto;}
+  .prow .ci{width:36px;height:36px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;}
+  .prow .mid{flex:1;min-width:0;}
+  .prow .nm{font-size:15px;font-weight:600;}
+  .prow .tk{font-size:13px;color:var(--muted);margin-top:1px;}
+  .prow .spark{width:60px;height:28px;flex:0 0 auto;}
+  .prow .rgt{text-align:right;flex:0 0 auto;min-width:82px;}
+  .prow .pr{font-size:15px;font-weight:600;}
+  .prow .chg{font-size:13px;font-weight:600;margin-top:2px;}
+
+  /* ============ ASSETS (portfolio) ============ */
+  .pf{padding:8px 20px 0;}
+  .pf .lbl{font-size:15px;color:var(--muted);font-weight:500;}
+  .pf .big{font-size:40px;font-weight:800;letter-spacing:-1.4px;margin:4px 0 6px;line-height:1;
+    opacity:0;transform:translateY(12px);animation:rise .5s ease forwards;}
+  .alloc{padding:20px 20px 6px;}
+  .alloc-bar{display:flex;height:12px;border-radius:6px;overflow:hidden;gap:2px;
+    opacity:0;animation:vfade .6s .15s ease forwards;}
+  .alloc-bar span{height:100%;}
+  .alloc-legend{display:flex;flex-wrap:wrap;gap:14px 20px;margin-top:16px;}
+  .alloc-legend .lg{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);}
+  .alloc-legend .sw{width:10px;height:10px;border-radius:3px;}
+  .alloc-legend b{color:var(--text);}
+
+  /* ============ TRADE (center) ============ */
+  .trade{padding:12px 24px 0;text-align:center;}
+  .trade .tg{display:flex;background:var(--soft);border-radius:12px;padding:4px;margin:8px auto 26px;max-width:260px;}
+  .trade .tg span{flex:1;padding:10px;border-radius:9px;font-size:15px;font-weight:700;color:var(--muted);cursor:pointer;transition:.15s;}
+  .trade .tg span.on{background:#fff;color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.08);}
+  .trade .amt{font-size:64px;font-weight:800;letter-spacing:-2px;margin:16px 0 4px;}
+  .trade .conv{font-size:15px;color:var(--muted);}
+  .trade .coinpick{display:inline-flex;align-items:center;gap:8px;background:var(--soft);border-radius:22px;padding:8px 14px;margin:20px 0 8px;font-weight:600;font-size:15px;cursor:pointer;}
+  .trade .coinpick .ci{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;}
+  /* Coins rendered from real artwork rather than a lettermark. */
+  .ci.art{background:none;overflow:hidden;}
+  .ci img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%;}
+  .pad{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:8px 10px 4px;}
+  .key{display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:600;height:56px;cursor:pointer;border-radius:12px;transition:.1s;user-select:none;}
+  .key:active{background:var(--soft);}
+  .previewbtn{width:100%;background:var(--blue);color:#fff;border:0;font-family:var(--font);font-size:17px;font-weight:700;padding:16px;border-radius:30px;cursor:pointer;margin-top:8px;transition:.12s;}
+  .previewbtn:active{transform:scale(.98);}
+
+  /* ============ MORE ============ */
+  .more{padding:12px 0 0;}
+  .mitem{display:flex;align-items:center;gap:16px;padding:16px 22px;cursor:pointer;}
+  .mitem:active{background:var(--soft);}
+  .mitem .mi{width:40px;height:40px;border-radius:50%;background:var(--soft);display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+  .mitem .mi svg{width:20px;height:20px;stroke:var(--blue);fill:none;stroke-width:2;}
+  .mitem .mm{flex:1;}
+  .mitem .mt{font-size:16px;font-weight:600;}
+  .mitem .ms{font-size:13px;color:var(--muted);margin-top:2px;}
+  .mitem .chev{width:16px;height:16px;stroke:var(--dim);fill:none;stroke-width:2;}
+
+  /* ============ bottom nav ============ */
+  .nav{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-around;align-items:center;padding:10px 6px 24px;background:#fff;border-top:1px solid var(--line);z-index:20;}
+  .nb{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;flex:1;}
+  .nb svg{width:24px;height:24px;stroke:#8a919e;fill:none;stroke-width:1.9;}
+  .nb .nlab{font-size:11px;font-weight:600;color:#8a919e;}
+  .nb.on svg{stroke:var(--blue);}
+  .nb.on .nlab{color:var(--blue);}
+  .nb.trade{flex:0 0 auto;}
+  .nb.trade .tbtn{width:52px;height:52px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,82,255,.4);}
+  .nb.trade .tbtn svg{width:26px;height:26px;stroke:#fff;stroke-width:2.4;}
+
+  body.editing [data-edit]{outline:1.5px dashed var(--blue);outline-offset:3px;border-radius:4px;cursor:text;}
+  [data-edit]:focus{outline:1.5px solid var(--blue);}
+  .hint{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);color:#666;font-size:12px;text-align:center;max-width:90vw;}
+</style>
+<!-- krypt:phone:start -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Coinbase">
+<meta name="theme-color" content="#0052FF">
+<link rel="manifest" href="../../assets/manifests/coinbase.webmanifest">
+<link rel="apple-touch-icon" href="../../assets/icons/coinbase-180.png">
+<link rel="icon" type="image/png" sizes="512x512" href="../../assets/icons/coinbase-512.png">
+<link rel="stylesheet" href="../../assets/phone.css">
+<!-- krypt:phone:end -->
+</head>
+<body>
+
+<a class="back" href="../../index.html">← Collection</a>
+<div class="toolbar">
+  <button id="editBtn">✎ Edit</button>
+  <button id="resetBtn">↺ Reset</button>
+</div>
+
+<div class="phone">
+  <div class="statusbar">
+    <span>9:41</span>
+    <span class="right">
+      <span class="signal"><b></b><b></b><b></b><b></b></span>
+      <svg width="18" height="14" viewBox="0 0 18 14" fill="none"><path d="M9 3C11.5 3 13.8 4 15.5 5.6M9 7C10.4 7 11.7 7.6 12.7 8.5M4.3 5.6C6 4 8.3 3 9 3M6.3 8.5C7.3 7.6 8 7.4 9 7.4" stroke="#0a0b0d" stroke-width="1.6" stroke-linecap="round"/><circle cx="9" cy="11" r="1.2" fill="#0a0b0d"/></svg>
+      <span class="battery"><i></i></span>
+    </span>
+  </div>
+
+  <div class="topbar">
+    <div class="avatar" data-edit="avInit">AK</div>
+    <div class="rgt">
+      <div class="icobtn" title="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4" stroke-linecap="round"/></svg></div>
+      <div class="icobtn" title="Notifications"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen">
+
+    <!-- ============ HOME ============ -->
+    <div class="view on" data-view="home">
+      <div class="bal-wrap">
+        <div class="bal-lbl">Your balance</div>
+        <div class="bal-big">$<span class="cu" data-edit="balance" data-count="15960.69" data-fmt="2">15,960.69</span></div>
+        <div class="bal-chg up"><span class="tri">▲</span><span data-edit="balChg">$342.18</span><span class="per" data-edit="balPct">(+2.19%)</span> <span class="per">Today</span></div>
+      </div>
+
+      <div class="chart">
+        <svg viewBox="0 0 360 150" preserveAspectRatio="none">
+          <polyline class="cline" id="heroLine" points=""/>
+        </svg>
+      </div>
+      <div class="tf" id="tf">
+        <span>1H</span><span>1D</span><span class="on">1W</span><span>1M</span><span>1Y</span><span>ALL</span>
+      </div>
+
+      <div class="actions">
+        <div class="act" data-goto="trade"><div class="ai"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg></div><div class="al">Buy</div></div>
+        <div class="act" data-goto="trade"><div class="ai"><svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="al">Send</div></div>
+        <div class="act" data-goto="trade"><div class="ai"><svg viewBox="0 0 24 24"><path d="M19 12H5M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="al">Receive</div></div>
+        <div class="act" data-goto="prices"><div class="ai"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 15l3-4 3 3 4-6" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="al">Prices</div></div>
+      </div>
+
+      <div class="sec-h"><h2>Your assets</h2><span class="see" data-goto="assets">See all</span></div>
+      <div id="homeAssets"></div>
+
+      <div class="sec-h"><h2>Watchlist</h2><span class="see" data-goto="prices">See all</span></div>
+      <div id="watchlist"></div>
+    </div>
+
+    <!-- ============ PRICES ============ -->
+    <div class="view" data-view="prices">
+      <div class="searchbar">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4" stroke-linecap="round"/></svg>
+        <input placeholder="Search all assets" />
+      </div>
+      <div class="segs" id="segs">
+        <div class="seg on">Top</div><div class="seg">Gainers</div><div class="seg">Losers</div><div class="seg">New</div><div class="seg">Watchlist</div>
+      </div>
+      <div id="pricesList"></div>
+    </div>
+
+    <!-- ============ ASSETS (portfolio) ============ -->
+    <div class="view" data-view="assets">
+      <div class="pf">
+        <div class="lbl">Portfolio value</div>
+        <div class="big">$<span class="cu" data-edit="pfValue" data-count="15960.69" data-fmt="2">15,960.69</span></div>
+        <div class="bal-chg up"><span class="tri">▲</span><span data-edit="pfChg">$342.18</span><span class="per" data-edit="pfPct">(+2.19%)</span> <span class="per">Today</span></div>
+      </div>
+      <div class="alloc">
+        <div class="alloc-bar" id="allocBar"></div>
+        <div class="alloc-legend" id="allocLegend"></div>
+      </div>
+      <div class="sec-h"><h2>Holdings</h2></div>
+      <div id="holdings"></div>
+    </div>
+
+    <!-- ============ TRADE (center) ============ -->
+    <div class="view" data-view="trade">
+      <div class="trade">
+        <div class="tg" id="tradeToggle"><span class="on" data-side="buy">Buy</span><span data-side="sell">Sell</span></div>
+        <div class="amt" id="tradeAmt">$0</div>
+        <div class="conv"><span id="tradeConv">0.00000000</span> <span data-edit="tradeSym">BTC</span></div>
+        <div class="coinpick"><span class="ci" style="background:#f7931a">₿</span><span data-edit="tradeName">Bitcoin</span> ⌄</div>
+        <div class="pad" id="tpad"></div>
+        <button class="previewbtn" id="previewBtn">Preview buy</button>
+      </div>
+    </div>
+
+    <!-- ============ MORE ============ -->
+    <div class="view" data-view="more">
+      <div class="more">
+        <div class="mitem"><div class="mi"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18" stroke-linecap="round"/></svg></div><div class="mm"><div class="mt">Coinbase Card</div><div class="ms" data-edit="cardSub">Spend crypto, earn rewards</div></div><svg class="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="mitem"><div class="mi"><svg viewBox="0 0 24 24"><path d="M12 2l2.5 5 5.5.8-4 3.9.9 5.5L12 15.6 7.1 17.2l.9-5.5-4-3.9L9.5 7z" stroke-linejoin="round"/></svg></div><div class="mm"><div class="mt">Rewards</div><div class="ms" data-edit="rewardsSub">Earn up to 5.1% APY on USDC</div></div><svg class="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="mitem"><div class="mi"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke-linejoin="round"/></svg></div><div class="mm"><div class="mt">Security</div><div class="ms" data-edit="secSub">2FA, passkeys, vault</div></div><svg class="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="mitem"><div class="mi"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6" stroke-linecap="round"/></svg></div><div class="mm"><div class="mt">Profile &amp; settings</div><div class="ms" data-edit="profSub">Payment methods, limits</div></div><svg class="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- bottom nav -->
+  <div class="nav">
+    <div class="nb on" data-tab="home"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7M5 10v10h14V10" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="nlab">Home</span></div>
+    <div class="nb" data-tab="prices"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 15l3-4 3 3 4-6" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="nlab">Prices</span></div>
+    <div class="nb trade" data-tab="trade"><div class="tbtn"><svg viewBox="0 0 24 24"><path d="M7 10l5-5 5 5M7 14l5 5 5-5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div></div>
+    <div class="nb" data-tab="assets"><svg viewBox="0 0 24 24"><path d="M21 7H5a2 2 0 010-4h14v4zM3 5v14a2 2 0 002 2h16V7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="17" cy="14" r="1.4" fill="currentColor" stroke="none"/></svg><span class="nlab">My assets</span></div>
+    <div class="nb" data-tab="more"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg><span class="nlab">More</span></div>
+  </div>
+</div>
+
+<div class="hint">Bottom nav switches screens · tap Buy / center button to trade · Toggle Edit (top-right) to change values</div>
+
+<script>
+/* ============================================================
+   DATA — fictional placeholder holdings. Market prices are
+   illustrative samples, not live. Edit freely.
+   ============================================================ */
+const DEFAULT_DATA = {
+  avInit:"AK",
+  balance:"15,960.69", balChg:"$342.18", balPct:"(+2.19%)",
+  pfValue:"15,960.69", pfChg:"$342.18", pfPct:"(+2.19%)",
+  tradeSym:"BTC", tradeName:"Bitcoin",
+  cardSub:"Spend crypto, earn rewards", rewardsSub:"Earn up to 5.1% APY on USDC",
+  secSub:"2FA, passkeys, vault", profSub:"Payment methods, limits",
+
+  /* held assets — icon color, symbol glyph, value, holdings, 24h %, trend up/down */
+  holdings:[
+    {name:"Bitcoin", tk:"BTC", ci:"₿", bg:"#f7931a", price:"$63,180.24", value:"$9,350.68", amt:"0.14800 BTC", chg:"+1.24%", dir:"up"},
+    {name:"Ethereum", tk:"ETH", ci:"◆", bg:"#627eea", price:"$1,904.08", value:"$4,569.79", amt:"2.4000 ETH", chg:"+2.38%", dir:"up"},
+    {name:"Solana", tk:"SOL", ci:"◎", bg:"#111111", price:"$77.86", value:"$1,417.05", amt:"18.200 SOL", chg:"+2.88%", dir:"up"},
+    {name:"USD Coin", tk:"USDC", ci:"$", bg:"#2775ca", price:"$1.00", value:"$500.00", amt:"500.00 USDC", chg:"0.00%", dir:"up"},
+    {name:"Dogecoin", tk:"DOGE", ci:"Ð", bg:"#c2a633", price:"$0.1234", value:"$123.40", amt:"1,000 DOGE", chg:"-0.61%", dir:"down"},
+  ],
+
+  /* watchlist (not held) */
+  watchlist:[
+    {name:"Chainlink", tk:"LINK", ci:"⬡", bg:"#2a5ada", price:"$8.59", chg:"+3.36%", dir:"up"},
+    {name:"Litecoin", tk:"LTC", ci:"Ł", bg:"#345d9d", price:"$47.22", chg:"-0.61%", dir:"down"},
+    {name:"Avalanche", tk:"AVAX", ci:"▲", bg:"#e84142", price:"$21.40", chg:"+1.82%", dir:"up"},
+  ],
+
+  /* prices tab — top market list */
+  prices:[
+    {name:"Bitcoin", tk:"BTC", ci:"₿", bg:"#f7931a", price:"$63,180.24", chg:"+1.24%", dir:"up"},
+    {name:"Ethereum", tk:"ETH", ci:"◆", bg:"#627eea", price:"$1,904.08", chg:"+2.38%", dir:"up"},
+    {name:"Tether", tk:"USDT", ci:"₮", bg:"#26a17b", price:"$1.00", chg:"+0.01%", dir:"up"},
+    {name:"BNB", tk:"BNB", ci:"◈", bg:"#f3ba2f", price:"$412.55", chg:"-0.42%", dir:"down"},
+    {name:"Solana", tk:"SOL", ci:"◎", bg:"#111111", price:"$77.86", chg:"+2.88%", dir:"up"},
+    {name:"XRP", tk:"XRP", ci:"✕", bg:"#23292f", price:"$0.5218", chg:"+0.94%", dir:"up"},
+    {name:"Dogecoin", tk:"DOGE", ci:"Ð", bg:"#c2a633", price:"$0.1234", chg:"-0.61%", dir:"down"},
+    {name:"Cardano", tk:"ADA", ci:"₳", bg:"#0033ad", price:"$0.3841", chg:"+1.11%", dir:"up"},
+    {name:"Chainlink", tk:"LINK", ci:"⬡", bg:"#2a5ada", price:"$8.59", chg:"+3.36%", dir:"up"},
+    {name:"Litecoin", tk:"LTC", ci:"Ł", bg:"#345d9d", price:"$47.22", chg:"-0.61%", dir:"down"},
+  ],
+
+  /* allocation for the portfolio donut/bar */
+  alloc:[
+    {tk:"BTC", pct:58.6, bg:"#f7931a"},
+    {tk:"ETH", pct:28.6, bg:"#627eea"},
+    {tk:"SOL", pct:8.9, bg:"#111111"},
+    {tk:"USDC", pct:3.1, bg:"#2775ca"},
+    {tk:"DOGE", pct:0.8, bg:"#c2a633"},
+  ],
+};
+
+const KEY="coinbase-dash-v1";
+let DATA=load();
+function load(){try{const s=localStorage.getItem(KEY);if(s)return{...structuredClone(DEFAULT_DATA),...JSON.parse(s)};}catch(e){}return structuredClone(DEFAULT_DATA);}
+function save(){localStorage.setItem(KEY,JSON.stringify(DATA));}
+function editing(){return document.body.classList.contains("editing");}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+/* ---- sparkline generator (deterministic per ticker + direction) ---- */
+/* The wiggle is still seeded off the ticker so each asset keeps its own
+   shape, but the net rise or fall now comes from the percentage beside
+   it — edit the change and the line follows. */
+function spark(tk,dir,w,h,chg){
+  let seed=0;for(let i=0;i<tk.length;i++)seed+=tk.charCodeAt(i);
+  // Steepness of the trend comes from the percentage; the ticker only
+  // seeds the wiggle. Softly capped so a huge move still fits the box.
+  const pct=Math.abs(parseFloat(String(chg||"").replace(/[^\d.-]/g,""))||1);
+  const mag=Math.min(0.40,0.07+pct*0.035);
+  const n=14,pts=[];let v=0;
+  for(let i=0;i<n;i++){
+    seed=(seed*9301+49297)%233280;const r=seed/233280;
+    // small wiggle around the trend line, not a free random walk — the
+    // walk used to swamp the trend and the line ignored the percentage
+    v=Math.max(-0.5,Math.min(0.5,v+(r-0.5)*0.34));
+    const t=i/(n-1);
+    // yy is height above the baseline, so "up" has to increase with t
+    const trend=(dir==="up"?1:-1)*(t-0.5)*mag*2;
+    const yy=Math.max(0.06,Math.min(0.94,0.5+v*0.22+trend));
+    pts.push([t*w,(1-yy)*(h-4)+2]);
+  }
+  const stroke=dir==="down"?"#CF202F":"#05854D";
+  return `<svg viewBox="0 0 ${w} ${h}"><polyline points="${pts.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ")}" fill="none" stroke="${stroke}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+
+/* ---- hero portfolio line (pure CSS draw; always in DOM) ---- */
+function buildHero(){
+  const pts=[0.52,0.5,0.56,0.48,0.6,0.55,0.63,0.58,0.68,0.62,0.72,0.7,0.78,0.74,0.82,0.86];
+  const w=360,h=150,n=pts.length;
+  const s=pts.map((y,i)=>((i/(n-1))*w).toFixed(1)+","+((1-y)*(h-16)+8).toFixed(1)).join(" ");
+  document.getElementById("heroLine").setAttribute("points",s);
+}
+
+/* ---- render asset rows (home) ---- */
+/* Coins we have real artwork for (assets/coins) use it; everything else
+   keeps its lettermark in a brand-coloured circle. */
+const COIN_ART={SOL:"sol",USDC:"usdc",USDT:"usdt"};
+function coinMark(a){
+  const art=COIN_ART[a.tk];
+  return art
+    ? `<div class="ci art"><img src="../../assets/coins/${art}.png" alt="" draggable="false"></div>`
+    : `<div class="ci" style="background:${a.bg}">${esc(a.ci)}</div>`;
+}
+
+function renderHomeAssets(){
+  document.getElementById("homeAssets").innerHTML=DATA.holdings.map((a,i)=>`
+    <div class="asset" style="animation-delay:${i*45}ms">
+      ${coinMark(a)}
+      <div class="mid"><div class="nm">${esc(a.name)}</div><div class="sub">${esc(a.amt)}</div></div>
+      <div class="spark">${spark(a.tk,a.dir,56,26,a.chg)}</div>
+      <div class="rgt"><div class="pr">${esc(a.value)}</div><div class="chg ${a.dir}">${esc(a.chg)}</div></div>
+    </div>`).join("");
+}
+function renderWatchlist(){
+  document.getElementById("watchlist").innerHTML=DATA.watchlist.map((a,i)=>`
+    <div class="asset" style="animation-delay:${i*45}ms">
+      ${coinMark(a)}
+      <div class="mid"><div class="nm">${esc(a.name)}</div><div class="sub">${esc(a.tk)}</div></div>
+      <div class="spark">${spark(a.tk,a.dir,56,26,a.chg)}</div>
+      <div class="rgt"><div class="pr">${esc(a.price)}</div><div class="chg ${a.dir}">${esc(a.chg)}</div></div>
+    </div>`).join("");
+}
+function renderPrices(){
+  document.getElementById("pricesList").innerHTML=DATA.prices.map((a,i)=>`
+    <div class="prow" style="animation-delay:${i*35}ms">
+      <span class="rank">${i+1}</span>
+      ${coinMark(a)}
+      <div class="mid"><div class="nm">${esc(a.name)}</div><div class="tk">${esc(a.tk)}</div></div>
+      <div class="spark">${spark(a.tk,a.dir,60,28)}</div>
+      <div class="rgt"><div class="pr">${esc(a.price)}</div><div class="chg ${a.dir}">${esc(a.chg)}</div></div>
+    </div>`).join("");
+}
+function renderHoldings(){
+  document.getElementById("holdings").innerHTML=DATA.holdings.map((a,i)=>`
+    <div class="asset" style="animation-delay:${i*45}ms">
+      ${coinMark(a)}
+      <div class="mid"><div class="nm">${esc(a.name)}</div><div class="sub">${esc(a.amt)} · ${esc(a.price)}</div></div>
+      <div class="rgt"><div class="pr">${esc(a.value)}</div><div class="chg ${a.dir}">${esc(a.chg)}</div></div>
+    </div>`).join("");
+}
+function renderAlloc(){
+  document.getElementById("allocBar").innerHTML=DATA.alloc.map(a=>`<span style="flex:${a.pct};background:${a.bg}"></span>`).join("");
+  document.getElementById("allocLegend").innerHTML=DATA.alloc.map(a=>`<div class="lg"><span class="sw" style="background:${a.bg}"></span>${esc(a.tk)} <b>${a.pct}%</b></div>`).join("");
+}
+
+/* ---- count-up (visible-only, so previews show the real value) ---- */
+function fmtNum(v,fmt){
+  if(fmt==="2") return v.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+  return Math.round(v).toLocaleString("en-US");
+}
+function countUp(){
+  document.querySelectorAll(".cu").forEach(el=>{
+    if(el.dataset.done) return;
+    const target=parseFloat(String(el.dataset.count).replace(/,/g,"")); if(isNaN(target)) return;
+    const fmt=el.dataset.fmt||"n", dur=1200, start=performance.now();
+    function step(now){
+      const p=Math.min((now-start)/dur,1), e=1-Math.pow(1-p,3);
+      el.textContent=fmtNum(target*e,fmt);
+      if(p<1) requestAnimationFrame(step);
+      else{ el.textContent=fmtNum(target,fmt); el.dataset.done="1"; }
+    }
+    requestAnimationFrame(step);
+  });
+}
+function maybeCountUp(){
+  if(document.visibilityState==="visible") countUp();
+  else document.addEventListener("visibilitychange",function h(){
+    if(document.visibilityState==="visible"){countUp();document.removeEventListener("visibilitychange",h);}
+  });
+}
+
+/* ---- trade keypad ---- */
+let tentry="";
+function renderTpad(){
+  const keys=["1","2","3","4","5","6","7","8","9",".","0","del"];
+  document.getElementById("tpad").innerHTML=keys.map(k=>`<div class="key" data-k="${k}">${k==="del"?"⌫":k}</div>`).join("");
+  document.querySelectorAll("#tpad .key").forEach(el=>el.addEventListener("click",()=>{if(editing())return;tkey(el.dataset.k);}));
+}
+function tkey(k){
+  if(k==="del")tentry=tentry.slice(0,-1);
+  else if(k==="."){if(!tentry.includes("."))tentry=(tentry||"0")+".";}
+  else{if(tentry.includes(".")&&tentry.split(".")[1].length>=2)return;if(tentry.replace(".","").length>=7)return;tentry=(tentry==="0"?"":tentry)+k;}
+  document.getElementById("tradeAmt").textContent="$"+(tentry===""?"0":tentry);
+  const usd=parseFloat(tentry||"0"), px=63180.24;
+  document.getElementById("tradeConv").textContent=(usd/px).toFixed(8);
+}
+
+/* ---- editing ---- */
+function bindEdits(){
+  document.querySelectorAll("[data-edit]").forEach(el=>{
+    el.setAttribute("contenteditable",editing());
+    el.oninput=()=>{DATA[el.getAttribute("data-edit")]=el.textContent;save();
+      if(/-chg$/.test(k) && window.renderAll) renderAll();};
+  });
+}
+document.getElementById("editBtn").addEventListener("click",function(){
+  const on=document.body.classList.toggle("editing");
+  this.classList.toggle("on",on);this.textContent=on?"✓ Done":"✎ Edit";bindEdits();
+});
+document.getElementById("resetBtn").addEventListener("click",()=>{
+  if(confirm("Reset this dashboard to its original values?")){
+    localStorage.removeItem(KEY);DATA=structuredClone(DEFAULT_DATA);
+    renderAll();restoreScalars();bindEdits();
+  }
+});
+function restoreScalars(){
+  document.querySelectorAll("[data-edit]").forEach(el=>{
+    const k=el.getAttribute("data-edit");if(DATA[k]!==undefined)el.textContent=DATA[k];
+  });
+}
+
+/* ---- router ---- */
+function showView(name){
+  document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.dataset.view===name));
+  document.querySelectorAll(".nb").forEach(b=>b.classList.toggle("on",b.dataset.tab===name));
+  document.getElementById("screen").scrollTop=0;
+  bindEdits();
+}
+document.querySelectorAll(".nb").forEach(b=>b.addEventListener("click",()=>{if(!editing())showView(b.dataset.tab);}));
+document.querySelectorAll("[data-goto]").forEach(el=>el.addEventListener("click",()=>{if(!editing())showView(el.dataset.goto);}));
+
+/* segmented / toggle highlights */
+document.getElementById("segs").addEventListener("click",e=>{const s=e.target.closest(".seg");if(!s||editing())return;document.querySelectorAll(".seg").forEach(x=>x.classList.toggle("on",x===s));});
+document.getElementById("tf").addEventListener("click",e=>{const s=e.target.closest("span");if(!s||editing())return;document.querySelectorAll("#tf span").forEach(x=>x.classList.toggle("on",x===s));});
+document.getElementById("tradeToggle").addEventListener("click",e=>{const s=e.target.closest("span");if(!s||editing())return;document.querySelectorAll("#tradeToggle span").forEach(x=>x.classList.toggle("on",x===s));document.getElementById("previewBtn").textContent="Preview "+s.dataset.side;});
+
+/* ---- init ---- */
+function renderAll(){buildHero();renderHomeAssets();renderWatchlist();renderPrices();renderHoldings();renderAlloc();renderTpad();}
+renderAll();restoreScalars();bindEdits();maybeCountUp();
+</script>
+<!-- krypt:app:start -->
+<script src="../../assets/krypt-app.js" data-root="../../" data-label="Coinbase" defer></script>
+<script src="../../assets/krypt-desktop.js" defer></script>
+<script src="../../assets/push.js" defer></script>
+<!-- krypt:app:end -->
+</body>
+</html>

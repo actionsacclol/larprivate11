@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en" data-krypt-status="translucent">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Apple Fitness · Learning Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     APPLE FITNESS (Activity) — a learning recreation (TEST demo).
+     Dark theme + the three Activity rings (Move/Exercise/Stand).
+     Bottom nav: Summary (default) · Steps · Awards · Sharing.
+     Rings & bars are inline SVG/CSS (always visible); step count
+     counts up when the tab is visible. Data-driven — DEFAULT_DATA.
+     ============================================================ */
+  :root{
+    --move:#fa114f; --move2:#ff375f;
+    --exer:#a2f73b; --exer2:#6fe000;
+    --stand:#1aebff; --stand2:#00c8dc;
+    --bg:#000000;
+    --card:#1c1c1e;
+    --card2:#2c2c2e;
+    --text:#ffffff;
+    --muted:#8e8e93;
+    --dim:#636366;
+    --font:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{background:#0a0a0a;font-family:var(--font);color:var(--text);display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;-webkit-font-smoothing:antialiased;}
+
+  .back{position:fixed;top:18px;left:18px;z-index:50;background:#1c1c1e;color:#fff;border:1px solid #333;text-decoration:none;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;font-family:var(--font);transition:.15s;}
+  .back:hover{background:#2a2a2c;}
+  .toolbar{position:fixed;top:18px;right:18px;display:flex;gap:8px;z-index:50;}
+  .toolbar button{background:#1c1c1e;color:#fff;border:1px solid #333;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);transition:.15s;}
+  .toolbar button:hover{background:#2a2a2c;}
+  .toolbar button.on{background:var(--move);color:#fff;border-color:var(--move);}
+
+  .phone{position:relative;width:390px;max-width:100%;height:844px;background:var(--bg);border-radius:44px;box-shadow:0 0 0 12px #111,0 40px 90px rgba(0,0,0,.7);overflow:hidden;display:flex;flex-direction:column;}
+
+  .statusbar{display:flex;align-items:center;justify-content:space-between;padding:15px 30px 4px;font-size:15px;font-weight:600;flex:0 0 auto;color:#fff;}
+  .statusbar .right{display:flex;align-items:center;gap:7px;}
+  .battery{border:1.5px solid #fff;border-radius:4px;width:26px;height:13px;position:relative;display:flex;align-items:center;padding:1.5px;}
+  .battery::after{content:"";position:absolute;right:-4px;top:4px;width:2px;height:5px;background:#fff;border-radius:0 2px 2px 0;}
+  .battery i{display:block;height:100%;background:#fff;border-radius:1.5px;width:82%;}
+  .signal{display:flex;align-items:flex-end;gap:2px;height:12px;}
+  .signal b{width:3px;background:#fff;border-radius:1px;display:block;}
+  .signal b:nth-child(1){height:5px}.signal b:nth-child(2){height:7px}.signal b:nth-child(3){height:9px}.signal b:nth-child(4){height:12px;opacity:.4}
+
+  .header{display:flex;align-items:center;justify-content:space-between;padding:8px 18px 4px;flex:0 0 auto;}
+  .header .h1{font-size:26px;font-weight:800;letter-spacing:-.5px;}
+  .header .h1 small{display:block;font-size:14px;font-weight:600;color:var(--move2);letter-spacing:0;}
+  .header .pfp{width:34px;height:34px;border-radius:50%;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;cursor:pointer;}
+
+  .screen{flex:1;overflow-y:auto;scrollbar-width:none;}
+  .screen::-webkit-scrollbar{display:none;}
+  .view{display:none;padding:6px 16px 96px;}
+  .view.on{display:block;animation:vfade .22s ease;}
+  @keyframes vfade{from{opacity:0}to{opacity:1}}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  @keyframes pop{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:none}}
+
+  /* ============ rings ============ */
+  .rings{display:flex;justify-content:center;padding:8px 0 6px;opacity:0;animation:pop .6s ease forwards;}
+  .rings svg{width:240px;height:240px;}
+  .ringcards{display:flex;flex-direction:column;gap:10px;margin-top:6px;}
+  .rc{background:var(--card);border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:14px;
+    opacity:0;transform:translateY(14px);animation:rise .5s ease forwards;}
+  .rc .lbl{flex:1;}
+  .rc .lbl .n{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;}
+  .rc .lbl .v{font-size:24px;font-weight:800;margin-top:2px;}
+  .rc .lbl .v small{font-size:14px;font-weight:600;color:var(--muted);}
+  .rc .mini{width:44px;height:44px;flex:0 0 auto;}
+  .rc.move .n{color:var(--move2);} .rc.exer .n{color:var(--exer);} .rc.stand .n{color:var(--stand);}
+
+  /* stat tiles */
+  .stat3{display:flex;gap:10px;margin-top:10px;}
+  .stat3 .st{flex:1;background:var(--card);border-radius:16px;padding:14px;
+    opacity:0;transform:translateY(14px);animation:rise .5s .1s ease forwards;}
+  .stat3 .st .sl{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px;}
+  .stat3 .st .sl .d{width:9px;height:9px;border-radius:2px;}
+  .stat3 .st .sv{font-size:22px;font-weight:800;margin-top:8px;}
+  .stat3 .st .sv small{font-size:12px;color:var(--muted);font-weight:600;}
+
+  .sec-h{font-size:22px;font-weight:800;letter-spacing:-.4px;margin:24px 2px 10px;}
+  .wcard{background:var(--card);border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:14px;margin-bottom:10px;
+    opacity:0;transform:translateY(12px);animation:rise .5s ease forwards;}
+  .wcard .wi{width:42px;height:42px;border-radius:50%;background:var(--card2);display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+  .wcard .wi svg{width:22px;height:22px;stroke:var(--exer);fill:none;stroke-width:2;}
+  .wcard .wm{flex:1;}
+  .wcard .w1{font-size:16px;font-weight:700;}
+  .wcard .w2{font-size:13px;color:var(--muted);margin-top:2px;}
+  .wcard .wr{text-align:right;font-size:15px;font-weight:700;color:var(--move2);}
+
+  /* ============ steps ============ */
+  .steps-big{text-align:center;padding:16px 0 4px;}
+  .steps-big .lbl{font-size:15px;color:var(--muted);}
+  .steps-big .big{font-size:56px;font-weight:800;letter-spacing:-2px;line-height:1;margin:4px 0;}
+  .steps-big .goal{font-size:14px;color:var(--muted);}
+  .steps-big .goal b{color:var(--exer);}
+  .barcard{background:var(--card);border-radius:16px;padding:16px;margin-top:14px;}
+  .barcard .bh{font-size:13px;color:var(--muted);margin-bottom:12px;}
+  .bars{display:flex;align-items:flex-end;gap:5px;height:120px;}
+  .bars .b{flex:1;background:linear-gradient(180deg,#c4ff3d,#6fe000);border-radius:3px;min-height:3px;}
+  .bars .b.dim{background:#3a3a3c;}
+  .barlabels{display:flex;gap:5px;margin-top:8px;}
+  .barlabels span{flex:1;text-align:center;font-size:10px;color:var(--dim);}
+
+  /* ============ awards ============ */
+  .awardgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:8px;}
+  .award{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;
+    opacity:0;transform:scale(.85);animation:pop .5s ease forwards;}
+  .award .medal{width:74px;height:74px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;box-shadow:0 6px 18px rgba(0,0,0,.4);}
+  .award .an{font-size:12px;font-weight:600;line-height:1.2;}
+  .award .ad{font-size:11px;color:var(--muted);}
+
+  /* ============ sharing ============ */
+  .frow{background:var(--card);border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:14px;margin-bottom:10px;
+    opacity:0;transform:translateY(12px);animation:rise .5s ease forwards;}
+  .frow .fav{width:46px;height:46px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:15px;}
+  .frow .fm{flex:1;}
+  .frow .fn{font-size:16px;font-weight:700;}
+  .frow .fs{font-size:13px;color:var(--muted);margin-top:2px;}
+  .frow .fring{width:48px;height:48px;flex:0 0 auto;}
+
+  /* ============ bottom nav ============ */
+  .nav{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-around;align-items:center;padding:9px 6px 24px;background:rgba(20,20,22,.96);backdrop-filter:blur(16px);border-top:1px solid #2a2a2c;z-index:20;}
+  .nb{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;flex:1;}
+  .nb svg{width:25px;height:25px;stroke:#8e8e93;fill:none;stroke-width:2;}
+  .nb .nlab{font-size:10px;font-weight:600;color:#8e8e93;}
+  .nb.on svg{stroke:var(--move2);}
+  .nb.on .nlab{color:var(--move2);}
+
+  body.editing [data-edit]{outline:1.5px dashed var(--move2);outline-offset:3px;border-radius:4px;cursor:text;}
+  [data-edit]:focus{outline:1.5px solid var(--move2);}
+  .hint{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);color:#666;font-size:12px;text-align:center;max-width:90vw;}
+</style>
+<!-- krypt:phone:start -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fitness">
+<meta name="theme-color" content="#0A0A0C">
+<link rel="manifest" href="../../assets/manifests/apple-fitness.webmanifest">
+<link rel="apple-touch-icon" href="../../assets/icons/apple-fitness-180.png">
+<link rel="icon" type="image/png" sizes="512x512" href="../../assets/icons/apple-fitness-512.png">
+<link rel="stylesheet" href="../../assets/phone.css">
+<!-- krypt:phone:end -->
+</head>
+<body>
+
+<a class="back" href="../../index.html">← Collection</a>
+<div class="toolbar">
+  <button id="editBtn">✎ Edit</button>
+  <button id="resetBtn">↺ Reset</button>
+</div>
+
+<div class="phone">
+  <div class="statusbar">
+    <span>9:41</span>
+    <span class="right">
+      <span class="signal"><b></b><b></b><b></b><b></b></span>
+      <svg width="18" height="14" viewBox="0 0 18 14" fill="none"><path d="M9 3C11.5 3 13.8 4 15.5 5.6M9 7C10.4 7 11.7 7.6 12.7 8.5M4.3 5.6C6 4 8.3 3 9 3M6.3 8.5C7.3 7.6 8 7.4 9 7.4" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/><circle cx="9" cy="11" r="1.2" fill="#fff"/></svg>
+      <span class="battery"><i></i></span>
+    </span>
+  </div>
+
+  <div class="header">
+    <div class="h1" id="hdrTitle">Summary<small id="hdrDate">Monday, Jul 20</small></div>
+    <div class="pfp" data-edit="pfp">AK</div>
+  </div>
+
+  <div class="screen" id="screen">
+
+    <!-- ============ SUMMARY ============ -->
+    <div class="view on" data-view="summary">
+      <div class="rings"><svg viewBox="0 0 240 240" id="ringsBig"></svg></div>
+      <div class="ringcards">
+        <div class="rc move"><div class="lbl"><div class="n">Move</div><div class="v"><span data-edit="moveVal">512</span>/<span data-edit="moveGoal">500</span><small> CAL</small></div></div><svg class="mini" viewBox="0 0 44 44" data-mini="move"></svg></div>
+        <div class="rc exer"><div class="lbl"><div class="n">Exercise</div><div class="v"><span data-edit="exerVal">34</span>/<span data-edit="exerGoal">30</span><small> MIN</small></div></div><svg class="mini" viewBox="0 0 44 44" data-mini="exer"></svg></div>
+        <div class="rc stand"><div class="lbl"><div class="n">Stand</div><div class="v"><span data-edit="standVal">10</span>/<span data-edit="standGoal">12</span><small> HR</small></div></div><svg class="mini" viewBox="0 0 44 44" data-mini="stand"></svg></div>
+      </div>
+      <div class="stat3">
+        <div class="st"><div class="sl"><span class="d" style="background:var(--exer)"></span>Steps</div><div class="sv"><span class="cu" data-edit="steps" data-count="8432" data-fmt="n">8,432</span></div></div>
+        <div class="st"><div class="sl"><span class="d" style="background:var(--stand)"></span>Distance</div><div class="sv"><span data-edit="dist">3.7</span><small> MI</small></div></div>
+        <div class="st"><div class="sl"><span class="d" style="background:var(--move2)"></span>Flights</div><div class="sv"><span data-edit="flights">12</span></div></div>
+      </div>
+      <div class="sec-h">Workouts</div>
+      <div id="workoutList"></div>
+      <div class="sec-h">Awards</div>
+      <div class="awardgrid" id="awardMini"></div>
+    </div>
+
+    <!-- ============ STEPS ============ -->
+    <div class="view" data-view="steps">
+      <div class="steps-big">
+        <div class="lbl">Steps today</div>
+        <div class="big"><span class="cu" data-edit="steps2" data-count="8432" data-fmt="n">8,432</span></div>
+        <div class="goal"><b data-edit="stepPct">84%</b> of <span data-edit="stepGoal">10,000</span> goal</div>
+      </div>
+      <div class="barcard">
+        <div class="bh">Today · by hour</div>
+        <div class="bars" id="hourBars"></div>
+        <div class="barlabels" id="hourLabels"></div>
+      </div>
+      <div class="stat3">
+        <div class="st"><div class="sl">Distance</div><div class="sv"><span data-edit="dist2">3.7</span><small> MI</small></div></div>
+        <div class="st"><div class="sl">Flights</div><div class="sv"><span data-edit="flights2">12</span></div></div>
+        <div class="st"><div class="sl">Avg/day</div><div class="sv"><span data-edit="avgSteps">9,120</span></div></div>
+      </div>
+      <div class="barcard">
+        <div class="bh">Last 7 days</div>
+        <div class="bars" id="weekBars"></div>
+        <div class="barlabels" id="weekLabels"></div>
+      </div>
+    </div>
+
+    <!-- ============ AWARDS ============ -->
+    <div class="view" data-view="awards">
+      <div class="awardgrid" id="awardGrid" style="margin-top:14px"></div>
+    </div>
+
+    <!-- ============ SHARING ============ -->
+    <div class="view" data-view="sharing">
+      <div class="sec-h" style="margin-top:8px">Sharing</div>
+      <div id="friendList"></div>
+    </div>
+
+  </div>
+
+  <!-- bottom nav -->
+  <div class="nav">
+    <div class="nb on" data-tab="summary"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/></svg><span class="nlab">Summary</span></div>
+    <div class="nb" data-tab="steps"><svg viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-7" stroke-linecap="round"/></svg><span class="nlab">Steps</span></div>
+    <div class="nb" data-tab="awards"><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="6"/><path d="M9 14l-2 7 5-3 5 3-2-7" stroke-linejoin="round"/></svg><span class="nlab">Awards</span></div>
+    <div class="nb" data-tab="sharing"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3 19c0-3 2.7-5 6-5s6 2 6 5M15.5 14c2.5 0 5 1.6 5 4.5" stroke-linecap="round"/></svg><span class="nlab">Sharing</span></div>
+  </div>
+</div>
+
+<div class="hint">Bottom nav switches screens · Toggle Edit (top-right) to change values</div>
+
+<script>
+/* ============================================================
+   DATA — fictional activity values. Edit freely.
+   ============================================================ */
+const DEFAULT_DATA = {
+  pfp:"AK", hdrDate:"Monday, Jul 20",
+  moveVal:"512", moveGoal:"500", exerVal:"34", exerGoal:"30", standVal:"10", standGoal:"12",
+  steps:"8,432", steps2:"8,432", dist:"3.7", dist2:"3.7", flights:"12", flights2:"12",
+  stepPct:"84%", stepGoal:"10,000", avgSteps:"9,120",
+  hours:[0,0,40,120,260,180,90,340,210,150,420,380,260,110,190,430,320,540,280,90,40,0,0,0],
+  week:[9200,7800,10400,8432,11200,6900,9800],
+  weekDays:["M","T","W","T","F","S","S"],
+  workouts:[
+    {t1:"Outdoor Run", t2:"7:02 AM · 5.2 mi · Zone 3", rt:"42:18", ic:"run"},
+    {t1:"Strength Training", t2:"Yesterday · Upper body", rt:"28:00", ic:"lift"},
+    {t1:"Cycling", t2:"Sat · 18.4 mi", rt:"1:04:30", ic:"bike"},
+  ],
+  awards:[
+    {e:"🔥", n:"Perfect Week", d:"Jul 14–20", bg:"linear-gradient(135deg,#fa114f,#ff8a3d)"},
+    {e:"⚡", n:"Move Goal 200%", d:"Jul 18", bg:"linear-gradient(135deg,#a2f73b,#00c853)"},
+    {e:"🏃", n:"10K Steps", d:"12-day streak", bg:"linear-gradient(135deg,#1aebff,#0091ea)"},
+    {e:"🏆", n:"New Move Record", d:"812 CAL", bg:"linear-gradient(135deg,#ffd54f,#ff9100)"},
+    {e:"🌙", n:"Longest Workout", d:"1h 42m", bg:"linear-gradient(135deg,#b388ff,#651fff)"},
+    {e:"❄️", n:"Winter Challenge", d:"2024", bg:"linear-gradient(135deg,#80d8ff,#2979ff)"},
+  ],
+  friends:[
+    {av:"MC", bg:"#ff2d55", nm:"Maya Chen", fs:"Move 620 · Exercise 45 · Stand 12", r:[1,1,1]},
+    {av:"DK", bg:"#34c759", nm:"Dana Kim", fs:"Move 340 · Exercise 22 · Stand 9", r:[0.68,0.73,0.75]},
+    {av:"SP", bg:"#af52de", nm:"Sam Patel", fs:"Move 500 · Exercise 30 · Stand 11", r:[1,1,0.92]},
+  ],
+};
+
+const KEY="applefitness-dash-v1";
+let DATA=load();
+function load(){try{const s=localStorage.getItem(KEY);if(s)return{...structuredClone(DEFAULT_DATA),...JSON.parse(s)};}catch(e){}return structuredClone(DEFAULT_DATA);}
+function save(){localStorage.setItem(KEY,JSON.stringify(DATA));}
+function editing(){return document.body.classList.contains("editing");}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function num(s){return parseFloat(String(s).replace(/,/g,""))||0;}
+
+/* ---- ring SVG ---- */
+function ringArc(cx,cy,r,prog,color,track,w){
+  const circ=2*Math.PI*r, p=Math.max(0,Math.min(1,prog));
+  return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${track}" stroke-width="${w}"/>`+
+    (p>0?`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="${w}" stroke-linecap="round"
+      stroke-dasharray="${(p*circ).toFixed(1)} ${((1-p)*circ+0.01).toFixed(1)}" transform="rotate(-90 ${cx} ${cy})"/>`:"");
+}
+function renderRings(){
+  const mv=num(DATA.moveVal)/num(DATA.moveGoal), ex=num(DATA.exerVal)/num(DATA.exerGoal), st=num(DATA.standVal)/num(DATA.standGoal);
+  const svg=
+    ringArc(120,120,92,mv,"var(--move)","rgba(250,17,79,.22)",22)+
+    ringArc(120,120,64,ex,"var(--exer)","rgba(162,247,59,.20)",22)+
+    ringArc(120,120,36,st,"var(--stand)","rgba(26,235,255,.20)",22);
+  document.getElementById("ringsBig").innerHTML=svg;
+  // mini rings in cards
+  document.querySelectorAll("[data-mini]").forEach(el=>{
+    const k=el.dataset.mini, prog=k==="move"?mv:k==="exer"?ex:st, col=k==="move"?"var(--move)":k==="exer"?"var(--exer)":"var(--stand)", tr=k==="move"?"rgba(250,17,79,.22)":k==="exer"?"rgba(162,247,59,.2)":"rgba(26,235,255,.2)";
+    el.innerHTML=ringArc(22,22,16,prog,col,tr,7);
+  });
+}
+function miniRingSvg(r3){
+  return ringArc(24,24,20,r3[0],"var(--move)","rgba(250,17,79,.22)",5)+
+    ringArc(24,24,14,r3[1],"var(--exer)","rgba(162,247,59,.2)",5)+
+    ringArc(24,24,8,r3[2],"var(--stand)","rgba(26,235,255,.2)",5);
+}
+
+/* ---- bars ---- */
+/* Resting scales, taken from the shipped data's own peaks. Dividing by
+   the live series' max instead would redraw an identical chart at any
+   step count — 2,000 steps and 20,000 steps would look the same. */
+const HOUR_SCALE=Math.max(...DEFAULT_DATA.hours,1);
+const WEEK_SCALE=Math.max(...DEFAULT_DATA.week,1);
+function renderBars(barsId,labId,vals,labels,dimZero,scale){
+  const s=scale||Math.max(...vals,1);
+  document.getElementById(barsId).innerHTML=vals.map(v=>`<div class="b ${dimZero&&v===0?"dim":""}" style="height:${Math.min(120,Math.max(3,v/s*120)).toFixed(1)}px"></div>`).join("");
+  if(labId)document.getElementById(labId).innerHTML=(labels||[]).map(l=>`<span>${esc(l)}</span>`).join("");
+}
+
+/* The hourly bars are today's steps broken up, so they add to the step
+   count; the weekly bars hold their shape with today's bar replaced. */
+function rescaleSteps(){
+  const target=num(DATA.steps2||DATA.steps), sum=DATA.hours.reduce((a,b)=>a+b,0);
+  DATA.hours = sum>0 ? DATA.hours.map(v=>v*(target/sum)) : DATA.hours.map(()=>target/DATA.hours.length);
+  const i=3;                       // Thursday — the day the screen is showing
+  if(DATA.week[i]!==undefined) DATA.week[i]=target;
+  DATA.steps=DATA.steps2=String(Math.round(target).toLocaleString("en-US"));
+  const goal=num(DATA.stepGoal);
+  if(goal>0) DATA.stepPct=Math.round(target/goal*100)+"%";
+  save();
+}
+const WORK_ICON={run:`<path d="M13 4a2 2 0 100 .01M7 20l3-5 2-3 4 2 1 4M8 11l3-2 4 1 2 3" stroke-linecap="round" stroke-linejoin="round"/>`,
+  lift:`<path d="M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10" stroke-linecap="round"/>`,
+  bike:`<circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><path d="M6 17l4-8h4l3 8M10 9l2 5" stroke-linecap="round" stroke-linejoin="round"/>`};
+function renderWorkouts(){
+  document.getElementById("workoutList").innerHTML=DATA.workouts.map((w,i)=>`
+    <div class="wcard" style="animation-delay:${i*60}ms">
+      <div class="wi"><svg viewBox="0 0 24 24">${WORK_ICON[w.ic]||WORK_ICON.run}</svg></div>
+      <div class="wm"><div class="w1">${esc(w.t1)}</div><div class="w2">${esc(w.t2)}</div></div>
+      <div class="wr">${esc(w.rt)}</div>
+    </div>`).join("");
+}
+function awardHtml(a,i){return `<div class="award" style="animation-delay:${i*50}ms"><div class="medal" style="background:${a.bg}">${a.e}</div><div class="an">${esc(a.n)}</div><div class="ad">${esc(a.d)}</div></div>`;}
+function renderAwards(){
+  document.getElementById("awardGrid").innerHTML=DATA.awards.map(awardHtml).join("");
+  document.getElementById("awardMini").innerHTML=DATA.awards.slice(0,3).map(awardHtml).join("");
+}
+function renderFriends(){
+  document.getElementById("friendList").innerHTML=DATA.friends.map((f,i)=>`
+    <div class="frow" style="animation-delay:${i*60}ms">
+      <div class="fav" style="background:${f.bg}">${esc(f.av)}</div>
+      <div class="fm"><div class="fn">${esc(f.nm)}</div><div class="fs">${esc(f.fs)}</div></div>
+      <svg class="fring" viewBox="0 0 48 48">${miniRingSvg(f.r)}</svg>
+    </div>`).join("");
+}
+
+/* ---- count-up (visible-only) ---- */
+function fmtNum(v,fmt){return Math.round(v).toLocaleString("en-US");}
+function countUp(){
+  document.querySelectorAll(".cu").forEach(el=>{
+    if(el.dataset.done) return;
+    const target=parseFloat(String(el.dataset.count).replace(/,/g,"")); if(isNaN(target)) return;
+    const dur=1200, start=performance.now();
+    function step(now){const p=Math.min((now-start)/dur,1),e=1-Math.pow(1-p,3);el.textContent=fmtNum(target*e);if(p<1)requestAnimationFrame(step);else{el.textContent=fmtNum(target);el.dataset.done="1";}}
+    requestAnimationFrame(step);
+  });
+}
+function maybeCountUp(){if(document.visibilityState==="visible")countUp();else document.addEventListener("visibilitychange",function h(){if(document.visibilityState==="visible"){countUp();document.removeEventListener("visibilitychange",h);}});}
+
+/* ---- editing ---- */
+function bindEdits(){document.querySelectorAll("[data-edit]").forEach(el=>{el.setAttribute("contenteditable",editing());el.oninput=()=>{
+  const k=el.getAttribute("data-edit");DATA[k]=el.textContent;save();
+  if(["moveVal","moveGoal","exerVal","exerGoal","standVal","standGoal"].includes(k))renderRings();
+  // Step count drives the hourly bars, today's weekly bar and the % of goal.
+  if(k==="steps"||k==="steps2"||k==="stepGoal"){
+    if(k==="stepGoal"){const g=num(DATA.stepGoal);if(g>0)DATA.stepPct=Math.round(num(DATA.steps2||DATA.steps)/g*100)+"%";save();}
+    else rescaleSteps();
+    renderAll();
+    document.querySelectorAll("[data-edit]").forEach(o=>{const ok=o.getAttribute("data-edit");
+      if(o!==el&&["steps","steps2","stepPct"].includes(ok)&&DATA[ok]!==undefined)o.textContent=DATA[ok];});
+  }
+};});}
+document.getElementById("editBtn").addEventListener("click",function(){const on=document.body.classList.toggle("editing");this.classList.toggle("on",on);this.textContent=on?"✓ Done":"✎ Edit";bindEdits();});
+document.getElementById("resetBtn").addEventListener("click",()=>{if(confirm("Reset this dashboard to its original values?")){localStorage.removeItem(KEY);DATA=structuredClone(DEFAULT_DATA);renderAll();restoreScalars();bindEdits();}});
+function restoreScalars(){document.querySelectorAll("[data-edit]").forEach(el=>{const k=el.getAttribute("data-edit");if(DATA[k]!==undefined)el.textContent=DATA[k];});}
+
+/* ---- router ---- */
+const TITLES={summary:"Summary",steps:"Steps",awards:"Awards",sharing:"Sharing"};
+function showView(name){
+  document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.dataset.view===name));
+  document.querySelectorAll(".nb").forEach(b=>b.classList.toggle("on",b.dataset.tab===name));
+  document.getElementById("hdrTitle").childNodes[0].nodeValue=TITLES[name]||"";
+  document.getElementById("hdrDate").style.display=(name==="summary")?"block":"none";
+  document.getElementById("screen").scrollTop=0;bindEdits();
+}
+document.querySelectorAll(".nb").forEach(b=>b.addEventListener("click",()=>{if(!editing())showView(b.dataset.tab);}));
+
+/* ---- init ---- */
+function renderAll(){
+  renderRings();renderWorkouts();renderAwards();renderFriends();
+  const hourLabels=["12a","","","6a","","","12p","","","6p","","11p"];
+  renderBars("hourBars","hourLabels",DATA.hours,DATA.hours.map((_,i)=>[0,3,6,9,12,15,18,21].includes(i)?["12a","3a","6a","9a","12p","3p","6p","9p"][[0,3,6,9,12,15,18,21].indexOf(i)]:""),true,HOUR_SCALE);
+  renderBars("weekBars","weekLabels",DATA.week,DATA.weekDays,false,WEEK_SCALE);
+}
+renderAll();restoreScalars();bindEdits();maybeCountUp();
+</script>
+<!-- krypt:app:start -->
+<script src="../../assets/krypt-app.js" data-root="../../" data-label="Fitness" defer></script>
+<script src="../../assets/krypt-desktop.js" defer></script>
+<script src="../../assets/push.js" defer></script>
+<!-- krypt:app:end -->
+</body>
+</html>

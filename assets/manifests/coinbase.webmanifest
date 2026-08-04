@@ -1,0 +1,30 @@
+{
+  "name": "Coinbase — Krypt LARP",
+  "short_name": "Coinbase",
+  "description": "Coinbase, recreated. Part of the Krypt LARP collection.",
+  "start_url": "../../dashboards/coinbase/index.html",
+  "scope": "../../",
+  "display": "standalone",
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
+  "background_color": "#FFFFFF",
+  "theme_color": "#0052FF",
+  "icons": [
+    {
+      "src": "../icons/coinbase-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../icons/coinbase-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

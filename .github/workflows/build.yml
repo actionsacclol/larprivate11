@@ -1,0 +1,67 @@
+name: build
+
+# Windows, macOS and Linux installers.
+#
+# The platforms can't cross-build — a .dmg needs macOS's hdiutil, and the
+# Linux targets want a Linux toolchain — so each runner builds its own.
+#
+# Nothing is uploaded as a workflow artifact. Artifact storage is a small
+# quota and these installers are ~80-200 MB each, which blows straight
+# through it. Instead electron-builder uploads directly to a GitHub
+# Release, which doesn't count against that quota.
+#
+# Run it from the Actions tab (Run workflow), or push a tag like v1.1.0.
+# A plain push to main builds nothing — it is tags only.
+# Either way the result is a DRAFT release you review before publishing.
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write        # electron-builder needs this to create the release
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false   # one platform failing shouldn't hide the others
+      # Sequential on purpose. All three runners publish into the same
+      # draft release; in parallel they race to create it and you can end
+      # up with duplicates. Slower, but it lands in one place.
+      max-parallel: 1
+      matrix:
+        include:
+          - os: windows-latest
+            name: Windows
+            args: --win
+          - os: macos-latest
+            name: macOS
+            args: --mac
+          - os: ubuntu-latest
+            name: Linux
+            args: --linux
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - run: npm ci
+
+      # Icons and per-dashboard manifests are committed rather than
+      # regenerated here — their source images live outside the repo.
+      # See the note at the bottom of .gitignore.
+      - name: Package and publish
+        run: npx electron-builder ${{ matrix.args }} --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Nothing is code signed. Without this, macOS builds fail
+          # hunting for a certificate that isn't there.
+          CSC_IDENTITY_AUTO_DISCOVERY: false

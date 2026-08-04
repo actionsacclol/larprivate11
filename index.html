@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Krypt LARP — Dashboard Collection</title>
+
+<!-- krypt:phone:start — home-screen install (see tools/serve.js) -->
+<link rel="manifest" href="assets/manifest.webmanifest">
+<meta name="theme-color" content="#0a0a0b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Krypt LARP">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<!-- krypt:phone:end -->
+<style>
+  :root{
+    --bg:#0a0a0b;
+    --card:#151517;
+    --card-hi:#1e1e22;
+    --text:#f4f4f5;
+    --muted:#8a8a92;
+    --accent:#ab9ff2;
+    --line:#26262b;
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(171,159,242,.14), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(0,214,50,.07), transparent 60%),
+      var(--bg);
+    color:var(--text);font-family:var(--font);min-height:100vh;
+    padding:64px 28px 80px;
+  }
+
+  /* ---- phone ---- tighter margins, and clear the notch when this is
+     installed to the home screen (no browser chrome to push us down). */
+  @media (max-width:560px){
+    body{
+      padding:calc(28px + env(safe-area-inset-top)) 18px
+              calc(48px + env(safe-area-inset-bottom));
+    }
+    .grid{grid-template-columns:1fr;gap:16px;}
+    header{margin-bottom:30px;}
+    /* Touch devices latch :hover after a tap, so none of the lift, tilt
+       or shine survives down here — they'd stick on the last card
+       touched instead of reading as feedback. */
+    .card:hover{transform:none;box-shadow:none;border-color:var(--line);}
+    .card:hover::after,.card:hover .thumb::before{opacity:0;}
+    .card:hover .thumb::after{animation:none;}
+    .card:hover .mini{transform:translateY(14px);box-shadow:0 12px 30px rgba(0,0,0,.55);}
+    .toolbar{gap:10px;padding:12px 0 11px;}
+    .toolbar::before{left:-18px;right:-18px;}
+    .modes{width:100%;}
+    .mode{flex:1;padding:9px 10px;text-align:center;}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    /* .in carries the opacity:0 start state, so it has to be neutralised
+       here too or the cards would simply never appear. */
+    .cardlink.in{animation:none;opacity:1;transform:none;}
+    .card,.mini,.thumb::before,.card::after{transition:none;}
+    .card:hover{transform:none;}
+    .card:hover .mini{transform:translateY(14px);}
+    .card:hover .thumb::after{animation:none;}
+  }
+
+  /* ---- Tutorial video ----
+     Big call-to-action in the header; opens the video in an overlay.
+     The <iframe> is only created when opened, so nothing talks to
+     YouTube unless the user asks for it. */
+  .tutbtn{
+    display:inline-flex;align-items:center;gap:11px;margin-top:18px;
+    background:linear-gradient(120deg,#7c3aed,#a855f7);color:#fff;border:0;
+    padding:14px 24px 14px 18px;border-radius:14px;cursor:pointer;
+    font-family:var(--font);font-size:16px;font-weight:700;letter-spacing:-.2px;
+    box-shadow:0 10px 30px rgba(124,58,237,.32);transition:.18s cubic-bezier(.2,.7,.3,1);
+  }
+  .tutbtn:hover{transform:translateY(-2px);box-shadow:0 16px 40px rgba(124,58,237,.45);}
+  .tutbtn:active{transform:translateY(0);}
+
+  /* The tutorial button and the two community links share one row and
+     one shape — only the fill changes. */
+  .ctas{display:flex;flex-wrap:wrap;gap:12px;align-items:stretch;}
+  .ctas .tutbtn{margin-top:0;}
+  .cta{
+    display:inline-flex;align-items:center;gap:11px;text-decoration:none;
+    padding:14px 24px 14px 18px;border-radius:14px;cursor:pointer;border:0;
+    font-family:var(--font);font-size:16px;font-weight:700;letter-spacing:-.2px;color:#fff;
+    transition:.18s cubic-bezier(.2,.7,.3,1);
+  }
+  .cta:hover{transform:translateY(-2px);}
+  .cta:active{transform:translateY(0);}
+  .cta small{display:block;font-size:12px;font-weight:500;opacity:.82;margin-top:2px;}
+  .cta .ic{
+    width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.18);
+    display:flex;align-items:center;justify-content:center;flex:0 0 auto;
+  }
+  .cta .ic svg{width:17px;height:17px;fill:none;stroke:#fff;stroke-width:1.9;
+    stroke-linecap:round;stroke-linejoin:round;}
+  .cta.discord{background:linear-gradient(120deg,#5865F2,#7A84FF);
+    box-shadow:0 10px 30px rgba(88,101,242,.32);}
+  .cta.discord:hover{box-shadow:0 16px 40px rgba(88,101,242,.45);}
+  .cta.profile{background:linear-gradient(120deg,#0EA5A5,#22D3EE);
+    box-shadow:0 10px 30px rgba(34,211,238,.26);}
+  .cta.profile:hover{box-shadow:0 16px 40px rgba(34,211,238,.4);}
+  .tutbtn .play{
+    width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.18);
+    display:flex;align-items:center;justify-content:center;flex:0 0 auto;
+  }
+  .tutbtn .play svg{width:13px;height:13px;margin-left:2px;}
+  .tutbtn small{display:block;font-size:12px;font-weight:500;opacity:.82;margin-top:2px;}
+
+  .tutveil{
+    position:fixed;inset:0;z-index:9000;display:none;align-items:center;justify-content:center;
+    padding:32px;background:rgba(4,4,8,.82);
+    -webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);
+  }
+  .tutveil.open{display:flex;animation:tfade .18s ease;}
+  @keyframes tfade{from{opacity:0}to{opacity:1}}
+  .tutcard{
+    width:100%;max-width:900px;background:#131318;border:1px solid #26262e;
+    border-radius:18px;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,.7);
+  }
+  .tuthead{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 20px;}
+  .tuthead h3{font-size:16px;font-weight:700;}
+  .tuthead .x{
+    background:#22222b;border:0;color:#d7d7e2;width:32px;height:32px;border-radius:9px;
+    cursor:pointer;font-size:16px;line-height:1;font-family:var(--font);
+  }
+  .tuthead .x:hover{background:#2c2c36;}
+  .tutframe{position:relative;aspect-ratio:16/9;background:#000;}
+  .tutframe iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
+  .tutph{
+    position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:10px;text-align:center;padding:28px;
+    background:repeating-linear-gradient(45deg,#17171d,#17171d 12px,#1b1b22 12px,#1b1b22 24px);
+    color:var(--muted);font-size:14px;line-height:1.6;
+  }
+  .tutph b{color:var(--text);font-size:15px;}
+  .tutph code{
+    background:#0c0c10;border:1px solid #2a2a34;border-radius:6px;padding:3px 8px;
+    font:600 12.5px ui-monospace,Consolas,monospace;color:#c9c9d6;
+  }
+  .tutfoot{padding:12px 20px 18px;}
+  .tutfoot a{color:#8ab4ff;font-size:13.5px;text-decoration:none;cursor:pointer;}
+  .tutfoot a:hover{text-decoration:underline;}
+
+  .wrap{max-width:1180px;margin:0 auto;}
+  header{margin-bottom:44px;}
+  .kicker{color:var(--accent);font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;}
+  h1{font-size:clamp(38px,6vw,60px);font-weight:800;letter-spacing:-2px;margin:10px 0 14px;}
+  .sub{color:var(--muted);font-size:18px;max-width:640px;line-height:1.6;}
+  .count{color:var(--muted);font-size:14px;margin-top:22px;}
+  .count b{color:var(--text);}
+
+  .grid{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+    gap:22px;margin-top:14px;
+  }
+  /* The stagger is applied by JS on every filter pass rather than by a
+     hard-coded animation-delay, so re-filtering re-plays the entrance
+     instead of snapping the survivors into place.
+
+     Cards are visible by default and the entrance lives entirely in
+     .in — so if the script never runs (file opened straight off disk
+     with JS off), you get the grid rather than a page of invisible
+     cards. */
+  .cardlink{text-decoration:none;color:inherit;}
+  .cardlink.in{opacity:0;transform:translateY(16px);animation:rise .5s forwards;}
+  @keyframes rise{to{opacity:1;transform:none;}}
+
+  /* --ca-rgb is each card's own brand colour, read off its tag by JS.
+     Everything accent-tinted below derives from it, so the grid picks up
+     a different hover per card without a hand-written rule each. */
+  .card{
+    --ca-rgb:171,159,242;
+    position:relative;background:var(--card);border:1px solid var(--line);border-radius:20px;
+    overflow:hidden;transition:transform .22s cubic-bezier(.2,.7,.3,1),
+      border-color .22s ease,box-shadow .22s ease;
+    display:flex;flex-direction:column;height:100%;
+  }
+  /* hairline of brand colour along the top edge, lit on hover */
+  .card::after{
+    content:"";position:absolute;top:0;left:0;right:0;height:1px;z-index:3;
+    background:linear-gradient(90deg,transparent,rgba(var(--ca-rgb),.85),transparent);
+    opacity:0;transition:opacity .22s ease;pointer-events:none;
+  }
+  .card:hover{
+    transform:translateY(-6px);
+    border-color:rgba(var(--ca-rgb),.42);
+    box-shadow:0 24px 50px rgba(0,0,0,.55),0 14px 44px -20px rgba(var(--ca-rgb),.75);
+  }
+  .card:hover::after{opacity:1;}
+  .cardlink:focus-visible{outline:0;}
+  .cardlink:focus-visible .card{
+    border-color:rgba(var(--ca-rgb),.7);
+    box-shadow:0 0 0 3px rgba(var(--ca-rgb),.28);
+  }
+
+  .thumb{
+    height:172px;position:relative;overflow:hidden;display:flex;
+    align-items:center;justify-content:center;padding:18px;perspective:900px;
+  }
+  /* a soft pool of brand colour behind the preview, and a slow shine
+     sweep across it — both idle at 0 and only cost anything on hover */
+  .thumb::before{
+    content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background:radial-gradient(120% 90% at 50% 108%,rgba(var(--ca-rgb),.30),transparent 62%);
+    opacity:0;transition:opacity .3s ease;
+  }
+  .thumb::after{
+    content:"";position:absolute;top:-60%;bottom:-60%;width:45%;left:-70%;z-index:2;
+    background:linear-gradient(100deg,transparent,rgba(255,255,255,.09),transparent);
+    transform:skewX(-16deg);pointer-events:none;
+  }
+  .card:hover .thumb::before{opacity:1;}
+  .card:hover .thumb::after{animation:shine .75s cubic-bezier(.3,.6,.4,1);}
+  @keyframes shine{to{left:130%;}}
+  .thumb>*{position:relative;z-index:1;}
+
+  /* mini previews */
+  .mini{
+    width:150px;border-radius:18px;padding:13px 12px;box-shadow:0 12px 30px rgba(0,0,0,.55);
+    transform:translateY(14px);font-size:9px;
+    transition:transform .28s cubic-bezier(.2,.7,.3,1),box-shadow .28s ease;
+  }
+  /* the preview leans up out of the card, like a device on a stand */
+  .card:hover .mini{
+    transform:translateY(4px) scale(1.07) rotateX(7deg);
+    box-shadow:0 22px 44px rgba(0,0,0,.62);
+  }
+  .mini .bal{font-size:21px;font-weight:800;letter-spacing:-.5px;line-height:1;}
+  .mini .lbl{opacity:.6;font-weight:600;margin-bottom:3px;}
+  .mini .chg{display:inline-block;font-size:9px;font-weight:700;padding:2px 6px;border-radius:5px;margin-top:5px;}
+  .mini .rowlet{display:flex;align-items:center;gap:6px;margin-top:8px;}
+  .mini .dot{width:15px;height:15px;border-radius:50%;flex:0 0 auto;}
+  .mini .bar{flex:1;height:6px;border-radius:3px;opacity:.5;}
+  .mini .btn{margin-top:9px;height:22px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:9px;}
+
+  .body{padding:20px 22px 24px;}
+  .tag{display:inline-block;background:var(--card-hi);font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;letter-spacing:.5px;text-transform:uppercase;}
+  .card h3{font-size:21px;font-weight:700;margin:14px 0 6px;}
+  .card p{color:var(--muted);font-size:14px;line-height:1.55;}
+  .meta{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;}
+  .chip{font-size:11px;color:var(--muted);background:#111114;border:1px solid var(--line);padding:4px 9px;border-radius:8px;}
+
+  .modes{display:flex;gap:8px;flex:none;}
+  .mode{background:var(--card);border:1px solid var(--line);color:var(--muted);font-family:var(--font);font-size:13.5px;font-weight:700;padding:9px 18px;border-radius:22px;cursor:pointer;transition:.18s;}
+  .mode:hover{border-color:#3a3a44;color:var(--text);}
+  .mode.on{background:var(--accent);border-color:var(--accent);color:#17123a;}
+  .mode b{font-weight:800;opacity:.65;margin-left:5px;}
+
+  /* ---- toolbar ----
+     Sticks under the header so search and the filters stay reachable
+     a full grid deep. The blurred bar is its own layer, hence the z-index
+     above the grid but below the tutorial veil. */
+  .toolbar{
+    position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:14px;
+    flex-wrap:wrap;margin:26px 0 0;padding:14px 0 13px;
+    background:linear-gradient(to bottom,rgba(10,10,11,.94) 62%,rgba(10,10,11,0));
+    -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  }
+  /* Bleed the blur to the viewport edges — without this the cards slide
+     visibly past the toolbar's left and right corners. */
+  .toolbar::before{
+    content:"";position:absolute;top:0;bottom:0;left:-28px;right:-28px;z-index:-1;
+    background:inherit;-webkit-backdrop-filter:inherit;backdrop-filter:inherit;
+  }
+
+  .search{position:relative;flex:1 1 260px;min-width:0;}
+  .search svg{position:absolute;left:15px;top:50%;transform:translateY(-50%);
+    width:16px;height:16px;color:var(--muted);pointer-events:none;}
+  .search input{
+    width:100%;background:var(--card);border:1px solid var(--line);border-radius:22px;
+    color:var(--text);font-family:var(--font);font-size:14px;font-weight:500;
+    padding:11px 40px 11px 41px;outline:0;transition:.18s;-webkit-appearance:none;
+  }
+  .search input::placeholder{color:#61616b;}
+  .search input:hover{border-color:#3a3a44;}
+  .search input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(171,159,242,.16);}
+  .search input::-webkit-search-cancel-button{display:none;}
+  .qclear{
+    position:absolute;right:9px;top:50%;transform:translateY(-50%);width:26px;height:26px;
+    border:0;border-radius:50%;background:#2a2a34;color:#c9c9d6;cursor:pointer;
+    font:600 12px/1 var(--font);display:none;place-items:center;
+  }
+  .qclear:hover{background:#363642;color:#fff;}
+  .search.has .qclear{display:grid;}
+  .kbd{
+    position:absolute;right:13px;top:50%;transform:translateY(-50%);pointer-events:none;
+    color:#55555f;font:600 11px/1 ui-monospace,Consolas,monospace;
+    border:1px solid #2a2a34;border-radius:5px;padding:3px 6px;
+  }
+  .search.has .kbd,.search input:focus~.kbd{display:none;}
+
+  /* ---- category chips ---- */
+  .cats{display:flex;flex-wrap:wrap;gap:7px;margin:2px 0 4px;}
+  .cat{
+    background:transparent;border:1px solid var(--line);color:var(--muted);
+    font-family:var(--font);font-size:12.5px;font-weight:600;letter-spacing:.1px;
+    padding:6px 13px;border-radius:20px;cursor:pointer;transition:.16s;
+  }
+  .cat:hover{border-color:#3a3a44;color:var(--text);}
+  .cat.on{background:rgba(171,159,242,.14);border-color:rgba(171,159,242,.55);color:#cfc6ff;}
+  .cat i{font-style:normal;opacity:.5;margin-left:5px;font-weight:700;}
+
+  /* ---- empty state ---- */
+  .empty{
+    display:none;grid-column:1/-1;text-align:center;padding:70px 20px;color:var(--muted);
+    border:1px dashed var(--line);border-radius:20px;
+  }
+  .empty.on{display:block;}
+  .empty b{display:block;color:var(--text);font-size:17px;margin-bottom:7px;}
+  .empty button{
+    margin-top:16px;background:var(--card-hi);border:1px solid var(--line);color:var(--text);
+    font:600 13px var(--font);padding:9px 18px;border-radius:20px;cursor:pointer;
+  }
+  .empty button:hover{border-color:#3a3a44;}
+
+  .card.add{border-style:dashed;background:transparent;align-items:center;justify-content:center;min-height:340px;color:var(--muted);text-align:center;padding:30px;}
+  .card.add .plus{font-size:44px;font-weight:300;color:var(--accent);line-height:1;}
+  .card.add h3{color:var(--text);}
+  .card.add p{font-size:13px;}
+  footer{margin-top:60px;color:#55555c;font-size:13px;text-align:center;}
+  code{background:#151517;padding:2px 6px;border-radius:5px;color:#c9c9d1;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">Krypt LARP</div>
+    <h1>Dashboard Collection</h1>
+    <p class="sub">A local playground of recreated dashboards from around the web — each one editable, animated, and built from scratch to learn how the good ones work.</p>
+    <div class="count"><b id="n">30</b> dashboards · more on the way</div>
+    <div style="margin-top:16px;display:inline-block;background:#ffd400;color:#3a2e00;font-size:12px;font-weight:700;letter-spacing:.8px;padding:7px 15px;border-radius:8px;">⚠ TEST · LEARNING DEMOS · NOT REAL APPS — no real accounts, data, or transactions</div>
+
+    <div class="ctas">
+      <button class="tutbtn" id="tutBtn" type="button">
+        <span class="play"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 3.5l14 8.5-14 8.5z"/></svg></span>
+        <span>Watch the tutorial<small>How to use Krypt LARP, on desktop and on your phone</small></span>
+      </button>
+
+      <a class="cta discord" data-ext="https://discord.gg/muzFKR657F" href="https://discord.gg/muzFKR657F">
+        <span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 18V7a2 2 0 012-2h10a2 2 0 012 2v7a2 2 0 01-2 2H9z"/><circle cx="10" cy="10.5" r="1.1" fill="#fff" stroke="none"/><circle cx="14.5" cy="10.5" r="1.1" fill="#fff" stroke="none"/></svg></span>
+        <span>Join the Discord<small>Ask questions and request a dashboard</small></span>
+      </a>
+
+      <a class="cta profile" data-ext="https://krypt.cc/" href="https://krypt.cc/">
+        <span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.4"/><path d="M4.5 20c0-3.8 3.4-6 7.5-6s7.5 2.2 7.5 6"/></svg></span>
+        <span>Make a profile<small>krypt.cc</small></span>
+      </a>
+    </div>
+
+  </header>
+
+  <div class="toolbar">
+    <div class="search" id="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
+      <input id="q" type="search" autocomplete="off" spellcheck="false"
+             aria-label="Search dashboards" placeholder="Search dashboards…">
+      <span class="kbd">/</span>
+      <button class="qclear" id="qClear" type="button" aria-label="Clear search">✕</button>
+    </div>
+    <div class="modes" id="modes">
+      <button class="mode on" data-m="all">All<b id="cAll"></b></button>
+      <button class="mode" data-m="mobile">📱 Mobile<b id="cMob"></b></button>
+      <button class="mode" data-m="desktop">🖥 Desktop<b id="cDesk"></b></button>
+    </div>
+  </div>
+
+  <div class="cats" id="cats"></div>
+
+  <div class="grid" id="grid">
+
+    <!-- Phantom -->
+    <a class="cardlink" data-mode="mobile" href="dashboards/phantom-wallet/index.html">
+      <div class="card">
+        <div class="thumb" style="background:linear-gradient(160deg,#1a1530,#0b0b0d)">
+          <div class="mini" style="background:#000;color:#fff">
+            <div class="lbl">GG.xyz MS1 ⌄</div>
+            <div class="bal">$6.21</div>
+            <div class="chg" style="background:#3ad17c;color:#052b17">+1.23%</div>
+            <div class="rowlet"><span class="dot" style="background:#fff"></span><span class="bar" style="background:#333"></span></div>
+            <div class="rowlet"><span class="dot" style="background:linear-gradient(135deg,#9945ff,#14f195)"></span><span class="bar" style="background:#333"></span></div>
+            <div class="rowlet"><span class="dot" style="background:#26a17b"></span><span class="bar" style="background:#333"></span></div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="tag" style="color:#ab9ff2">Crypto Wallet</span>
+          <h3>Phantom Wallet</h3>
+          <p>The Phantom mobile home screen — pill nav, animated count-up balance, and an editable token list.</p>
+          <div class="meta"><span class="chip">Editable</span><span class="chip">Animated</span><span class="chip">Mobile</span></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Venmo -->
+    <a class="cardlink" data-mode="mobile" href="dashboards/venmo/index.html">
+      <div class="card">
+        <div class="thumb" style="background:linear-gradient(160deg,#0a3d6b,#0a0a0d)">
+          <div class="mini" style="background:#fff;color:#2f3033">
+            <div style="color:#008CFF;font-weight:800;font-size:13px;">venmo</div>
+            <div class="btn" style="background:#008CFF;color:#fff;margin-top:7px;">Pay or Request</div>
+            <div class="rowlet"><span class="dot" style="background:#ff8a65"></span><span class="bar" style="background:#e6e8eb"></span></div>
+            <div class="rowlet"><span class="dot" style="background:#7c4dff"></span><span class="bar" style="background:#e6e8eb"></span></div>
+            <div class="rowlet"><span class="dot" style="background:#26c6da"></span><span class="bar" style="background:#e6e8eb"></span></div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="tag" style="color:#4aa8ff">Social Payments</span>
+          <h3>Venmo</h3>
+          <p>The social feed — friends paying friends with emoji captions, likes, and comments. Editable feed items.</p>
+          <div class="meta"><span class="chip">Editable</span><span class="chip">Animated</span><span class="chip">Mobile</span></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Cash App -->
+    <a class="cardlink" data-mode="mobile" href="dashboards/cash-app/index.html">
+      <div class="card">
+        <div class="thumb" style="background:linear-gradient(160deg,#04331a,#000)">
+          <div class="mini" style="background:#000;color:#fff;border:1px solid #1c1c1e">
+            <div class="lbl">Cash balance</div>
+            <div class="bal">$1,240.75</div>
+            <div class="btn" style="background:#00D632;color:#022b10;margin-top:8px;">Add Cash</div>
+            <div class="rowlet"><span class="dot" style="background:#00D632"></span><span class="bar" style="background:#1c1c1e"></span></div>
+            <div class="rowlet"><span class="dot" style="background:#f7931a"></span><span class="bar" style="background:#1c1c1e"></span></div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="tag" style="color:#00D632">Money · Banking</span>
+          <h3>Cash App</h3>
+          <p>The Money tab — balance, Savings, Bitcoin and Stocks tiles. A masterclass in black-and-green minimalism.</p>
+          <div class="meta"><span class="chip">Editable</span><span class="chip">Animated</span><span class="chip">Mobile</span></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Shopify -->
+    <a class="cardlink" data-mode="mobile" href="dashboards/shopify/index.html">
+      <div class="card">
+        <div class="thumb" style="background:linear-gradient(160deg,#0b3b2e,#0a0a0d)">
+          <div class="mini" style="background:#fff;color:#1a1a1a">
+            <div class="lbl">Total sales · Today</div>
+            <div class="bal" style="font-size:19px">$12,480</div>
+            <div class="chg" style="background:#008060;color:#fff">+12.5%</div>
+            <svg width="126" height="30" viewBox="0 0 126 30" style="margin-top:7px"><defs><linearGradient id="shg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#008060" stop-opacity=".35"/><stop offset="1" stop-color="#008060" stop-opacity="0"/></linearGradient></defs><path d="M0,24 21,20 42,22 63,12 84,15 105,7 126,4 L126,30 L0,30 Z" fill="url(#shg)"/><polyline points="0,24 21,20 42,22 63,12 84,15 105,7 126,4" fill="none" stroke="#008060" stroke-width="2"/></svg>
+          </div>
+        </div>
+        <div class="body">
+          <span class="tag" style="color:#2ea883">Merchant Admin</span>
+          <h3>Shopify</h3>
+          <p>The Shopify mobile app — a Total-sales card with an animated chart, Live View, orders to fulfill, and products.</p>
+          <div class="meta"><span class="chip">Editable</span><span class="chip">Animated</span><span class="chip">Mobile</span></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- PayPal -->
+    <a class="cardlink" data-mode="mobile" href="dashboards/paypal/index.html">
+      <div class="card">
+        <div class="thumb" style="background:linear-gradient(160deg,#062a63,#0a0a0d)">
+          <div class="mini" style="background:linear-gradient(160deg,#0070E0,#003087);color:#fff">
+            <div class="lbl" style="opacity:.85">PayPal balance</div>
+            <div class="bal">$1,842.50</div>
+            <div style="display:flex;gap:6px;margin-top:9px;">
+              <div class="btn" style="background:rgba(255,255,255,.9);color:#003087;flex:1">Send</div>
+              <div class="btn" style="background:rgba(255,255,255,.2);color:#fff;flex:1">Request</div>
+            </div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="tag" style="color:#4aa8ff">Digital Wallet</span>
+          <h3>PayPal</h3>
+          <p>The wallet home — balance card, Send/Request actions, and a recent-activity list. Trustworthy fintech blue.</p>
+          <div class="meta"><span class="chip">Editable</span><span class="chip">Animated</span><span class="chip">Mobile</span></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Chase -->
+    <a class="cardlink" data-mode="mobile" href="dashboards/chase/index.html">
+      <div class="card">
+        <div class="thumb" style="background:linear-gradient(160deg,#083a6b,#0a0a0d)">
+          <div class="mini" style="background:#f5f6f7;color:#2b2b2b">
+            <div style="background:#117ACA;color:#fff;margin:-13px -12px 8px;padding:9px 12px;border-radius:18px 18px 8px 8px;font-weight:700;font-size:10px;">Good afternoon, Alex</div>
+            <div class="lbl">Total Checking ····1234</div>
+            <div class="bal" style="font-size:17px">$4,820.55</div>
+            <div class="rowlet"><span class="lbl" style="flex:1">Savings ····5678</span><b>$12,300</b></div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="tag" style="color:#4aa8ff">Mobile Banking</span>
+          <h3>Chase</h3>
+          <p>The accounts overview — checking, savings, and credit cards with balances, plus a spending snapshot.</p>
+          <div class="meta"><span class="chip">Editable</span><span class="chip">Animated</span><span class="chip">Mobile</span></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Robinhood -->
+    <a class="cardlink" data-mode="mobile" href="dashboards/robinhood/index.html">
+      <div class="card">
+        <div class="thumb" style="background:linear-gradient(160deg,#04250f,#000)">
+          <div class="mini" style="background:#000;color:#fff;border:1px solid #1c1c1e">
+            <div class="lbl">Portfolio</div>
+            <div class="bal">$14,208</div>
+            <div style="color:#00C805;font-size:9px;font-weight:700;margin-top:3px;">+$342.18 · +2.47% Today</div>
+            <svg width="126" height="34" viewBox="0 0 126 34" style="margin-top:6px"><polyline points="0,28 18,24 36,26 54,16 72,19 90,9 108,12 126,3" fill="none" stroke="#00C805" stroke-width="2"/></svg>
+          </div>
+        </div>
+        <div class="body">
+          <span class="tag" style="color:#00C805">Investing</span>
+          <h3>Robinhood</h3>
+          <p>The investing home — huge portfolio value, the signature animated line chart, and stock/crypto holdings.</p>
+          <div class="meta"><span class="chip">Editable</span><span class="chip">Animated</span><span class="chip">Mobile</span></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Stripe -->
+    <a class="cardlink" data-mode="mobile" href="dashboards/stripe/index.html">
+      <div class="card">
+        <div class="thumb" style="background:linear-gradient(160deg,#1e1b4d,#0a0a0d)">
+          <div class="mini" style="background:#fff;color:#1a1f36">
+            <div class="lbl">Gross volume · Today</div>
+            <div class="bal" style="font-size:19px">$24,318</div>
+            <div class="chg" style="background:#635BFF;color:#fff">+11.2%</div>
+            <svg width="126" height="30" viewBox="0 0 126 30" style="margin-top:7px"><defs><linearGradient id="sg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#635BFF" stop-opacity=".35"/><stop offset="1" stop-color="#635BFF" stop-opacity="0"/></linearGradient></defs><path d="M0,24 21,20 42,22 63,12 84,15 105,7 126,4 L126,30 L0,30 Z" fill="url(#sg)"/><polyline points="0,24 21,20 42,22 63,12 84,15 105,7 126,4" fill="none" stroke="#635BFF" stroke-width="2"/></svg>
+          </div>
+        </div>
+        <div class="body">
+          <span class="tag" style="color:#8a83ff">Payments</span>
+          <h3>Stripe</h3>
+          <p>The Stripe mobile app — a Gross-volume card with an animated indigo chart, balance, and recent payments.</p>
+          <div class="meta"><span class="chip">Editable</span><span class="chip">Animated</span><span class="chip">Mobile</span></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- TikTok earnings -->
+    <a class="cardlink" data-mode="mobile" href="dashboards/tiktok-earnings/index.html">
+      <div class="card">
+        <div class="thumb" style="background:linear-gradient(160deg,#2a0a17,#000)">
+          <div class="mini" style="background:#000;color:#fff;border:1px solid #1c1c1e">
+            <div class="lbl">Estimated rewards</div>
+            <div class="bal">$1,247.82</div>
+            <div style="color:#25F4EE;font-size:9px;font-weight:700;margin-top:2px;">+18.2% · Last 30 days</div>
+            <div style="display:flex;align-items:flex-end;gap:3px;height:26px;margin-top:8px;">
+              <span style="flex:1;height:40%;background:#FE2C55;border-radius:2px;"></span><span style="flex:1;height:65%;background:#FE2C55;border-radius:2px;"></span><span style="flex:1;height:50%;background:#25F4EE;border-radius:2px;"></span><span style="flex:1;height:85%;background:#25F4EE;border-radius:2px;"></span><span style="flex:1;height:70%;background:#FE2C55;border-radius:2px;"></span><span style="flex:1;height:100%;background:#25F4EE;border-radius:2px;"></span>
+            </div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="tag" style="color:#FE2C55">Creator Earnings</span>
+          <h3>TikTok</h3>
+          <p>Creator Rewards — count-up earnings, an animated pink/cyan bar chart, RPM tiles, and top-earning videos.</p>
+          <div class="meta"><span class="chip">Editable</span><span class="chip">Animated</span><span class="chip">Mobile</span></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- X earnings -->
+    <a class="cardlink" data-mode="mobile" href="dashboards/x-earnings/index.html">
+      <div class="card">
+        <div class="thumb" style="background:linear-gradient(160deg,#0e0e0e,#000)">
+          <div class="mini" style="background:#000;color:#fff;border:1px solid #2f3336;text-align:center;">
+            <div style="font-size:22px;font-weight:800;letter-spacing:-.5px;">$512.90</div>
+            <div class="lbl" style="margin:2px 0 8px;">Total payouts</div>
+            <div style="display:flex;align-items:center;gap:7px;text-align:left;margin-top:4px;"><span style="width:12px;height:12px;border:1.5px solid #1d9bf0;border-radius:3px;flex:0 0 auto;"></span><span style="flex:1;height:6px;border-radius:3px;background:#1c1c1e;"></span></div>
+            <div style="display:flex;align-items:center;gap:7px;text-align:left;margin-top:7px;"><span style="width:12px;height:12px;border:1.5px solid #00ba7c;border-radius:50%;flex:0 0 auto;"></span><span style="flex:1;height:6px;border-radius:3px;background:#1c1c1e;"></span></div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="tag" style="color:#8a9aa8">Creator Earnings</span>
+          <h3>X</h3>
+          <p>Revenue Sharing — total payouts and a list of pay periods: paid amounts, below-minimum notices, and the next payout. Monochrome.</p>
+          <div class="meta"><span class="chip">Editable</span><span class="chip">Animated</span><span class="chip">Mobile</span></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- YouTube Studio -->
+    <a class="cardlink" data-mode="mobile" href="dashboards/youtube-studio/index.html">
+      <div class="card">
+        <div class="thumb" style="background:linear-gradient(160deg,#2a0d0d,#0a0a0d)">
+          <div class="mini" style="background:#0f0f0f;color:#fff;border:1px solid #303030">
+            <div style="display:flex;align-items:center;gap:5px;margin-bottom:4px;"><span style="width:14px;height:10px;background:#FF0000;border-radius:3px;display:inline-flex;align-items:center;justify-content:center;"><span style="border-left:4px solid #fff;border-top:2.5px solid transparent;border-bottom:2.5px solid transparent;"></span></span><span class="lbl" style="margin:0;">Studio</span></div>
+            <div class="lbl">Subscribers</div>
+            <div class="bal">24,812</div>
+            <svg width="126" height="28" viewBox="0 0 126 28" style="margin-top:6px"><defs><linearGradient id="ytg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#3ea6ff" stop-opacity=".4"/><stop offset="1" stop-color="#3ea6ff" stop-opacity="0"/></linearGradient></defs><path d="M0,22 21,18 42,20 63,11 84,13 105,6 126,3 L126,28 L0,28 Z" fill="url(#ytg)"/><polyline points="0,22 21,18 42,20 63,11 84,13 105,6 126,3" fill="none" stroke="#3ea6ff" stroke-width="2"/></svg>
+          </div>
+        </div>
+        <div class="body">
+          <span class="tag" style="color:#ff5c5c">Creator Analytics</span>
+          <h3>YouTube Studio</h3>
+          <p>Analytics — Overview/Content/Audience/Revenue tabs, count-up metrics, a views chart, and a live realtime card.</p>
+          <div class="meta"><span class="chip">Editable</span><span class="chip">Animated</span><span class="chip">Mobile</span></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Instagram Insights -->
+    <a class="cardlink" data-mode="mobile" href="dashboards/instagram-insights/index.html">
+      <div class="card">
+        <div class="thumb" style="background:linear-gradient(160deg,#3a1533,#0a0a0d)">
+          <div class="mini" style="background:#fff;color:#000;display:flex;flex-direction:column;align-items:center;padding:16px 12px;">
+            <svg width="86" height="86" viewBox="0 0 100 100"><defs><linearGradient id="iggrad" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#feda75"/><stop offset=".35" stop-color="#fa7e1e"/><stop offset=".6" stop-color="#d62976"/><stop offset=".8" stop-color="#962fbf"/><stop offset="1" stop-color="#4f5bd5"/></linearGradient></defs><circle cx="50" cy="50" r="42" fill="none" stroke="#eee" stroke-width="9"/><circle cx="50" cy="50" r="42" fill="none" stroke="url(#iggrad)" stroke-width="9" stroke-linecap="round" stroke-dasharray="210 264" transform="rotate(-90 50 50)"/></svg>
+            <div style="font-size:15px;font-weight:800;margin-top:8px;letter-spacing:-.3px;">1.28M</div>
+            <div class="lbl" style="margin:0;">Views · 30 days</div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="tag" style="color:#d62976">Creator Insights</span>
+          <h3>Instagram</h3>
+          <p>Insights — the animated gradient "Views · past 30 days" ring with a count-up center, reach cards, and audience breakdowns.</p>
+          <div class="meta"><span class="chip">Editable</span><span class="chip">Animated</span><span class="chip">Mobile</span></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Kalshi -->
+    <a class="cardlink" data-mode="mobile" href="dashboards/kalshi/index.html">
+      <div class="card">
+        <div class="thumb" style="background:linear-gradient(160deg,#06231a,#0a0a0d)">
+          <div class="mini" style="background:#000;color:#fff;border:1px solid #17392c">
+            <div style="color:#00D68A;font-weight:800;font-size:13px;margin-bottom:7px;">Kalshi</div>
+            <div class="lbl" style="margin-bottom:6px;">Finals MVP 2026</div>
+            <div class="rowlet" style="margin-top:0;"><span style="flex:1;font-weight:700;border-bottom:2px solid #00D68A;padding-bottom:2px;">North Bay</span><b style="font-size:11px;">46%</b></div>
+            <div class="rowlet"><span style="flex:1;font-weight:700;border-bottom:2px solid #4b7bec;padding-bottom:2px;">Lakeview</span><b style="font-size:11px;">24%</b></div>
+            <div class="btn" style="background:#00D68A;color:#00230f;margin-top:9px;">Get $500?</div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="tag" style="color:#00D68A">Prediction Markets</span>
+          <h3>Kalshi</h3>
+          <p>The For You feed — swipeable market cards, a portfolio with Predictions/Perpetuals, Manage funds, and a slide-in menu.</p>
+          <div class="meta"><span class="chip">Editable</span><span class="chip">Animated</span><span class="chip">Mobile</span></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Coinbase -->
+    <a class="cardlink" data-mode="mobile" href="dashboards/coinbase/index.html">
+      <div class="card">
+        <div class="thumb" style="background:linear-gradient(160deg,#0a3aa0,#0a0a0d)">
+          <div class="mini" style="background:#fff;color:#0a0b0d">
+            <div class="lbl" style="color:#5b616e">Your balance</div>
+            <div class="bal">$15,960</div>
+            <div class="chg" style="background:#e4f3ea;color:#05854D">▲ +2.19%</div>
+            <svg width="126" height="30" viewBox="0 0 126 30" style="margin-top:7px"><polyline points="0,24 16,22 32,25 48,18 64,20 80,12 96,15 110,7 126,4" fill="none" stroke="#05854D" stroke-width="2"/></svg>
+            <div class="rowlet"><span class="dot" style="background:#f7931a"></span><span class="bar" style="background:#eceef1"></span></div>
+            <div class="rowlet"><span class="dot" style="background:#627eea"></span><span class="bar" style="background:#eceef1"></span></div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="tag" style="color:#0052FF">Crypto Exchange</span>
+          <h3>Coinbase</h3>
+          <p>The Home tab — count-up balance, a drawn portfolio chart, your assets with sparklines, a Prices market list, and an interactive Buy keypad.</p>
+          <div class="meta"><span class="chip">Editable</span><span class="chip">Animated</span><span class="chip">Mobile</span></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Apple Card -->
+    <a class="cardlink" data-mode="mobile" href="dashboards/apple-card/index.html">
+      <div class="card">
+        <div class="thumb" style="background:linear-gradient(160deg,#2a2320,#0a0a0d)">
+          <div class="mini" style="background:linear-gradient(135deg,#fafafa,#e9e9ec);color:#3a3a3c;position:relative;overflow:hidden;">
+            <div style="position:absolute;inset:-12px;background:radial-gradient(52px 46px at 82% 20%,rgba(255,149,0,.44),transparent 68%),radial-gradient(58px 50px at 60% 78%,rgba(255,45,85,.38),transparent 70%),radial-gradient(62px 56px at 22% 92%,rgba(0,122,255,.36),transparent 70%),radial-gradient(50px 50px at 14% 26%,rgba(52,199,89,.34),transparent 70%);"></div>
+            <div style="position:relative;">
+              <div class="lbl" style="color:#6a6a6e;">Apple Card</div>
+              <div class="bal" style="color:#1c1c1e;">$1,240</div>
+              <div style="display:flex;justify-content:flex-end;margin-top:16px;"><span style="width:15px;height:15px;border-radius:50%;background:#eb001b;display:block;"></span><span style="width:15px;height:15px;border-radius:50%;background:#f79e1b;margin-left:-6px;mix-blend-mode:multiply;display:block;"></span></div>
+            </div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="tag" style="color:#ff2d55">Credit Card · Wallet</span>
+          <h3>Apple Card</h3>
+          <p>The titanium card with its mesh gradient, the colorful spending category wheel, Daily Cash, and category-coded transactions.</p>
+          <div class="meta"><span class="chip">Editable</span><span class="chip">Animated</span><span class="chip">Mobile</span></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Strava -->
+    <a class="cardlink" data-mode="mobile" href="dashboards/strava/index.html">
+      <div class="card">
+        <div class="thumb" style="background:linear-gradient(160deg,#3a1a08,#0a0a0d)">
+          <div class="mini" style="background:#fff;color:#141a1f">
+            <div style="color:#fc4c02;font-weight:800;font-size:12px;letter-spacing:.3px;">STRAVA</div>
+            <div style="font-weight:700;font-size:11px;margin:3px 0 5px;">Morning Run</div>
+            <svg width="126" height="52" viewBox="0 0 126 52" style="border-radius:5px;">
+              <rect width="126" height="52" fill="#e8ebee"/>
+              <line x1="0" y1="18" x2="126" y2="26" stroke="#d2d7db" stroke-width="3"/><line x1="46" y1="0" x2="54" y2="52" stroke="#d2d7db" stroke-width="3"/>
+              <path d="M10,40 L28,24 L46,30 L66,12 L88,24 L106,10 L118,20" fill="none" stroke="#fc4c02" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="10" cy="40" r="4" fill="#fff" stroke="#fc4c02" stroke-width="2.5"/><circle cx="118" cy="20" r="4" fill="#fc4c02"/>
+            </svg>
+            <div style="display:flex;gap:12px;margin-top:6px;font-size:8px;color:#6d7278;"><span><b style="font-size:11px;color:#141a1f;">6.21</b> mi</span><span><b style="font-size:11px;color:#141a1f;">7:48</b> /mi</span></div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="tag" style="color:#fc4c02">Fitness · Social</span>
+          <h3>Strava</h3>
+          <p>The activity feed — friends' runs and rides with route maps, kudos, a weekly-mileage profile, and a live Record screen.</p>
+          <div class="meta"><span class="chip">Editable</span><span class="chip">Animated</span><span class="chip">Mobile</span></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Apple Fitness -->
+    <a class="cardlink" data-mode="mobile" href="dashboards/apple-fitness/index.html">
+      <div class="card">
+        <div class="thumb" style="background:linear-gradient(160deg,#2a0a14,#000)">
+          <div class="mini" style="background:#000;color:#fff;border:1px solid #1c1c1e;display:flex;flex-direction:column;align-items:center;">
+            <svg width="78" height="78" viewBox="0 0 78 78">
+              <circle cx="39" cy="39" r="31" fill="none" stroke="rgba(250,17,79,.22)" stroke-width="7"/>
+              <circle cx="39" cy="39" r="31" fill="none" stroke="#fa114f" stroke-width="7" stroke-linecap="round" stroke-dasharray="195 0" transform="rotate(-90 39 39)"/>
+              <circle cx="39" cy="39" r="21.5" fill="none" stroke="rgba(162,247,59,.2)" stroke-width="7"/>
+              <circle cx="39" cy="39" r="21.5" fill="none" stroke="#a2f73b" stroke-width="7" stroke-linecap="round" stroke-dasharray="135 0" transform="rotate(-90 39 39)"/>
+              <circle cx="39" cy="39" r="12" fill="none" stroke="rgba(26,235,255,.2)" stroke-width="7"/>
+              <circle cx="39" cy="39" r="12" fill="none" stroke="#1aebff" stroke-width="7" stroke-linecap="round" stroke-dasharray="62 14" transform="rotate(-90 39 39)"/>
+            </svg>
+            <div style="font-size:16px;font-weight:800;margin-top:8px;">8,432</div>
+            <div style="font-size:9px;opacity:.55;">steps today</div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="tag" style="color:#fa114f">Health · Activity</span>
+          <h3>Apple Fitness</h3>
+          <p>The three Activity rings — Move, Exercise, Stand — plus a steps view with hourly &amp; weekly bars, workouts, and awards.</p>
+          <div class="meta"><span class="chip">Editable</span><span class="chip">Animated</span><span class="chip">Mobile</span></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- GitHub -->
+    <a class="cardlink" data-mode="mobile" href="dashboards/github/index.html">
+      <div class="card">
+        <div class="thumb" style="background:linear-gradient(160deg,#0d1117,#000)">
+          <div class="mini" style="background:#0d1117;color:#e6edf3;border:1px solid #30363d;">
+            <div style="font-size:9px;color:#7d8590;margin-bottom:6px;"><b style="color:#e6edf3;">1,247</b> contributions</div>
+            <div style="display:grid;grid-template-columns:repeat(13,1fr);gap:2px;">
+              <span style="aspect-ratio:1;border-radius:1.5px;background:#161b22"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#0e4429"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#006d32"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#0e4429"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#161b22"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#006d32"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#26a641"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#0e4429"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#161b22"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#0e4429"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#006d32"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#39d353"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#006d32"></span>
+              <span style="aspect-ratio:1;border-radius:1.5px;background:#0e4429"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#006d32"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#26a641"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#006d32"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#0e4429"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#26a641"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#39d353"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#006d32"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#0e4429"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#006d32"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#26a641"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#26a641"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#0e4429"></span>
+              <span style="aspect-ratio:1;border-radius:1.5px;background:#161b22"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#0e4429"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#006d32"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#39d353"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#006d32"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#0e4429"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#006d32"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#26a641"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#39d353"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#006d32"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#0e4429"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#006d32"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#161b22"></span>
+              <span style="aspect-ratio:1;border-radius:1.5px;background:#006d32"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#26a641"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#0e4429"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#006d32"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#26a641"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#39d353"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#006d32"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#0e4429"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#006d32"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#26a641"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#006d32"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#0e4429"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#26a641"></span>
+              <span style="aspect-ratio:1;border-radius:1.5px;background:#161b22"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#161b22"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#0e4429"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#006d32"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#0e4429"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#161b22"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#0e4429"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#006d32"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#26a641"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#0e4429"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#161b22"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#0e4429"></span><span style="aspect-ratio:1;border-radius:1.5px;background:#006d32"></span>
+            </div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="tag" style="color:#3fb950">Developer</span>
+          <h3>GitHub</h3>
+          <p>The mobile profile — the contribution graph, pinned repos, achievements, a My Work home, and a notifications inbox.</p>
+          <div class="meta"><span class="chip">Editable</span><span class="chip">Animated</span><span class="chip">Mobile</span></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Screen Time -->
+    <a class="cardlink" data-mode="mobile" href="dashboards/screen-time/index.html">
+      <div class="card">
+        <div class="thumb" style="background:linear-gradient(160deg,#1a2233,#0a0a0d)">
+          <div class="mini" style="background:#fff;color:#1c1c1e;">
+            <div class="lbl" style="color:#8a8a8e;">Screen Time · Daily Avg</div>
+            <div class="bal" style="color:#1c1c1e;">6h 17m</div>
+            <div style="display:flex;align-items:flex-end;gap:4px;height:42px;margin-top:9px;">
+              <span style="flex:1;display:flex;flex-direction:column-reverse;height:55%;gap:1px;"><b style="flex:46;background:#0a84ff;border-radius:0 0 2px 2px;"></b><b style="flex:32;background:#ff375f;"></b><b style="flex:22;background:#ff9f0a;border-radius:2px 2px 0 0;"></b></span>
+              <span style="flex:1;display:flex;flex-direction:column-reverse;height:72%;gap:1px;"><b style="flex:46;background:#0a84ff;border-radius:0 0 2px 2px;"></b><b style="flex:32;background:#ff375f;"></b><b style="flex:22;background:#ff9f0a;border-radius:2px 2px 0 0;"></b></span>
+              <span style="flex:1;display:flex;flex-direction:column-reverse;height:85%;gap:1px;"><b style="flex:46;background:#0a84ff;border-radius:0 0 2px 2px;"></b><b style="flex:32;background:#ff375f;"></b><b style="flex:22;background:#30b0c7;border-radius:2px 2px 0 0;"></b></span>
+              <span style="flex:1;display:flex;flex-direction:column-reverse;height:64%;gap:1px;"><b style="flex:46;background:#0a84ff;border-radius:0 0 2px 2px;"></b><b style="flex:32;background:#ff375f;"></b><b style="flex:22;background:#ff9f0a;border-radius:2px 2px 0 0;"></b></span>
+              <span style="flex:1;display:flex;flex-direction:column-reverse;height:92%;gap:1px;"><b style="flex:46;background:#0a84ff;border-radius:0 0 2px 2px;"></b><b style="flex:32;background:#ff375f;"></b><b style="flex:22;background:#30b0c7;border-radius:2px 2px 0 0;"></b></span>
+              <span style="flex:1;display:flex;flex-direction:column-reverse;height:100%;gap:1px;"><b style="flex:46;background:#0a84ff;border-radius:0 0 2px 2px;"></b><b style="flex:32;background:#ff375f;"></b><b style="flex:22;background:#ff9f0a;border-radius:2px 2px 0 0;"></b></span>
+              <span style="flex:1;display:flex;flex-direction:column-reverse;height:78%;gap:1px;"><b style="flex:46;background:#0a84ff;border-radius:0 0 2px 2px;"></b><b style="flex:32;background:#ff375f;"></b><b style="flex:22;background:#30b0c7;border-radius:2px 2px 0 0;"></b></span>
+            </div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="tag" style="color:#0a84ff">iOS · Digital Wellbeing</span>
+          <h3>Screen Time</h3>
+          <p>The Settings report — a Day/Week stacked-category usage chart, category breakdown, most-used apps, and Pickups &amp; Notifications detail.</p>
+          <div class="meta"><span class="chip">Editable</span><span class="chip">Animated</span><span class="chip">Mobile</span></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Spotify Wrapped -->
+    <a class="cardlink" data-mode="mobile" href="dashboards/spotify-wrapped/index.html">
+      <div class="card">
+        <div class="thumb" style="background:linear-gradient(160deg,#3a1466,#0a0a0d)">
+          <div class="mini" style="background:linear-gradient(155deg,#0a2417,#1ed760);color:#08160d;">
+            <div class="lbl" style="color:#08160d;opacity:.75;">Your #1 Artist</div>
+            <div style="width:58px;height:58px;border-radius:5px;background:linear-gradient(135deg,#ff6a3d,#f038a0 48%,#5b2bd6);margin:7px 0 8px;box-shadow:0 6px 16px rgba(0,0,0,.3);"></div>
+            <div style="font-size:18px;font-weight:800;color:#08160d;letter-spacing:-.4px;">Nova Sol</div>
+            <div class="chg" style="background:#08160d;color:#1ed760;margin-top:7px;">TOP 0.5%</div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="tag" style="color:#1ed760">Music · Year in Review</span>
+          <h3>Spotify Wrapped</h3>
+          <p>The tap-through story — Top Artist, "you're in the top 0.5%", minutes, songs &amp; genres. Editable name, %, and a real photo upload.</p>
+          <div class="meta"><span class="chip">Editable</span><span class="chip">Animated</span><span class="chip">Mobile</span></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Bet Slip -->
+    <a class="cardlink" data-mode="mobile" href="dashboards/bet-slip/index.html">
+      <div class="card">
+        <div class="thumb" style="background:linear-gradient(160deg,#0a2e16,#0a0a0d)">
+          <div class="mini" style="background:#161b22;color:#eef1f4;border:1px solid #262d37;">
+            <div class="chg" style="background:rgba(32,193,94,.16);color:#20c15e;margin:0 0 6px;display:inline-block;">WON</div>
+            <div class="lbl" style="color:#8b95a1;">6-Leg Parlay · +19150</div>
+            <div class="bal" style="color:#20c15e;">$4,812</div>
+            <div class="rowlet" style="margin-top:8px;"><span class="dot" style="background:#20c15e;width:13px;height:13px;"></span><span class="bar" style="background:#262d37;"></span></div>
+            <div class="rowlet"><span class="dot" style="background:#20c15e;width:13px;height:13px;"></span><span class="bar" style="background:#262d37;"></span></div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="tag" style="color:#53d337">Sportsbook · Flex</span>
+          <h3>Bet Slip</h3>
+          <p>The settled winning parlay — big green payout, huge odds, and every leg checked off. My Bets list, live/lobby boards, and account.</p>
+          <div class="meta"><span class="chip">Editable</span><span class="chip">Animated</span><span class="chip">Mobile</span></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Crypto PnL card -->
+    <a class="cardlink" data-mode="mobile" href="dashboards/crypto-pnl/index.html">
+      <div class="card">
+        <div class="thumb" style="background:linear-gradient(160deg,#241a00,#0a0a0d)">
+          <div class="mini" style="background:#0c0d10;color:#eef1f4;border:1px solid #23262d;">
+            <div style="display:flex;align-items:center;gap:4px;color:#f0b90b;font-weight:900;font-size:11px;letter-spacing:.3px;"><span style="width:11px;height:11px;background:#f0b90b;display:inline-block;transform:rotate(45deg);"></span>BINANCE</div>
+            <div style="font-size:9px;color:#8b95a1;margin:6px 0 3px;">Long 20x · BTCUSDT</div>
+            <div class="bal" style="color:#0ecb81;font-size:20px;">+1284%</div>
+            <div style="display:flex;justify-content:flex-end;margin-top:8px;">
+              <svg viewBox="0 0 30 30" style="width:32px;height:32px;background:#fff;border-radius:3px;">
+                <rect x="1.5" y="1.5" width="8" height="8" fill="none" stroke="#000" stroke-width="1.6"/><rect x="4" y="4" width="3" height="3" fill="#000"/>
+                <rect x="20.5" y="1.5" width="8" height="8" fill="none" stroke="#000" stroke-width="1.6"/><rect x="23" y="4" width="3" height="3" fill="#000"/>
+                <rect x="1.5" y="20.5" width="8" height="8" fill="none" stroke="#000" stroke-width="1.6"/><rect x="4" y="23" width="3" height="3" fill="#000"/>
+                <rect x="12" y="2" width="2" height="2" fill="#000"/><rect x="16" y="4" width="2" height="2" fill="#000"/><rect x="13" y="12" width="2" height="2" fill="#000"/><rect x="17" y="14" width="2" height="2" fill="#000"/><rect x="21" y="13" width="2" height="2" fill="#000"/><rect x="25" y="16" width="2" height="2" fill="#000"/><rect x="12" y="22" width="2" height="2" fill="#000"/><rect x="15" y="26" width="2" height="2" fill="#000"/><rect x="19" y="24" width="2" height="2" fill="#000"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="tag" style="color:#f0b90b">Crypto · PnL Flex</span>
+          <h3>Futures PnL Card</h3>
+          <p>The shareable position card — huge ROI %, leverage, entry/mark, referral + QR. Toggle Binance or Hyperliquid skins.</p>
+          <div class="meta"><span class="chip">Editable</span><span class="chip">Animated</span><span class="chip">Mobile</span></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- App Store -->
+    <a class="cardlink" data-mode="mobile" href="dashboards/app-store/index.html">
+      <div class="card">
+        <div class="thumb" style="background:linear-gradient(160deg,#0a4a9e,#0a0a0d)">
+          <div class="mini" style="background:#fff;color:#1c1c1e;padding:10px 11px;">
+            <div style="display:flex;align-items:center;gap:7px;background:#e9e9ee;border-radius:9px;padding:6px 9px;">
+              <svg viewBox="0 0 24 24" style="width:12px;height:12px;" fill="none" stroke="#8e8e93" stroke-width="2.6"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4" stroke-linecap="round"/></svg>
+              <span style="font-size:11px;font-weight:600;color:#3c3c43;">hinge</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:11px;">
+              <div style="width:34px;height:34px;border-radius:9px;background:#111;flex:0 0 auto;display:flex;align-items:center;justify-content:center;color:#fff;font-size:17px;font-weight:800;">H</div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:11px;font-weight:700;">Hinge Dating App</div>
+                <div style="font-size:9px;color:#8e8e93;margin-top:1px;">Designed to be deleted</div>
+              </div>
+              <span style="background:#e8e8ed;color:#007aff;font-size:9px;font-weight:800;padding:4px 12px;border-radius:11px;letter-spacing:.3px;">GET</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:10px;">
+              <div style="width:34px;height:34px;border-radius:9px;background:linear-gradient(150deg,#fe5f6d,#fd297b);flex:0 0 auto;"></div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:11px;font-weight:700;">Tinder — Dating &amp; Chat</div>
+                <div style="font-size:9px;color:#8e8e93;margin-top:1px;">Match. Chat. Date.</div>
+              </div>
+              <span style="background:#e8e8ed;color:#007aff;font-size:9px;font-weight:800;padding:4px 12px;border-radius:11px;letter-spacing:.3px;">GET</span>
+            </div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="tag" style="color:#0a84ff">Apple · Store UI</span>
+          <h3>App Store</h3>
+          <p>Search results and a full product page. The lesson is the install button's three states — GET, the ☁ redownload cloud, and OPEN — plus the ratings histogram and privacy cards.</p>
+          <div class="meta"><span class="chip">Editable</span><span class="chip">Animated</span><span class="chip">Mobile</span></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Apple Health -->
+    <a class="cardlink" data-mode="mobile" href="dashboards/apple-health/index.html">
+      <div class="card">
+        <div class="thumb" style="background:linear-gradient(160deg,#3a2008,#000)">
+          <div class="mini" style="background:#000;color:#fff;border:1px solid #1c1c1e">
+            <div class="lbl" style="letter-spacing:1px;">AVERAGE</div>
+            <div class="bal">1,824 <small style="font-size:10px;font-weight:600;opacity:.55;">steps</small></div>
+            <div class="lbl" style="margin-top:2px;">Jun 20 – Jul 20</div>
+            <div style="display:flex;align-items:flex-end;gap:2px;height:30px;margin-top:7px;border-bottom:1px solid #2a2a2c;">
+              <span style="flex:1;height:18%;background:#fd7d22;border-radius:2px 2px 0 0;"></span><span style="flex:1;height:28%;background:#fd7d22;border-radius:2px 2px 0 0;"></span><span style="flex:1;height:20%;background:#fd7d22;border-radius:2px 2px 0 0;"></span><span style="flex:1;height:12%;background:#fd7d22;border-radius:2px 2px 0 0;"></span><span style="flex:1;height:52%;background:#fd7d22;border-radius:2px 2px 0 0;"></span><span style="flex:1;height:14%;background:#fd7d22;border-radius:2px 2px 0 0;"></span><span style="flex:1;height:38%;background:#fd7d22;border-radius:2px 2px 0 0;"></span><span style="flex:1;height:100%;background:#fd7d22;border-radius:2px 2px 0 0;"></span><span style="flex:1;height:74%;background:#fd7d22;border-radius:2px 2px 0 0;"></span><span style="flex:1;height:16%;background:#fd7d22;border-radius:2px 2px 0 0;"></span>
+            </div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="tag" style="color:#fd7d22">Health · Steps</span>
+          <h3>Apple Health</h3>
+          <p>The Steps detail — D/W/M/6M/Y period chart with dashed week gridlines, Highlights comparison bars, and the today-vs-average curve.</p>
+          <div class="meta"><span class="chip">Editable</span><span class="chip">Animated</span><span class="chip">Mobile</span></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Whop -->
+    <a class="cardlink" data-mode="mobile" href="dashboards/whop/index.html">
+      <div class="card">
+        <div class="thumb" style="background:linear-gradient(160deg,#101a3a,#000)">
+          <div class="mini" style="background:#000;color:#fff;border:1px solid #1d1f24">
+            <div style="display:flex;align-items:center;gap:5px;margin-bottom:5px;"><svg viewBox="0 0 24 24" style="width:13px;height:13px;"><path d="M12 3l1.8 6.2L20 11l-6.2 1.8L12 19l-1.8-6.2L4 11l6.2-1.8z" fill="#39d3c6"/></svg><b style="font-size:11px;">Starforge</b></div>
+            <div class="lbl">Gross revenue</div>
+            <div class="bal" style="font-size:18px;">$42,318.60</div>
+            <div style="color:#7fa6ff;font-size:9px;font-weight:700;margin-top:2px;">▼ $58,204.11 (57.9%)</div>
+            <div style="display:flex;align-items:flex-end;gap:3px;height:24px;margin-top:7px;">
+              <span style="flex:1;height:45%;background:#87a9f7;border-radius:2px;"></span><span style="flex:1;height:100%;background:#87a9f7;border-radius:2px;"></span><span style="flex:1;height:80%;background:#87a9f7;border-radius:2px;"></span><span style="flex:1;height:60%;background:#87a9f7;border-radius:2px;"></span><span style="flex:1;height:38%;background:#87a9f7;border-radius:2px;"></span><span style="flex:1;height:24%;background:#87a9f7;border-radius:2px;"></span><span style="flex:1;height:14%;background:#87a9f7;border-radius:2px;"></span>
+            </div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="tag" style="color:#7fa6ff">Creator · Store Console</span>
+          <h3>Whop</h3>
+          <p>The creator-store console — Balances/Analytics/Payments/Users tabs, redrawing range charts, a USD drill-down with pending breakdown, and the personal wallet.</p>
+          <div class="meta"><span class="chip">Editable</span><span class="chip">Animated</span><span class="chip">Mobile</span></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Stripe Desktop -->
+    <a class="cardlink" data-mode="desktop" href="dashboards/stripe-desktop/index.html">
+      <div class="card">
+        <div class="thumb" style="background:linear-gradient(160deg,#241f5c,#0a0a0d)">
+          <div class="mini" style="width:196px;background:#fff;color:#1a1f36;padding:0;overflow:hidden;">
+            <div style="display:flex;align-items:center;gap:4px;background:#f0f1f6;padding:5px 8px;"><span style="width:6px;height:6px;border-radius:50%;background:#ff5f57;"></span><span style="width:6px;height:6px;border-radius:50%;background:#febc2e;"></span><span style="width:6px;height:6px;border-radius:50%;background:#28c840;"></span><span style="flex:1;background:#fff;border-radius:4px;font-size:7px;color:#9aa0b3;padding:2px 6px;margin-left:5px;">dashboard.stripe.com</span></div>
+            <div style="display:flex;">
+              <div style="width:52px;background:#f6f8fa;border-right:1px solid #e8eaf0;padding:7px 6px;font-size:7px;color:#6a7086;line-height:2;"><b style="color:#635BFF;">Home</b><br>Balances<br>Payments<br>Customers</div>
+              <div style="flex:1;padding:8px 9px;">
+                <div class="lbl" style="margin-bottom:2px;">Gross volume</div>
+                <div style="font-size:15px;font-weight:800;letter-spacing:-.3px;">$28,462</div>
+                <svg width="110" height="26" viewBox="0 0 110 26" style="margin-top:5px;"><polyline points="0,20 15,17 30,19 45,11 60,14 75,7 92,10 110,3" fill="none" stroke="#635BFF" stroke-width="2"/><polyline points="0,22 15,21 30,22 45,18 60,19 75,15 92,17 110,13" fill="none" stroke="#d5d9e4" stroke-width="1.5" stroke-dasharray="3 3"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="tag" style="color:#8a83ff">Payments · Web Console</span>
+          <h3>Stripe Dashboard</h3>
+          <p>The first desktop dashboard — browser frame, sidebar nav, Today charts with a yesterday comparison line, and payments &amp; customers tables.</p>
+          <div class="meta"><span class="chip">Editable</span><span class="chip">Animated</span><span class="chip">Desktop</span></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- YouTube Studio Desktop -->
+    <a class="cardlink" data-mode="desktop" href="dashboards/youtube-studio-desktop/index.html">
+      <div class="card">
+        <div class="thumb" style="background:linear-gradient(160deg,#3a0d0d,#0a0a0d)">
+          <div class="mini" style="width:196px;background:#0f0f0f;color:#f1f1f1;border:1px solid #282828;padding:0;overflow:hidden;">
+            <div style="display:flex;align-items:center;gap:4px;background:#1f1f1f;padding:5px 8px;"><span style="width:6px;height:6px;border-radius:50%;background:#ff5f57;"></span><span style="width:6px;height:6px;border-radius:50%;background:#febc2e;"></span><span style="width:6px;height:6px;border-radius:50%;background:#28c840;"></span><span style="flex:1;background:#0f0f0f;border-radius:4px;font-size:7px;color:#717171;padding:2px 6px;margin-left:5px;">studio.youtube.com</span></div>
+            <div style="display:flex;">
+              <div style="width:52px;border-right:1px solid #282828;padding:7px 6px;font-size:7px;color:#aaa;line-height:2;"><b style="color:#fff;">Dashboard</b><br>Content<br>Analytics<br>Comments</div>
+              <div style="flex:1;padding:8px 9px;">
+                <div class="lbl">Current subscribers</div>
+                <div style="font-size:15px;font-weight:800;letter-spacing:-.3px;">24,812</div>
+                <svg width="110" height="24" viewBox="0 0 110 24" style="margin-top:5px;"><polyline points="0,19 15,16 30,18 45,10 60,13 75,6 92,9 110,2" fill="none" stroke="#3ea6ff" stroke-width="2"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="tag" style="color:#ff5c5c">Creator · Web Console</span>
+          <h3>YouTube Studio Desktop</h3>
+          <p>The Studio web app — channel dashboard cards, Analytics with realtime, a Content table, and comments. Sidebar routed.</p>
+          <div class="meta"><span class="chip">Editable</span><span class="chip">Animated</span><span class="chip">Desktop</span></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Shopify Admin Desktop -->
+    <a class="cardlink" data-mode="desktop" href="dashboards/shopify-desktop/index.html">
+      <div class="card">
+        <div class="thumb" style="background:linear-gradient(160deg,#0b3b2e,#0a0a0d)">
+          <div class="mini" style="width:196px;background:#f1f2f4;color:#303030;padding:0;overflow:hidden;">
+            <div style="display:flex;align-items:center;gap:4px;background:#1a1a1a;padding:5px 8px;"><span style="width:6px;height:6px;border-radius:50%;background:#ff5f57;"></span><span style="width:6px;height:6px;border-radius:50%;background:#febc2e;"></span><span style="width:6px;height:6px;border-radius:50%;background:#28c840;"></span><span style="flex:1;background:#303030;border-radius:4px;font-size:7px;color:#9aa0b3;padding:2px 6px;margin-left:5px;">admin.shopify.com</span></div>
+            <div style="display:flex;">
+              <div style="width:52px;background:#ebebeb;border-right:1px solid #e0e0e0;padding:7px 6px;font-size:7px;color:#616161;line-height:2;"><b style="color:#008060;">Home</b><br>Orders<br>Products<br>Analytics</div>
+              <div style="flex:1;padding:8px 9px;background:#fff;">
+                <div class="lbl" style="color:#616161;">Total sales</div>
+                <div style="font-size:15px;font-weight:800;letter-spacing:-.3px;">$12,480</div>
+                <svg width="110" height="24" viewBox="0 0 110 24" style="margin-top:5px;"><polyline points="0,19 15,16 30,18 45,10 60,13 75,6 92,9 110,2" fill="none" stroke="#008060" stroke-width="2"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="tag" style="color:#2ea883">Merchant · Web Console</span>
+          <h3>Shopify Admin Desktop</h3>
+          <p>The admin console — dark top bar, Home sales chart, Orders with payment &amp; fulfillment pills, Products, Customers, and Analytics sparklines.</p>
+          <div class="meta"><span class="chip">Editable</span><span class="chip">Animated</span><span class="chip">Desktop</span></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- GitHub Desktop -->
+    <a class="cardlink" data-mode="desktop" href="dashboards/github-desktop/index.html">
+      <div class="card">
+        <div class="thumb" style="background:linear-gradient(160deg,#0d1117,#000)">
+          <div class="mini" style="width:196px;background:#0d1117;color:#e6edf3;border:1px solid #30363d;padding:0;overflow:hidden;">
+            <div style="display:flex;align-items:center;gap:4px;background:#161b22;padding:5px 8px;"><span style="width:6px;height:6px;border-radius:50%;background:#ff5f57;"></span><span style="width:6px;height:6px;border-radius:50%;background:#febc2e;"></span><span style="width:6px;height:6px;border-radius:50%;background:#28c840;"></span><span style="flex:1;background:#0d1117;border-radius:4px;font-size:7px;color:#7d8590;padding:2px 6px;margin-left:5px;">github.com/jrivera</span></div>
+            <div style="display:flex;padding:8px 9px;gap:8px;">
+              <div style="width:34px;"><div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#4493f8,#a371f7);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;">JR</div><div style="font-size:7px;color:#7d8590;margin-top:4px;">1.2k<br>followers</div></div>
+              <div style="flex:1;">
+                <div style="font-size:8px;color:#7d8590;margin-bottom:4px;"><b style="color:#e6edf3;">1,247</b> contributions</div>
+                <div style="display:grid;grid-template-columns:repeat(14,1fr);gap:1.5px;">
+                  <span style="aspect-ratio:1;border-radius:1px;background:#161b22"></span><span style="aspect-ratio:1;border-radius:1px;background:#0e4429"></span><span style="aspect-ratio:1;border-radius:1px;background:#006d32"></span><span style="aspect-ratio:1;border-radius:1px;background:#26a641"></span><span style="aspect-ratio:1;border-radius:1px;background:#0e4429"></span><span style="aspect-ratio:1;border-radius:1px;background:#161b22"></span><span style="aspect-ratio:1;border-radius:1px;background:#006d32"></span><span style="aspect-ratio:1;border-radius:1px;background:#39d353"></span><span style="aspect-ratio:1;border-radius:1px;background:#0e4429"></span><span style="aspect-ratio:1;border-radius:1px;background:#006d32"></span><span style="aspect-ratio:1;border-radius:1px;background:#26a641"></span><span style="aspect-ratio:1;border-radius:1px;background:#161b22"></span><span style="aspect-ratio:1;border-radius:1px;background:#0e4429"></span><span style="aspect-ratio:1;border-radius:1px;background:#006d32"></span>
+                  <span style="aspect-ratio:1;border-radius:1px;background:#006d32"></span><span style="aspect-ratio:1;border-radius:1px;background:#161b22"></span><span style="aspect-ratio:1;border-radius:1px;background:#26a641"></span><span style="aspect-ratio:1;border-radius:1px;background:#0e4429"></span><span style="aspect-ratio:1;border-radius:1px;background:#39d353"></span><span style="aspect-ratio:1;border-radius:1px;background:#006d32"></span><span style="aspect-ratio:1;border-radius:1px;background:#0e4429"></span><span style="aspect-ratio:1;border-radius:1px;background:#161b22"></span><span style="aspect-ratio:1;border-radius:1px;background:#26a641"></span><span style="aspect-ratio:1;border-radius:1px;background:#006d32"></span><span style="aspect-ratio:1;border-radius:1px;background:#0e4429"></span><span style="aspect-ratio:1;border-radius:1px;background:#39d353"></span><span style="aspect-ratio:1;border-radius:1px;background:#006d32"></span><span style="aspect-ratio:1;border-radius:1px;background:#161b22"></span>
+                  <span style="aspect-ratio:1;border-radius:1px;background:#0e4429"></span><span style="aspect-ratio:1;border-radius:1px;background:#26a641"></span><span style="aspect-ratio:1;border-radius:1px;background:#161b22"></span><span style="aspect-ratio:1;border-radius:1px;background:#006d32"></span><span style="aspect-ratio:1;border-radius:1px;background:#0e4429"></span><span style="aspect-ratio:1;border-radius:1px;background:#26a641"></span><span style="aspect-ratio:1;border-radius:1px;background:#39d353"></span><span style="aspect-ratio:1;border-radius:1px;background:#006d32"></span><span style="aspect-ratio:1;border-radius:1px;background:#161b22"></span><span style="aspect-ratio:1;border-radius:1px;background:#0e4429"></span><span style="aspect-ratio:1;border-radius:1px;background:#006d32"></span><span style="aspect-ratio:1;border-radius:1px;background:#26a641"></span><span style="aspect-ratio:1;border-radius:1px;background:#0e4429"></span><span style="aspect-ratio:1;border-radius:1px;background:#161b22"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="tag" style="color:#3fb950">Developer · Web Profile</span>
+          <h3>GitHub Desktop</h3>
+          <p>The desktop profile — two-column layout, pinned repo grid, the full-width 53-week contribution graph, and a repositories tab.</p>
+          <div class="meta"><span class="chip">Editable</span><span class="chip">Animated</span><span class="chip">Desktop</span></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Kalshi Web Terminal -->
+    <a class="cardlink" data-mode="desktop" href="dashboards/kalshi-desktop/index.html">
+      <div class="card">
+        <div class="thumb" style="background:linear-gradient(160deg,#06231a,#0a0a0d)">
+          <div class="mini" style="width:196px;background:#000;color:#fff;border:1px solid #17392c;padding:0;overflow:hidden;">
+            <div style="display:flex;align-items:center;gap:4px;background:#0d0f0e;padding:5px 8px;"><span style="width:6px;height:6px;border-radius:50%;background:#ff5f57;"></span><span style="width:6px;height:6px;border-radius:50%;background:#febc2e;"></span><span style="width:6px;height:6px;border-radius:50%;background:#28c840;"></span><span style="flex:1;background:#000;border-radius:4px;font-size:7px;color:#5f6d66;padding:2px 6px;margin-left:5px;">kalshi.com/markets</span></div>
+            <div style="display:flex;">
+              <div style="width:64px;border-right:1px solid #17392c;padding:7px 6px;font-size:6.5px;color:#8a938e;line-height:1.9;">Finals MVP<br><b style="color:#00D68A;">46¢</b> <b style="color:#4b7bec;">54¢</b><br>Rate cut Dec<br><b style="color:#00D68A;">72¢</b> <b style="color:#4b7bec;">28¢</b></div>
+              <div style="flex:1;padding:7px 9px;">
+                <div style="font-size:14px;font-weight:700;color:#00D68A;">46%<span style="font-size:8px;color:#8a938e;"> Yes</span></div>
+                <div style="display:flex;gap:2px;margin-top:5px;align-items:flex-end;height:20px;">
+                  <span style="flex:1;height:60%;background:rgba(0,214,138,.35);"></span><span style="flex:1;height:80%;background:rgba(0,214,138,.5);"></span><span style="flex:1;height:100%;background:rgba(0,214,138,.7);"></span><span style="flex:1;height:100%;background:rgba(75,123,236,.7);"></span><span style="flex:1;height:70%;background:rgba(75,123,236,.5);"></span><span style="flex:1;height:45%;background:rgba(75,123,236,.35);"></span>
+                </div>
+                <div style="font-size:7px;color:#8a938e;margin-top:3px;text-align:center;">Order book · Spread 1¢</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="tag" style="color:#00D68A">Prediction Markets · Terminal</span>
+          <h3>Kalshi Web Terminal</h3>
+          <p>The desktop trading view — market list, price chart, a mint/blue order-book ladder with depth bars, and a live-computing trade ticket.</p>
+          <div class="meta"><span class="chip">Editable</span><span class="chip">Animated</span><span class="chip">Desktop</span></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- iMessage -->
+    <a class="cardlink" data-mode="mobile" href="dashboards/imessage/index.html">
+      <div class="card">
+        <div class="thumb" style="background:linear-gradient(160deg,#0d3a1a,#0a0a0d)">
+          <div class="mini" style="background:#000;color:#fff;border:1px solid #1c1c1e;padding:11px 10px;">
+            <div style="display:flex;align-items:center;gap:5px;padding-bottom:7px;margin-bottom:6px;">
+              <span style="width:16px;height:16px;border-radius:50%;background:linear-gradient(160deg,#6e6a8a,#413e58);flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:6.5px;font-weight:700;">JR</span>
+              <b style="font-size:8px;font-weight:700;letter-spacing:.2px;">Jordan Reyes</b>
+            </div>
+            <div style="display:flex;margin-bottom:4px;">
+              <span style="background:#262629;border-radius:9px;padding:4px 7px;font-size:7.5px;max-width:80%;">the light that morning was unreal</span>
+            </div>
+            <div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
+              <span style="background:#0B84FF;border-radius:9px;padding:4px 7px;font-size:7.5px;">they came out great</span>
+            </div>
+            <div style="display:flex;">
+              <span style="background:#262629;border-radius:9px;padding:4px 7px;font-size:7.5px;">what are you up to later</span>
+            </div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="tag" style="color:#3ad17c">Messaging · iOS</span>
+          <h3>iMessage</h3>
+          <p>A live conversation thread — bubble tails, tapbacks, a typing indicator, and a composer that actually sends and gets a reply back.</p>
+          <div class="meta"><span class="chip">Editable</span><span class="chip">Animated</span><span class="chip">Mobile</span></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Add new -->
+    <div class="card add" id="addCard">
+      <div>
+        <div class="plus">+</div>
+        <h3 style="margin:14px 0 6px;">Next dashboard</h3>
+        <p>Drop another screenshot in the chat and it lands here — same edit &amp; animate treatment.</p>
+      </div>
+    </div>
+
+    <div class="empty" id="empty">
+      <b>Nothing matches that</b>
+      <span id="emptyQ"></span>
+      <div><button type="button" id="emptyReset">Clear filters</button></div>
+    </div>
+
+  </div>
+
+  <footer>Built locally · open <code>index.html</code> in your browser · nothing leaves your machine</footer>
+</div>
+
+<div class="tutveil" id="tutVeil" role="dialog" aria-modal="true" aria-label="Tutorial video">
+  <div class="tutcard">
+    <div class="tuthead">
+      <h3 id="tutTitle">Krypt LARP — tutorial</h3>
+      <button class="x" id="tutClose" type="button" aria-label="Close">✕</button>
+    </div>
+    <div class="tutframe" id="tutFrame"></div>
+    <div class="tutfoot"><a id="tutOpen">Open on YouTube ↗</a></div>
+  </div>
+</div>
+
+<script>
+  /* ============================================================
+     TUTORIAL VIDEO — set `id` to your YouTube video id and it goes live.
+     That's the 11 characters after "watch?v=" in the URL, e.g.
+     https://www.youtube.com/watch?v=dQw4w9WgXcQ  ->  "dQw4w9WgXcQ"
+
+     While it's left as PLACEHOLDER the overlay explains itself instead
+     of embedding a dead player.
+     ============================================================ */
+  const TUTORIAL = {
+    id: "8wlHYFw0vrg",
+    title: "Krypt LARP — tutorial",
+  };
+
+  (function initTutorial(){
+    const veil  = document.getElementById("tutVeil");
+    const frame = document.getElementById("tutFrame");
+    const open  = document.getElementById("tutOpen");
+    const ready = TUTORIAL.id && TUTORIAL.id !== "PLACEHOLDER";
+    const url   = "https://www.youtube.com/watch?v=" + TUTORIAL.id;
+
+    document.getElementById("tutTitle").textContent = TUTORIAL.title;
+    open.style.display = ready ? "" : "none";
+    open.addEventListener("click", () => {
+      // In the desktop app this has to leave the app deliberately;
+      // in a plain browser it's an ordinary new tab.
+      if (window.krypt && window.krypt.app) window.krypt.app.openExternal(url);
+      else window.open(url, "_blank", "noopener");
+    });
+
+    function show(){
+      if (!frame.firstChild) {
+        if (ready) {
+          const f = document.createElement("iframe");
+          // nocookie host + no related videos from other channels
+          f.src = "https://www.youtube-nocookie.com/embed/" + encodeURIComponent(TUTORIAL.id) +
+                  "?rel=0&modestbranding=1&autoplay=1";
+          f.title = TUTORIAL.title;
+          f.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture";
+          f.allowFullscreen = true;
+          f.referrerPolicy = "strict-origin-when-cross-origin";
+          frame.appendChild(f);
+        } else {
+          frame.innerHTML =
+            '<div class="tutph"><b>No tutorial video set yet</b>' +
+            '<div>Put your YouTube video id in <code>TUTORIAL.id</code> ' +
+            'near the bottom of <code>index.html</code> and this becomes the player.</div></div>';
+        }
+      }
+      veil.classList.add("open");
+    }
+
+    function hide(){
+      veil.classList.remove("open");
+      // Tear the iframe down so the video actually stops.
+      if (ready) frame.innerHTML = "";
+    }
+
+    document.getElementById("tutBtn").addEventListener("click", show);
+    document.getElementById("tutClose").addEventListener("click", hide);
+    veil.addEventListener("click", e => { if (e.target === veil) hide(); });
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape" && veil.classList.contains("open")) hide();
+    });
+  })();
+
+  /* ============================================================
+     GALLERY — search, category and mobile/desktop filtering.
+
+     Everything below reads the cards that are already in the markup;
+     nothing here has to be updated when a dashboard is added, except
+     CATS, which is the one thing that can't be inferred (a card's tag
+     text is bespoke per dashboard — "Sportsbook · Flex", "iOS · Digital
+     Wellbeing" — so grouping them is a judgement call, not a parse).
+     ============================================================ */
+  const CATS = {
+    "Money":     ["venmo","cash-app","paypal","chase","apple-card"],
+    "Commerce":  ["shopify","shopify-desktop","stripe","stripe-desktop","whop","app-store"],
+    "Crypto":    ["phantom-wallet","coinbase","crypto-pnl"],
+    "Markets":   ["robinhood","kalshi","kalshi-desktop","bet-slip"],
+    "Creator":   ["tiktok-earnings","x-earnings","youtube-studio","youtube-studio-desktop","instagram-insights"],
+    "Health":    ["apple-fitness","apple-health","strava"],
+    "Developer": ["github","github-desktop"],
+    "Lifestyle": ["screen-time","spotify-wrapped","imessage"],
+  };
+
+  /* Anything marked data-ext leaves the app deliberately: through the
+     shell in the desktop build, a new tab in a plain browser. The href
+     stays on the element so it still works with JS off. */
+  document.addEventListener("click", e => {
+    const a = e.target.closest("[data-ext]");
+    if (!a) return;
+    e.preventDefault();
+    const url = a.dataset.ext;
+    if (window.krypt && window.krypt.app) window.krypt.app.openExternal(url);
+    else window.open(url, "_blank", "noopener");
+  });
+
+  const cards = [...document.querySelectorAll(".cardlink")];
+  const grid  = document.getElementById("grid");
+  const addCard = document.getElementById("addCard");
+  const empty = document.getElementById("empty");
+  const qInput = document.getElementById("q");
+  const searchBox = document.getElementById("search");
+
+  const catOf = {};
+  for (const [name, slugs] of Object.entries(CATS)) for (const s of slugs) catOf[s] = name;
+
+  /* Index each card once: its slug, its category, and the haystack the
+     search runs against (title + tag + blurb + slug). */
+  const unfiled = [];
+  for (const c of cards) {
+    const slug = (c.getAttribute("href").match(/dashboards\/([^/]+)\//) || [,""])[1];
+    const tag = c.querySelector(".tag");
+    c.dataset.slug = slug;
+    c.dataset.cat = catOf[slug] || "";
+    if (!catOf[slug]) unfiled.push(slug);
+    c.dataset.hay = [
+      c.querySelector("h3")?.textContent,
+      tag?.textContent,
+      c.querySelector("p")?.textContent,
+      slug.replace(/-/g, " "),
+    ].join(" ").toLowerCase();
+
+    // Each card borrows its own brand colour from the tag it already
+    // carries, so hover glow and focus ring match the dashboard.
+    if (tag) {
+      const rgb = getComputedStyle(tag).color.match(/\d+/g);
+      if (rgb && rgb.length >= 3) {
+        c.querySelector(".card").style.setProperty("--ca-rgb", rgb.slice(0, 3).join(","));
+      }
+    }
+  }
+  if (unfiled.length) console.warn("[gallery] no category for:", unfiled.join(", "));
+
+  /* ---- category chips, built from CATS in declaration order ---- */
+  const catsEl = document.getElementById("cats");
+  catsEl.innerHTML =
+    '<button class="cat on" data-c="">All<i>' + cards.length + "</i></button>" +
+    Object.keys(CATS).map(name => {
+      const n = cards.filter(c => c.dataset.cat === name).length;
+      return '<button class="cat" data-c="' + name + '">' + name + "<i>" + n + "</i></button>";
+    }).join("");
+
+  const state = { mode: "all", cat: "", q: "" };
+
+  function apply(replay) {
+    const q = state.q.trim().toLowerCase();
+    let shown = 0;
+
+    for (const c of cards) {
+      const ok = (state.mode === "all" || c.dataset.mode === state.mode)
+              && (!state.cat || c.dataset.cat === state.cat)
+              && (!q || c.dataset.hay.includes(q));
+      c.style.display = ok ? "" : "none";
+      if (!ok) continue;
+      if (replay) {
+        // Re-run the entrance for the survivors: strip the class, force a
+        // reflow so the animation is genuinely restarted, then stagger.
+        c.classList.remove("in");
+        void c.offsetWidth;
+        c.style.animationDelay = Math.min(shown * 26, 420) + "ms";
+        c.classList.add("in");
+      }
+      shown++;
+    }
+
+    // The "next dashboard" placeholder belongs at the end of the full set,
+    // not dangling after three search hits.
+    addCard.style.display = (q || state.cat || state.mode !== "all") ? "none" : "";
+    empty.classList.toggle("on", shown === 0);
+    document.getElementById("emptyQ").textContent =
+      q ? 'No dashboard matches "' + state.q.trim() + '".' : "No dashboard in this combination of filters.";
+
+    document.querySelectorAll(".mode").forEach(b => b.classList.toggle("on", b.dataset.m === state.mode));
+    document.querySelectorAll(".cat").forEach(b => b.classList.toggle("on", b.dataset.c === state.cat));
+    searchBox.classList.toggle("has", !!state.q);
+  }
+
+  document.getElementById("n").textContent = cards.length;
+  document.getElementById("cAll").textContent = cards.length;
+  document.getElementById("cMob").textContent = cards.filter(c => c.dataset.mode === "mobile").length;
+  document.getElementById("cDesk").textContent = cards.filter(c => c.dataset.mode === "desktop").length;
+
+  document.getElementById("modes").addEventListener("click", e => {
+    const b = e.target.closest(".mode");
+    if (!b) return;
+    state.mode = b.dataset.m;
+    try { localStorage.setItem("krypt-gallery-mode", state.mode); } catch (err) {}
+    apply(true);
+  });
+
+  catsEl.addEventListener("click", e => {
+    const b = e.target.closest(".cat");
+    if (!b) return;
+    // Clicking the active chip clears it, so the row doubles as a toggle.
+    state.cat = (b.dataset.c === state.cat) ? "" : b.dataset.c;
+    apply(true);
+  });
+
+  let qTimer = null;
+  qInput.addEventListener("input", () => {
+    state.q = qInput.value;
+    // Typing shouldn't re-play 30 entrance animations on every keystroke;
+    // the filter is instant, the stagger only lands once you pause.
+    apply(false);
+    clearTimeout(qTimer);
+    qTimer = setTimeout(() => apply(true), 220);
+  });
+
+  function clearSearch() { qInput.value = ""; state.q = ""; apply(true); qInput.focus(); }
+  document.getElementById("qClear").addEventListener("click", clearSearch);
+  document.getElementById("emptyReset").addEventListener("click", () => {
+    state.q = ""; state.cat = ""; state.mode = "all"; qInput.value = "";
+    try { localStorage.setItem("krypt-gallery-mode", "all"); } catch (err) {}
+    apply(true);
+  });
+
+  document.addEventListener("keydown", e => {
+    if (e.target === qInput) {
+      if (e.key === "Escape") { clearSearch(); }
+      // Enter on a single result opens it — search, then go.
+      if (e.key === "Enter") {
+        const hits = cards.filter(c => c.style.display !== "none");
+        if (hits.length) hits[0].click();
+      }
+      return;
+    }
+    // "/" focuses search, the way it does on GitHub — but not while the
+    // tutorial overlay owns the keyboard.
+    if (e.key === "/" && !e.ctrlKey && !e.metaKey && !e.altKey
+        && !document.getElementById("tutVeil").classList.contains("open")
+        && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) {
+      e.preventDefault();
+      qInput.focus();
+      qInput.select();
+    }
+  });
+
+  try {
+    const saved = localStorage.getItem("krypt-gallery-mode");
+    if (saved === "mobile" || saved === "desktop") state.mode = saved;
+  } catch (err) {}
+  apply(true);
+</script>
+<!-- krypt:app:start -->
+<script src="assets/krypt-app.js" data-root="./" data-label="Krypt LARP" data-gallery defer></script>
+<script src="assets/krypt-desktop.js" defer></script>
+<!-- krypt:app:end -->
+</body>
+</html>

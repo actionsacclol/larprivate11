@@ -1,0 +1,30 @@
+{
+  "name": "Venmo — Krypt LARP",
+  "short_name": "Venmo",
+  "description": "Venmo, recreated. Part of the Krypt LARP collection.",
+  "start_url": "../../dashboards/venmo/index.html",
+  "scope": "../../",
+  "display": "standalone",
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
+  "background_color": "#F5F5F7",
+  "theme_color": "#008CFF",
+  "icons": [
+    {
+      "src": "../icons/venmo-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../icons/venmo-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

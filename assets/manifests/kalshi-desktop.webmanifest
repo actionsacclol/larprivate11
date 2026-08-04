@@ -1,0 +1,30 @@
+{
+  "name": "Kalshi Terminal (desktop) — Krypt LARP",
+  "short_name": "Kalshi Web",
+  "description": "Kalshi Terminal (desktop), recreated. Part of the Krypt LARP collection.",
+  "start_url": "../../dashboards/kalshi-desktop/index.html",
+  "scope": "../../",
+  "display": "standalone",
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "any",
+  "background_color": "#FFFFFF",
+  "theme_color": "#00D082",
+  "icons": [
+    {
+      "src": "../icons/kalshi-desktop-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../icons/kalshi-desktop-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
