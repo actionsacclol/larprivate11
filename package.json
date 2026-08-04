@@ -2,7 +2,7 @@
   "name": "krypt-larp",
   "productName": "Krypt LARP",
   "version": "1.1.0",
-  "description": "A collection of faithful, editable, animated recreations of app UIs — 31 screens rebuilt from scratch, browsable on your desktop and servable to your phone over your own Wi-Fi. Part of the Krypt free tools suite.",
+  "description": "A collection of faithful, editable, animated recreations of app UIs \u2014 31 screens rebuilt from scratch, browsable on your desktop and servable to your phone over your own Wi-Fi. Part of the Krypt free tools suite.",
   "main": "electron/main.js",
   "author": {
     "name": "Krypt",
@@ -114,8 +114,6 @@
     },
     "publish": {
       "provider": "github",
-      "owner": "scripflipped",
-      "repo": "krypt-larp",
       "releaseType": "draft"
     }
   }
