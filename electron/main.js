@@ -22,6 +22,7 @@ const { spawn } = require('node:child_process');
 const store = require('./store.js');
 const discord = require('./discord.js');
 const autostart = require('./autostart.js');
+const custom = require('./custom.js');
 const {
   createLanServer, lanAddresses, vpnAddresses, qrMatrix, qrToSvg,
 } = require('../tools/lan-server.js');
@@ -172,7 +173,12 @@ function broadcastPhone() {
 async function startPhone() {
   if (phoneServer?.isRunning()) return phoneState();
   const port = store.get().port || 4173;
-  phoneServer = createLanServer({ root: ROOT, port, cacheDays: store.get().cacheDays });
+  phoneServer = createLanServer({
+    root: ROOT, port, cacheDays: store.get().cacheDays,
+    // Imported dashboards live in userData, not in the app bundle,
+    // so the server needs the store to reach them.
+    custom: custom.get(),
+  });
   try {
     await phoneServer.listen(port);
   } catch (err) {
@@ -241,6 +247,32 @@ function installMenu() {
           accelerator: 'CmdOrCtrl+G',
           click: () => void mainWindow?.loadFile(join(ROOT, 'index.html')),
         },
+        {
+          label: 'Your dashboards…',
+          accelerator: 'CmdOrCtrl+D',
+          click: () => void createMainWindow()
+            .loadFile(join(ROOT, 'custom', 'index.html')),
+        },
+        {
+          label: 'Import a dashboard…',
+          accelerator: 'CmdOrCtrl+I',
+          click: async () => {
+            const win = createMainWindow();
+            const r = await custom.importFiles(win);
+            // Land on the collection either way — after an import to show
+            // what arrived, after a cancel because that is where they were
+            // heading anyway.
+            await win.loadFile(join(ROOT, 'custom', 'index.html'));
+            if (r.errors.length) {
+              void dialog.showMessageBox(win, {
+                type: 'warning',
+                title: 'Could not import',
+                message: `${r.errors.length} file(s) could not be imported.`,
+                detail: r.errors.map(e => `${e.file}: ${e.message}`).join('\n'),
+              });
+            }
+          },
+        },
         { type: 'separator' },
         // Explicit rather than role:'quit' — Electron ignores `click` on a
         // role, and this is the one place that has to set `quitting` so the
@@ -299,8 +331,10 @@ function installMenu() {
             type: 'info',
             title: 'Krypt LARP',
             message: `Krypt LARP ${app.getVersion()}`,
-            detail: 'A collection of faithful, editable app-UI recreations.\n\n' +
-              'Every screen is a learning demo and is watermarked as such.\n\n' +
+            detail: 'A collection of editable interface mock-ups for apps that ' +
+              'do not exist.\n\n' +
+              'Every product, brand and icon in here is invented. Every screen ' +
+              'is a learning demo and is watermarked as such.\n\n' +
               'krypt.cc',
             buttons: ['OK'],
           }),
@@ -342,6 +376,20 @@ function registerIpc() {
       return { ok: false, reason: e.message };
     }
   });
+
+  /* ---- dashboards the user imported ---- */
+  const winOf = (e) => BrowserWindow.fromWebContents(e.sender) || mainWindow;
+  ipcMain.handle('custom:list', () => custom.get().list());
+  ipcMain.handle('custom:read', (_e, id) => custom.get().html(id));
+  ipcMain.handle('custom:import', (e) => custom.importFiles(winOf(e)));
+  ipcMain.handle('custom:importHtml', (_e, payload) => custom.importHtml(payload || {}));
+  ipcMain.handle('custom:importPaths', (_e, files) =>
+    custom.importPaths(Array.isArray(files) ? files : []));
+  ipcMain.handle('custom:rename', (_e, id, name) => custom.get().rename(id, name));
+  ipcMain.handle('custom:replace', (_e, id, html) => custom.get().replace(id, html));
+  ipcMain.handle('custom:remove', (e, id) => custom.removeOne(winOf(e), id));
+  ipcMain.handle('custom:export', (e, id) => custom.exportOne(winOf(e), id));
+  ipcMain.handle('custom:reveal', () => custom.reveal());
 
   ipcMain.handle('onboarding:seen', () => store.get().onboarded);
   ipcMain.handle('onboarding:markSeen', () => store.save({ onboarded: true }).onboarded);

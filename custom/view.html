@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Dashboard — Krypt LARP</title>
+<style>
+  /* ============================================================
+     view.html — runs one imported dashboard.
+
+     The dashboard is somebody's HTML, and "somebody" might not be you:
+     a file off the internet gets exactly the same treatment as one you
+     wrote. So it never runs in this document. It runs in an iframe with
+     sandbox="allow-scripts …" and *no* allow-same-origin, which puts it
+     on an opaque origin: it cannot read this page, cannot reach
+     window.krypt, cannot see any other dashboard's saved data, and
+     cannot read a cookie.
+
+     The cost of that is localStorage, which throws on an opaque origin —
+     and every dashboard worth importing uses it to remember your edits.
+     So the frame gets a shim that looks exactly like localStorage and
+     forwards writes here by postMessage, where they are kept namespaced
+     per dashboard. The dashboard is none the wiser and the sandbox
+     stays shut.
+     ============================================================ */
+  :root{ color-scheme: dark; }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;background:#0a0a0c;}
+  body{font:400 15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#e9e9ef;}
+
+  #frame{position:fixed;inset:0;width:100%;height:100%;border:0;display:block;background:#0a0a0c;}
+
+  /* ---- the corner control ---- */
+  .bar{position:fixed;left:max(12px,env(safe-area-inset-left));
+    bottom:max(12px,env(safe-area-inset-bottom));z-index:10;
+    display:flex;align-items:center;gap:6px;
+    font:600 13px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    -webkit-tap-highlight-color:transparent;}
+  .dot{width:34px;height:34px;border-radius:999px;border:1px solid rgba(255,255,255,.18);
+    background:rgba(18,18,22,.78);-webkit-backdrop-filter:blur(14px) saturate(180%);
+    backdrop-filter:blur(14px) saturate(180%);color:#fff;cursor:pointer;flex:none;
+    display:flex;align-items:center;justify-content:center;gap:3px;padding:0;
+    opacity:.55;transition:opacity .18s ease,transform .18s ease;}
+  .dot i{width:3px;height:3px;border-radius:50%;background:currentColor;display:block;}
+  .bar:hover .dot,.bar.open .dot{opacity:1;}
+  .bar.open .dot{transform:rotate(90deg);}
+
+  .pill{display:flex;align-items:center;gap:2px;padding:4px;border-radius:999px;
+    border:1px solid rgba(255,255,255,.14);background:rgba(18,18,22,.86);
+    -webkit-backdrop-filter:blur(16px) saturate(180%);backdrop-filter:blur(16px) saturate(180%);
+    box-shadow:0 8px 26px rgba(0,0,0,.5);
+    opacity:0;transform:translateX(-8px) scale(.94);transform-origin:left center;
+    pointer-events:none;transition:opacity .18s ease,transform .18s cubic-bezier(.2,.8,.3,1);}
+  .bar.open .pill{opacity:1;transform:none;pointer-events:auto;}
+  .btn{display:flex;align-items:center;gap:6px;padding:8px 13px;border:0;border-radius:999px;
+    background:transparent;color:#fff;cursor:pointer;font:inherit;white-space:nowrap;
+    text-decoration:none;}
+  .btn:hover{background:rgba(255,255,255,.12);}
+  .btn.danger{color:#ff7a7a;}
+  .btn svg{flex:none;width:14px;height:14px;}
+
+  /* ---- states ---- */
+  .msg{position:fixed;inset:0;display:none;place-items:center;padding:32px;text-align:center;}
+  .msg.on{display:grid;}
+  .msg .box{max-width:420px;}
+  .msg h1{font-size:19px;font-weight:700;margin-bottom:8px;letter-spacing:-.01em;}
+  .msg p{color:#9a9aa8;font-size:14px;margin-bottom:18px;}
+  .msg a{display:inline-block;background:#22222b;color:#fff;text-decoration:none;
+    padding:10px 18px;border-radius:11px;font-weight:600;font-size:14px;}
+  .msg a:hover{background:#2c2c37;}
+
+  .toast{position:fixed;left:50%;transform:translateX(-50%);
+    bottom:calc(14px + env(safe-area-inset-bottom));z-index:12;
+    padding:9px 16px;border-radius:999px;background:rgba(18,18,22,.92);color:#fff;
+    border:1px solid rgba(255,255,255,.14);font:600 12px/1 inherit;
+    opacity:0;transition:opacity .3s ease;pointer-events:none;}
+  .toast.on{opacity:1;}
+</style>
+</head>
+<body>
+
+<iframe id="frame"
+        title="Imported dashboard"
+        sandbox="allow-scripts allow-forms allow-popups allow-modals"
+        referrerpolicy="no-referrer"></iframe>
+
+<div class="msg" id="msg"><div class="box">
+  <h1 id="msgT">Loading…</h1>
+  <p id="msgP"></p>
+  <a href="index.html" id="msgA">← Your dashboards</a>
+</div></div>
+
+<div class="bar" id="bar">
+  <button class="dot" id="dot" type="button" aria-label="Controls"><i></i><i></i><i></i></button>
+  <div class="pill" id="pill"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="krypt-custom.js"></script>
+<!-- Headless: mounts nothing and listens for nothing. It is here only so
+     the panel inside the frame has somewhere real to send Add to Home
+     Screen and Home-screen icon, both of which act on this page. -->
+<script src="../assets/krypt-app.js" data-root="../" data-headless defer></script>
+<script>
+(function () {
+  'use strict';
+
+  var ID = new URLSearchParams(location.search).get('id') || '';
+  var frame = document.getElementById('frame');
+  var bar = document.getElementById('bar');
+  var pill = document.getElementById('pill');
+  var record = null;
+
+  /* ---------------- per-dashboard storage ----------------
+
+     The frame can't have a real localStorage, so this page keeps one
+     for it: a single JSON blob per dashboard, in *our* localStorage,
+     under a key nothing else uses. Namespacing by id is what stops two
+     imported dashboards that both save under "state" from overwriting
+     each other. */
+  var KEY = 'krypt-custom-data:' + ID;
+
+  function loadData() {
+    try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; }
+    catch (e) { return {}; }
+  }
+  function saveData(d) {
+    try { localStorage.setItem(KEY, JSON.stringify(d)); return true; }
+    catch (e) { return false; }   // quota or private mode
+  }
+
+  var data = loadData();
+
+  window.addEventListener('message', function (e) {
+    // Identity, not origin: a sandboxed frame's origin is the string
+    // "null", which is not something to trust or match on.
+    if (e.source !== frame.contentWindow) return;
+    var m = e.data;
+    if (!m || m.__kryptLS !== 1) return;
+    if (m.op === 'set') data[String(m.key)] = String(m.value);
+    else if (m.op === 'remove') delete data[String(m.key)];
+    else if (m.op === 'clear') data = {};
+    else return;
+    if (!saveData(data)) toast('Not enough browser storage to save that');
+  });
+
+  /* ---------------- the shim injected into the frame ---------------- */
+
+  function shimSource(seed) {
+    return '<script>(function(){' +
+      'var mem=' + JSON.stringify(seed) + ';' +
+      'function post(op,k,v){try{parent.postMessage(' +
+        '{__kryptLS:1,op:op,key:k,value:v},"*");}catch(e){}}' +
+      'function keys(){return Object.keys(mem);}' +
+      'var shim={' +
+        'getItem:function(k){k=String(k);' +
+          'return Object.prototype.hasOwnProperty.call(mem,k)?mem[k]:null;},' +
+        'setItem:function(k,v){k=String(k);mem[k]=String(v);post("set",k,mem[k]);},' +
+        'removeItem:function(k){k=String(k);delete mem[k];post("remove",k);},' +
+        'clear:function(){mem={};post("clear");},' +
+        'key:function(i){var a=keys();return i<a.length?a[i]:null;}' +
+      '};' +
+      'Object.defineProperty(shim,"length",{get:function(){return keys().length;}});' +
+      // The real accessor lives on the window or its prototype depending
+      // on the engine, and on an opaque origin it throws on read. Shadow
+      // whichever one is there; if both refuse, the dashboard still runs,
+      // it just won't remember anything.
+      'function put(o,n){try{Object.defineProperty(o,n,' +
+        '{value:shim,configurable:true,writable:false});return true;}catch(e){return false;}}' +
+      'if(!put(window,"localStorage"))put(Object.getPrototypeOf(window),"localStorage");' +
+      'if(!put(window,"sessionStorage"))put(Object.getPrototypeOf(window),"sessionStorage");' +
+      '})();<\/script>';
+  }
+
+  /* Put the shim before anything the dashboard ships, but after the
+     doctype — a script above <!DOCTYPE> drops the page into quirks
+     mode, which silently wrecks layouts built against standards mode. */
+  function inject(html, snippet) {
+    var head = /<head\b[^>]*>/i.exec(html);
+    if (head) return html.slice(0, head.index + head[0].length) + snippet +
+      html.slice(head.index + head[0].length);
+    var htmlTag = /<html\b[^>]*>/i.exec(html);
+    if (htmlTag) return html.slice(0, htmlTag.index + htmlTag[0].length) + snippet +
+      html.slice(htmlTag.index + htmlTag[0].length);
+    var doctype = /^\s*<!doctype[^>]*>/i.exec(html);
+    var at = doctype ? doctype[0].length : 0;
+    return html.slice(0, at) + snippet + html.slice(at);
+  }
+
+  /* srcdoc documents resolve relative URLs against *this* page, so a
+     dashboard that reuses assets/phone.css needs the base moved up one
+     level to the project root. Ours goes in first, and the first <base>
+     in a document is the one that counts. */
+  function withBase(html) {
+    return inject(html, '<base href="../">');
+  }
+
+  /* The controls layer goes in *with* the dashboard rather than around
+     it, so an imported dashboard gets the real thing: tap three times,
+     the same panel opens, Edit and Reset drive the dashboard's own
+     buttons, Currency rewrites its own amounts. None of that could work
+     from out here — the sandbox is opaque, and the parent cannot reach
+     a single node inside it.
+
+     data-framed tells it the three things it must hand back (see
+     krypt-app.js). Deferred so the dashboard's own scripts have defined
+     #editBtn and friends before it looks for them. */
+  function withPanel(html, name) {
+    // data-root is "../" because the URLs it builds are resolved by the
+    // *parent*, against /custom/view.html — not against the frame's own
+    // base. Get that wrong and "Back to gallery" lands on the manager.
+    return html + '\n<script src="assets/krypt-app.js" data-root="../" ' +
+      'data-label="' + esc(name) + '" data-framed defer><\/script>\n';
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  /* Everything the frame is not allowed to do itself. */
+  window.addEventListener('message', function (e) {
+    if (e.source !== frame.contentWindow) return;
+    var m = e.data;
+    if (!m) return;
+    if (typeof m.__kryptNav === 'string') {
+      // Resolved against this page, not the frame's base, and kept
+      // inside the app — a dashboard cannot use this to send the
+      // window somewhere of its own choosing.
+      var url = new URL(m.__kryptNav, location.href);
+      if (url.origin === location.origin) location.href = url.href;
+      return;
+    }
+    if (m.__kryptReady) {
+      // The dashboard has the real panel now — one control, in the same
+      // corner, behaving the way it does on every built-in screen.
+      bar.style.display = 'none';
+      return;
+    }
+    if (m.__kryptPanel === 'fullscreen') return toggleFullscreen();
+    // The headless copy of krypt-app.js loaded on this page opens the
+    // real sheet and the real picker — same code every other screen
+    // uses, acting on this page's tags, which are the ones that count.
+    if (m.__kryptPanel === 'install' && window.kryptApp) window.kryptApp.openSheet();
+    else if (m.__kryptPanel === 'icon' && window.kryptApp) window.kryptApp.openIconPicker();
+  });
+
+  /* ---------------- chrome ---------------- */
+
+  function svg(d) {
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" ' +
+      'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>';
+  }
+  var ICON = {
+    back: svg('<path d="M15 18l-6-6 6-6"/>'),
+    grid: svg('<rect x="3.5" y="3.5" width="7" height="7" rx="2"/>' +
+      '<rect x="13.5" y="3.5" width="7" height="7" rx="2"/>' +
+      '<rect x="3.5" y="13.5" width="7" height="7" rx="2"/>' +
+      '<rect x="13.5" y="13.5" width="7" height="7" rx="2"/>'),
+    full: svg('<path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3' +
+      'M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/>'),
+    pencil: svg('<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M14.5 5.5l4 4"/>'),
+    trash: svg('<path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/>'),
+    undo: svg('<path d="M4 5v6h6"/><path d="M4.6 14a8 8 0 1 0 1.9-8.3L4 8"/>'),
+  };
+
+  function button(icon, label, cls, fn) {
+    var b = document.createElement('button');
+    b.className = 'btn ' + (cls || '');
+    b.type = 'button';
+    b.innerHTML = icon + '<span>' + label + '</span>';
+    b.addEventListener('click', fn);
+    pill.appendChild(b);
+    return b;
+  }
+
+  var closeTimer = null;
+  function openBar() {
+    bar.classList.add('open');
+    clearTimeout(closeTimer);
+    closeTimer = setTimeout(closeBar, 6000);
+  }
+  function closeBar() { bar.classList.remove('open'); clearTimeout(closeTimer); }
+  document.getElementById('dot').addEventListener('click', function (e) {
+    e.stopPropagation();
+    if (bar.classList.contains('open')) closeBar(); else openBar();
+  });
+  pill.addEventListener('click', openBar);
+  document.addEventListener('click', function (e) { if (!bar.contains(e.target)) closeBar(); });
+
+  function toggleFullscreen() {
+    var el = document.documentElement;
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+      (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    } else {
+      var req = el.requestFullscreen || el.webkitRequestFullscreen;
+      if (req) { var p = req.call(el); if (p && p.catch) p.catch(function () {}); }
+    }
+  }
+
+  var toastTimer = null;
+  function toast(text) {
+    var t = document.getElementById('toast');
+    t.textContent = text;
+    t.classList.add('on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.remove('on'); }, 2600);
+  }
+
+  function fail(title, body) {
+    document.getElementById('msgT').textContent = title;
+    document.getElementById('msgP').textContent = body;
+    document.getElementById('msg').classList.add('on');
+    frame.style.display = 'none';
+  }
+
+  /* ---------------- home-screen identity ----------------
+
+     Point the icon and manifest at this dashboard's own, so adding it
+     from a phone gives it its tile rather than the gallery's. Only
+     possible over HTTP — under file:// the icons live in userData,
+     which the page has no way to address. */
+  function setIdentity(rec) {
+    document.title = rec.name + ' — Krypt LARP';
+    var icon = window.kryptCustom.iconUrl(rec.id);
+    var man = window.kryptCustom.manifestUrl(rec.id);
+    if (icon) add('link', { rel: 'apple-touch-icon', href: icon });
+    if (man) add('link', { rel: 'manifest', href: man });
+    add('meta', { name: 'apple-mobile-web-app-title', content: rec.name.slice(0, 12) });
+    if (rec.theme) add('meta', { name: 'theme-color', content: rec.theme });
+  }
+  function add(tag, attrs) {
+    var el = document.createElement(tag);
+    for (var k in attrs) el.setAttribute(k, attrs[k]);
+    document.head.appendChild(el);
+  }
+
+  /* ---------------- go ---------------- */
+
+  if (!ID) {
+    fail('No dashboard chosen', 'This page opens one of your imported dashboards. Pick one from the list.');
+    return;
+  }
+
+  var C = window.kryptCustom;
+
+  C.get(ID).then(function (rec) {
+    if (!rec) {
+      fail('That dashboard is not here',
+        C.mode === 'none'
+          ? 'Imported dashboards are stored by the desktop app. Open Krypt LARP, or start the phone server, to reach them.'
+          : 'It may have been deleted. Your other dashboards are still in the list.');
+      return null;
+    }
+    record = rec;
+    setIdentity(rec);
+    return C.read(ID);
+  }).then(function (html) {
+    if (html == null) {
+      if (record) fail('Could not read that dashboard', 'The file is missing from your collection folder.');
+      return;
+    }
+    window.kryptLabel = record.name;
+    frame.setAttribute('srcdoc',
+      withPanel(withBase(inject(html, shimSource(data))), record.name));
+
+    /* ---- controls, once we know there is something to control ---- */
+    button(ICON.grid, 'Your dashboards', '', function () { location.href = 'index.html'; });
+    button(ICON.back, 'Gallery', '', function () { location.href = '../index.html'; });
+    if (document.fullscreenEnabled || document.webkitFullscreenEnabled) {
+      button(ICON.full, 'Fullscreen', '', toggleFullscreen);
+    }
+    button(ICON.undo, 'Reset data', '', function () {
+      data = {};
+      saveData(data);
+      // The frame holds its seed in memory, so it has to be rebuilt.
+      frame.setAttribute('srcdoc',
+        withPanel(withBase(inject(html, shimSource({}))), record.name));
+      closeBar();
+      toast('Cleared this dashboard’s saved edits');
+    });
+    if (C.canWrite) {
+      button(ICON.pencil, 'Rename', '', function () {
+        var next = prompt('Name this dashboard', record.name);
+        if (next == null) return;
+        C.rename(ID, next).then(function (r) {
+          record = r;
+          document.title = r.name + ' — Krypt LARP';
+          toast('Renamed');
+        }).catch(function (e) { toast(e.message); });
+      });
+      button(ICON.trash, 'Delete', 'danger', function () {
+        C.remove(ID).then(function (r) {
+          if (r && r.removed) location.href = 'index.html';
+        }).catch(function (e) { toast(e.message); });
+      });
+    }
+
+    // Introduce the control once — on a phone the frame fills the screen
+    // and there is otherwise no visible way back out of it.
+    var seen;
+    try { seen = localStorage.getItem('krypt-custom-view-hint'); } catch (e) { seen = '1'; }
+    if (!seen) {
+      try { localStorage.setItem('krypt-custom-view-hint', '1'); } catch (e) {}
+      setTimeout(openBar, 700);
+    }
+  }).catch(function (e) {
+    fail('Could not open that dashboard', e && e.message ? e.message : String(e));
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key === 'f' || e.key === 'F') toggleFullscreen();
+    else if (e.key === 'Escape') closeBar();
+  });
+})();
+</script>
+</body>
+</html>

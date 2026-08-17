@@ -1,0 +1,30 @@
+{
+  "name": "Momentum — Krypt LARP",
+  "short_name": "Momentum",
+  "description": "Momentum — a fictional Activity Rings mock-up. Part of the Krypt LARP collection.",
+  "start_url": "../../dashboards/momentum/index.html",
+  "scope": "../../",
+  "display": "standalone",
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
+  "background_color": "#000000",
+  "theme_color": "#0C0C10",
+  "icons": [
+    {
+      "src": "../icons/momentum-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../icons/momentum-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

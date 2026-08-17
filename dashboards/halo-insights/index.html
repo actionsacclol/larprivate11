@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en" data-krypt-status="translucent">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Halo Insights · Learning Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     HALO — Professional dashboard + Insights (TEST demo)
+     Two screens: the dark "Professional dashboard" landing and
+     the "Insights" detail (magenta line chart + content bars).
+     Tap an Insights row to open the detail; back returns.
+     Data-driven (see DATA below). Edit toggle = click-to-change,
+     saved to your browser. Entrance animations are pure CSS.
+     ============================================================ */
+  :root{
+    --bg:#000000;
+    --card:#1c1c1e;
+    --card2:#262628;
+    --text:#ffffff;
+    --muted:#a8a8a8;
+    --muted2:#8e8e8e;
+    --line:#262626;
+    --green:#31d07a;
+    --mag:#ff2e9f;      /* Halo magenta */
+    --mag2:#ff9ed5;     /* non-followers */
+    --blue:#5a6ff0;     /* links / New pill */
+    --font:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{background:#0a0a0a;font-family:var(--font);color:var(--text);display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;-webkit-font-smoothing:antialiased;}
+
+  .phone{position:relative;width:390px;max-width:100%;height:844px;background:var(--bg);border-radius:44px;box-shadow:0 0 0 12px #111,0 40px 90px rgba(0,0,0,.7);overflow:hidden;display:flex;flex-direction:column;}
+
+  .statusbar{display:flex;align-items:center;justify-content:space-between;padding:15px 30px 6px;font-size:15px;font-weight:600;flex:0 0 auto;}
+  .statusbar .right{display:flex;align-items:center;gap:7px;}
+  .battery{border:1.5px solid #fff;border-radius:4px;width:26px;height:13px;position:relative;display:flex;align-items:center;padding:1.5px;}
+  .battery::after{content:"";position:absolute;right:-4px;top:4px;width:2px;height:5px;background:#fff;border-radius:0 2px 2px 0;}
+  .battery i{display:block;height:100%;background:#fff;border-radius:1.5px;width:80%;}
+  .signal{display:flex;align-items:flex-end;gap:2px;height:12px;}
+  .signal b{width:3px;background:#fff;border-radius:1px;display:block;}
+  .signal b:nth-child(1){height:5px}.signal b:nth-child(2){height:7px}.signal b:nth-child(3){height:9px}.signal b:nth-child(4){height:12px}
+
+  .screen{flex:1;overflow-y:auto;scrollbar-width:none;}
+  .screen::-webkit-scrollbar{display:none;}
+
+  /* Header */
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:6px 16px 14px;}
+  .topbar .title{font-size:17px;font-weight:700;}
+  .circ{width:38px;height:38px;border-radius:50%;background:#1a1a1a;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto;transition:.15s;}
+  .circ:hover{background:#262626;}
+  .circ svg{width:20px;height:20px;stroke:#fff;fill:none;}
+  .pillbtn{display:flex;align-items:center;gap:0;background:#1a1a1a;border-radius:22px;padding:0;overflow:hidden;}
+  .pillbtn .circ{background:transparent;}
+
+  /* Views (screens) */
+  .view{display:none;}
+  .view.active{display:block;animation:vfade .25s ease;}
+  @keyframes vfade{from{opacity:0}to{opacity:1}}
+
+  /* ---------- SCREEN 1: Professional dashboard ---------- */
+  .pad{padding:0 20px;}
+  .sec-h{display:flex;align-items:baseline;justify-content:space-between;margin:14px 0 6px;}
+  .sec-h .t{font-size:21px;font-weight:800;letter-spacing:-.5px;}
+  .sec-h .t.sm{font-size:18px;}
+  .sec-h .r{font-size:13.5px;color:var(--muted);font-weight:500;}
+  .sec-h .r.link{color:var(--blue);font-weight:600;cursor:pointer;}
+
+  .irow{display:flex;align-items:center;justify-content:space-between;padding:12px 2px;cursor:pointer;
+    opacity:0;transform:translateY(10px);animation:rise .5s ease forwards;}
+  @keyframes rise{to{opacity:1;transform:none;}}
+  .irow .lbl{font-size:16px;font-weight:500;}
+  .irow .rt{display:flex;align-items:center;gap:8px;}
+  .irow .arrow{width:16px;height:16px;stroke:var(--green);fill:none;stroke-width:2.4;}
+  .irow .val{font-size:16px;font-weight:600;}
+  .irow .chev{width:9px;height:16px;stroke:#6a6a6a;fill:none;stroke-width:2.2;flex:0 0 auto;}
+  .irow:active{opacity:.6;}
+
+  .divider{height:6px;background:#0e0e0e;margin:10px 0;box-shadow:inset 0 1px 0 #1c1c1c,inset 0 -1px 0 #1c1c1c;}
+
+  .nextcard{display:flex;align-items:center;gap:16px;border:1px solid var(--line);border-radius:14px;padding:16px;margin:6px 0 2px;cursor:pointer;
+    opacity:0;transform:translateY(10px);animation:rise .5s .05s ease forwards;}
+  .nextcard .ic{width:46px;height:46px;border-radius:12px;border:1px solid #333;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+  .nextcard .ic svg{width:23px;height:23px;stroke:#fff;fill:none;stroke-width:1.8;}
+  .nextcard .tx{flex:1;}
+  .nextcard .tx .a{font-size:14.5px;font-weight:700;line-height:1.3;}
+  .nextcard .tx .b{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.35;}
+  .nextcard .chev{width:9px;height:16px;stroke:#6a6a6a;fill:none;stroke-width:2.2;}
+
+  .trow{display:flex;align-items:center;gap:15px;padding:11px 2px;cursor:pointer;
+    opacity:0;transform:translateY(10px);animation:rise .5s ease forwards;}
+  .trow .ic{width:24px;height:24px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;}
+  .trow .ic svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:1.7;}
+  .trow .nm{flex:1;font-size:15.5px;font-weight:500;}
+  .trow .chev{width:9px;height:16px;stroke:#6a6a6a;fill:none;stroke-width:2.2;}
+  .newpill{background:var(--blue);color:#fff;font-size:13px;font-weight:700;padding:5px 12px;border-radius:16px;}
+  .trow:active{opacity:.6;}
+
+  /* ---------- SCREEN 2: Insights detail ---------- */
+  .tabs{display:flex;border-bottom:1px solid var(--line);margin-bottom:4px;}
+  .tab{flex:1;text-align:center;padding:10px 0 12px;font-size:15px;font-weight:600;color:var(--muted2);cursor:pointer;position:relative;}
+  .tab.on{color:#fff;}
+  .tab.on::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:#fff;border-radius:2px;}
+
+  .allrow{display:flex;align-items:baseline;justify-content:space-between;padding:14px 20px 6px;}
+  .allrow .t{font-size:19px;font-weight:800;letter-spacing:-.5px;}
+  .allrow .r{font-size:14px;color:#fff;font-weight:600;display:flex;align-items:center;gap:5px;cursor:pointer;}
+  .allrow .r svg{width:13px;height:13px;stroke:#fff;fill:none;stroke-width:2.4;}
+
+  .mcards{display:flex;gap:12px;overflow-x:auto;padding:6px 20px 2px;scrollbar-width:none;}
+  .mcards::-webkit-scrollbar{display:none;}
+  .mcard{flex:0 0 auto;width:134px;background:var(--card);border:2px solid transparent;border-radius:14px;padding:12px 14px;cursor:pointer;
+    opacity:0;transform:translateY(10px);animation:rise .5s ease forwards;}
+  .mcard.sel{border-color:#fff;}
+  .mcard .l{font-size:13px;color:var(--muted);font-weight:500;}
+  .mcard .v{font-size:21px;font-weight:800;letter-spacing:-.5px;margin-top:6px;}
+
+  .split{padding:12px 20px 4px;font-size:14px;line-height:1.5;}
+  .split b{font-weight:700;}
+
+  .chartwrap{padding:8px 8px 4px;}
+  .chartwrap svg{width:100%;height:auto;display:block;}
+  .magline{fill:none;stroke:var(--mag);stroke-width:3;stroke-linecap:round;stroke-linejoin:round;
+    stroke-dasharray:2600;stroke-dashoffset:2600;animation:draw 1.6s cubic-bezier(.4,0,.2,1) forwards;}
+  @keyframes draw{to{stroke-dashoffset:0;}}
+  .gridline{stroke:#222;stroke-width:1;}
+  .axl{fill:#8e8e8e;font-size:12px;font-family:var(--font);}
+
+  .byhead{display:flex;align-items:center;gap:8px;padding:6px 20px 2px;}
+  .byhead .t{font-size:18px;font-weight:800;letter-spacing:-.5px;}
+  .byhead .i{width:20px;height:20px;border-radius:50%;border:1.5px solid #6a6a6a;color:#6a6a6a;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;font-style:italic;}
+  .reached{display:flex;align-items:baseline;justify-content:space-between;padding:12px 20px 12px;border-bottom:1px solid var(--line);}
+  .reached .l{font-size:16px;font-weight:700;}
+  .reached .v{font-size:16px;font-weight:700;}
+  .legend{display:flex;gap:22px;padding:14px 20px 6px;}
+  .legend span{display:flex;align-items:center;gap:8px;font-size:13.5px;color:#fff;}
+  .dot{width:11px;height:11px;border-radius:50%;flex:0 0 auto;}
+  .bar{padding:10px 20px;}
+  .bar .bl{font-size:14px;font-weight:600;margin-bottom:8px;}
+  .bar .track{display:flex;align-items:center;gap:12px;}
+  .bar .rail{flex:1;height:12px;border-radius:6px;background:#2a2a2a;overflow:hidden;display:flex;}
+  .bar .fillF{height:100%;background:var(--mag);border-radius:6px 0 0 6px;width:0;animation:grow 1.1s cubic-bezier(.4,0,.2,1) forwards;}
+  .bar .fillN{height:100%;background:var(--mag2);width:0;animation:grow 1.1s cubic-bezier(.4,0,.2,1) forwards;}
+  @keyframes grow{to{width:var(--w);}}
+  .bar .bv{font-size:14px;font-weight:700;white-space:nowrap;}
+
+  /* Chrome */
+  .toolbar{position:fixed;top:18px;right:18px;display:flex;gap:8px;z-index:50;}
+  .toolbar button{background:#1c1c1e;color:#fff;border:1px solid #333;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);transition:.15s;}
+  .toolbar button:hover{background:#2a2a2c;}
+  .toolbar button.on{background:var(--mag);color:#fff;border-color:var(--mag);}
+  .back{position:fixed;top:18px;left:18px;z-index:50;background:#1c1c1e;color:#fff;border:1px solid #333;text-decoration:none;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;font-family:var(--font);transition:.15s;}
+  .back:hover{background:#2a2a2c;}
+  body.editing [data-edit]{outline:1.5px dashed var(--mag);outline-offset:3px;border-radius:4px;cursor:text;}
+  [data-edit]:focus{outline:1.5px solid var(--mag);}
+  .hint{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);color:#666;font-size:12px;}
+  /* Content / Audience panel rows (Overview keeps its own layout) */
+  .igrow{display:flex;align-items:baseline;justify-content:space-between;gap:14px;
+    padding:11px 0;border-bottom:1px solid var(--line);
+    opacity:0;transform:translateY(8px);animation:rise .4s ease forwards;}
+  .igrow .il{font-size:14.5px;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .igrow .ir{font-size:12.5px;color:var(--muted2);white-space:nowrap;}
+  .igrow .ir b{color:#fff;font-weight:700;}
+</style>
+<!-- krypt:phone:start -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Halo">
+<meta name="theme-color" content="#A9469E">
+<link rel="manifest" href="../../assets/manifests/halo-insights.webmanifest">
+<link rel="apple-touch-icon" href="../../assets/icons/halo-insights-180.png">
+<link rel="icon" type="image/png" sizes="512x512" href="../../assets/icons/halo-insights-512.png">
+<link rel="stylesheet" href="../../assets/phone.css">
+<!-- krypt:phone:end -->
+</head>
+<body>
+
+<a class="back" href="../../index.html">← Collection</a>
+<div class="toolbar">
+  <button id="editBtn">✎ Edit</button>
+  <button id="resetBtn">↺ Reset</button>
+</div>
+
+<div class="phone">
+  <div class="statusbar">
+    <span>11:36</span>
+    <span class="right">
+      <span class="signal"><b></b><b></b><b></b><b></b></span>
+      <svg width="18" height="14" viewBox="0 0 18 14" fill="none"><path d="M9 3C11.5 3 13.8 4 15.5 5.6M9 7C10.4 7 11.7 7.6 12.7 8.5M4.3 5.6C6 4 8.3 3 9 3M6.3 8.5C7.3 7.6 8 7.4 9 7.4" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/><circle cx="9" cy="11" r="1.2" fill="#fff"/></svg>
+      <span class="battery"><i></i></span>
+    </span>
+  </div>
+
+  <div class="screen" id="screen">
+
+    <!-- ============ SCREEN 1: PROFESSIONAL DASHBOARD ============ -->
+    <div class="view active" id="view-dashboard">
+      <div class="topbar">
+        <div class="circ" title="Back"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="title">Professional dashboard</div>
+        <div class="circ" title="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M18.4 5.6l-1.8 1.8M7.4 16.6l-1.8 1.8" stroke-linecap="round"/></svg></div>
+      </div>
+
+      <div class="pad">
+        <div class="sec-h">
+          <span class="t">Insights</span>
+          <span class="r" data-edit="dateRange">May 12 - Jun 10</span>
+        </div>
+        <div class="irow" style="animation-delay:0ms" data-open="insights">
+          <span class="lbl">Views</span>
+          <span class="rt"><svg class="arrow" viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="val" data-edit="sumViews">412.8K</span><svg class="chev" viewBox="0 0 12 20"><path d="M2 2l8 8-8 8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </div>
+        <div class="irow" style="animation-delay:55ms" data-open="insights">
+          <span class="lbl">New followers</span>
+          <span class="rt"><svg class="arrow" viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="val" data-edit="sumFollowers">2.9K</span><svg class="chev" viewBox="0 0 12 20"><path d="M2 2l8 8-8 8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </div>
+        <div class="irow" style="animation-delay:110ms" data-open="insights">
+          <span class="lbl">Content you shared</span>
+          <span class="rt"><span class="val" data-edit="sumContent">47</span><svg class="chev" viewBox="0 0 12 20"><path d="M2 2l8 8-8 8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="pad">
+        <div class="sec-h"><span class="t sm">Next steps</span></div>
+        <div class="nextcard">
+          <div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" stroke-dasharray="3 2.5"/><path d="M10 8.5l5 3.5-5 3.5z" fill="#fff" stroke="none"/></svg></div>
+          <div class="tx"><div class="a" data-edit="nextTitle">Find your next hit with trial reels</div><div class="b" data-edit="nextSub">See how your content performs with non-followers first.</div></div>
+          <svg class="chev" viewBox="0 0 12 20"><path d="M2 2l8 8-8 8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="pad">
+        <div class="sec-h"><span class="t sm">Your tools</span><span class="r link">See all</span></div>
+        <div id="toolsList"></div>
+      </div>
+      <div style="height:24px"></div>
+    </div>
+
+    <!-- ============ SCREEN 2: INSIGHTS DETAIL ============ -->
+    <div class="view" id="view-insights">
+      <div class="topbar">
+        <div class="circ" data-open="dashboard" title="Back"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="title">Insights</div>
+        <div class="pillbtn">
+          <div class="circ" title="Share"><svg viewBox="0 0 24 24"><path d="M12 16V4M8 8l4-4 4 4" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 13v5a2 2 0 002 2h10a2 2 0 002-2v-5" stroke-linecap="round"/></svg></div>
+          <div class="circ" title="Info"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01" stroke-linecap="round"/></svg></div>
+        </div>
+      </div>
+
+      <div class="tabs" id="igTabs">
+        <div class="tab on" data-it="ov">Overview</div>
+        <div class="tab" data-it="ct">Content</div>
+        <div class="tab" data-it="au">Audience</div>
+      </div>
+      <!-- Content and Audience are their own panels; Overview is
+           everything that was already here. -->
+      <div id="igCt" style="display:none;padding:0 16px 8px;"></div>
+      <div id="igAu" style="display:none;padding:0 16px 8px;"></div>
+
+      <div class="allrow">
+        <span class="t">All content</span>
+        <span class="r">30 days <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      </div>
+
+      <div class="mcards">
+        <div class="mcard sel" style="animation-delay:0ms"><div class="l">Views</div><div class="v countup" data-edit="dViews" data-target="412806">412,806</div></div>
+        <div class="mcard" style="animation-delay:55ms"><div class="l">Net followers</div><div class="v countup" data-edit="dNet" data-target="2914" data-prefix="+">+2,914</div></div>
+        <div class="mcard" style="animation-delay:110ms"><div class="l">Interactions</div><div class="v countup" data-edit="dInter" data-target="24153">24,153</div></div>
+      </div>
+
+      <div class="split"><b data-edit="folPct">12.4%</b> followers<br><b data-edit="nonPct">87.6%</b> non-followers</div>
+
+      <div class="chartwrap" id="chartwrap"></div>
+
+      <div class="divider"></div>
+
+      <div class="byhead"><span class="t">Views by content type</span><span class="i">i</span></div>
+      <div class="reached"><span class="l">Accounts reached</span><span class="v countup" data-edit="reached" data-target="188402">188,402</span></div>
+      <div class="legend">
+        <span><i class="dot" style="background:var(--mag)"></i>Followers</span>
+        <span><i class="dot" style="background:var(--mag2)"></i>Non-followers</span>
+      </div>
+      <div id="barsList"></div>
+      <div style="height:20px"></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="hint">Tap an Insights row to open the detail · Toggle Edit to change values</div>
+
+<script>
+/* ============================================================
+   DATA — edit freely.
+   ============================================================ */
+const DEFAULT_DATA = {
+  dateRange:"May 12 - Jun 10",
+  sumViews:"412.8K", sumFollowers:"2.9K", sumContent:"47",
+  nextTitle:"Find your next hit with trial reels",
+  nextSub:"See how your content performs with non-followers first.",
+  dViews:"412,806", dNet:"+2,914", dInter:"24,153",
+  folPct:"12.4%", nonPct:"87.6%", reached:"188,402",
+  tools:[
+    {name:"Monthly recap",          icon:"recap"},
+    {name:"Best practices",         icon:"cap", badge:"New"},
+    {name:"Inspiration",            icon:"bulb"},
+    {name:"Ad tools",               icon:"trend"},
+    {name:"Branded content",        icon:"person"},
+    {name:"Message response tracker",icon:"rocket"},
+    {name:"Your AIs",               icon:"ai"},
+  ],
+  // daily views series in thousands (spike then settle) — 30 pts
+  series:[0.71,1.18,28.24,13.66,7.77,6.36,7.07,6.12,5.65,6.36,5.89,5.18,5.65,5.42,4.95,4.71,5.42,4.95,4.71,6.12,7.3,5.65,5.18,8.01,6.59,4.71,4.24,3.77,3.53,3.3],
+  bars:[
+    {label:"Reels",       val:"389K", f:0.78, n:0.12},
+    {label:"Stories",     val:"21K",  f:0.05, n:0.02},
+    {label:"Posts",       val:"0",    f:0,    n:0},
+    {label:"Live videos", val:"0",    f:0,    n:0},
+  ],
+
+  /* panels behind the Content and Audience tabs */
+  topPosts:[
+    {t:"Reel - studio tour",      v:"128,402", e:"9,120"},
+    {t:"Carousel - process shots",v:"84,610",  e:"6,240"},
+    {t:"Reel - time lapse",       v:"61,208",  e:"4,905"},
+    {t:"Photo - workspace",       v:"38,114",  e:"2,180"},
+  ],
+  audience:[
+    {t:"18-24", v:"31.2%"}, {t:"25-34", v:"42.8%"},
+    {t:"35-44", v:"17.4%"}, {t:"45+",   v:"8.6%"},
+  ],
+  audCities:[
+    {t:"London",   v:"12.4%"}, {t:"New York", v:"9.8%"},
+    {t:"Berlin",   v:"6.1%"},  {t:"Toronto",  v:"4.7%"},
+  ],
+};
+
+const KEY="halo-dash-v2";
+let DATA=load();
+function load(){try{const s=localStorage.getItem(KEY);if(s)return{...structuredClone(DEFAULT_DATA),...JSON.parse(s)};}catch(e){}return structuredClone(DEFAULT_DATA);}
+function save(){localStorage.setItem(KEY,JSON.stringify(DATA));}
+function editing(){return document.body.classList.contains("editing");}
+
+const TOOL_ICONS={
+  recap:`<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7" stroke-linecap="round"/><path d="M3 4v4h4" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 8v4l3 2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  cap:`<svg viewBox="0 0 24 24"><path d="M2 8l10-4 10 4-10 4z" stroke-linejoin="round"/><path d="M6 10v5c0 1.5 3 3 6 3s6-1.5 6-3v-5" stroke-linecap="round"/></svg>`,
+  bulb:`<svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4" stroke-linecap="round"/><path d="M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.3 1 2.5h6c0-1.2.3-1.8 1-2.5A6 6 0 0 0 12 3z" stroke-linejoin="round"/></svg>`,
+  trend:`<svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 7h6v6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  person:`<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2.3"/><path d="M5.5 16c.5-1.8 2-2.6 3.5-2.6s3 .8 3.5 2.6" stroke-linecap="round"/><path d="M15 9h4M15 13h4" stroke-linecap="round"/></svg>`,
+  rocket:`<svg viewBox="0 0 24 24"><path d="M5 15c-1.5 1.5-1.8 5-1.8 5s3.5-.3 5-1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 15l-.9-.9c-1-1-1-3 .5-5.5C11 4.5 15 3.2 20 4c.8 5-.5 9-3.6 11.4-2.5 1.5-4.5 1.5-5.5.5z" stroke-linejoin="round"/><circle cx="15" cy="9" r="1.6"/></svg>`,
+  ai:`<svg viewBox="0 0 24 24"><circle cx="7" cy="7" r="2.4"/><circle cx="7" cy="16" r="2.4"/><circle cx="16" cy="16" r="2.4"/><path d="M17 4l.9 2.1L20 7l-2.1.9L17 10l-.9-2.1L14 7l2.1-.9z" fill="#fff" stroke="none"/></svg>`,
+};
+
+function renderTools(){
+  const el=document.getElementById("toolsList");el.innerHTML="";
+  DATA.tools.forEach((t,i)=>{
+    const r=document.createElement("div");r.className="trow";r.style.animationDelay=(i*45)+"ms";
+    r.innerHTML=`<span class="ic">${TOOL_ICONS[t.icon]||""}</span>
+      <span class="nm" data-edit="tool-${i}">${t.name}</span>
+      ${t.badge?`<span class="newpill">${t.badge}</span>`:""}
+      <svg class="chev" viewBox="0 0 12 20"><path d="M2 2l8 8-8 8" stroke="#6a6a6a" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    el.appendChild(r);
+  });
+}
+
+function renderBars(){
+  const el=document.getElementById("barsList");el.innerHTML="";
+  DATA.bars.forEach((b,i)=>{
+    const d=document.createElement("div");d.className="bar";
+    const fw=Math.round(b.f*100),nw=Math.round(b.n*100);
+    d.innerHTML=`<div class="il" data-edit="bar-${i}-label">${b.label}</div>
+      <div class="track"><div class="rail">
+        <div class="fillF" style="--w:${fw}%;animation-delay:${i*80}ms"></div>
+        <div class="fillN" style="--w:${nw}%;animation-delay:${i*80}ms"></div>
+      </div><div class="bv" data-edit="bar-${i}-val">${b.val}</div></div>`;
+    el.appendChild(d);
+  });
+}
+
+/* magenta line chart — pure-CSS draw-in */
+/* The daily points are accounts reached in thousands, so they add up
+   to the "Accounts reached" figure — edit that and the line follows.
+   The axis steps in round numbers rather than tracking the series peak,
+   which would redraw an identical line at any reach. */
+function chartAxis(){
+  const peak=Math.max(...DATA.series,0);
+  if(peak<=0) return 10;
+  const mag=Math.pow(10,Math.floor(Math.log10(peak)))/2;
+  return Math.max(mag*2, Math.ceil(peak/mag)*mag);
+}
+function rescaleSeries(){
+  const target=(parseFloat(String(DATA.reached).replace(/[^\d.]/g,""))||0)/1000;
+  const sum=DATA.series.reduce((a,b)=>a+b,0);
+  DATA.series = sum>0 ? DATA.series.map(v=>v*(target/sum)) : DATA.series.map(()=>target/DATA.series.length);
+  save();
+}
+
+/* ---- Content / Audience panels ---- */
+function renderIgPanels(){
+  // this file has no shared esc() helper
+  const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const rowsCt=DATA.topPosts.map((r,i)=>`
+    <div class="igrow" style="animation-delay:${i*50}ms">
+      <span class="il" data-edit="tp-${i}-t">${esc(r.t)}</span>
+      <span class="ir"><b data-edit="tp-${i}-v">${esc(r.v)}</b> views &middot; <span data-edit="tp-${i}-e">${esc(r.e)}</span> interactions</span>
+    </div>`).join("");
+  document.getElementById("igCt").innerHTML='<div class="allrow"><span class="t">Top content</span></div>'+rowsCt;
+  const bar=(r,i,k)=>`
+    <div class="igrow" style="animation-delay:${i*50}ms">
+      <span class="il" data-edit="${k}-${i}-t">${esc(r.t)}</span>
+      <span class="ir"><b data-edit="${k}-${i}-v">${esc(r.v)}</b></span>
+    </div>`;
+  document.getElementById("igAu").innerHTML=
+    '<div class="allrow"><span class="t">Age range</span></div>'+DATA.audience.map((r,i)=>bar(r,i,"ag")).join("")+
+    '<div class="allrow"><span class="t">Top cities</span></div>'+DATA.audCities.map((r,i)=>bar(r,i,"ct")).join("");
+}
+function renderChart(){
+  const data=DATA.series, n=data.length, max=chartAxis();
+  const W=360,H=178, pl=34,pr=8,pt=14,pb=28;
+  const xAt=i=>pl+(i/(n-1))*(W-pl-pr);
+  const yAt=v=>pt+(1-v/max)*(H-pt-pb);
+  let d="";data.forEach((v,i)=>d+=(i?'L':'M')+xAt(i).toFixed(1)+' '+yAt(v).toFixed(1)+' ');
+  let grid="",yl="";
+  [0,max/2,max].forEach(v=>{const y=yAt(v).toFixed(1);grid+=`<line class="gridline" x1="${pl}" y1="${y}" x2="${W-pr}" y2="${y}"/>`;yl+=`<text class="axl" x="${pl-6}" y="${(+y+4)}" text-anchor="end">${v?Math.round(v)+'K':'0'}</text>`;});
+  const xl=[[0,"Jun 20"],[15,"Jul 4"],[n-1,"Jul 19"]].map(([i,t])=>`<text class="axl" x="${xAt(i).toFixed(1)}" y="${H-8}" text-anchor="${i===0?'start':i===n-1?'end':'middle'}">${t}</text>`).join("");
+  document.getElementById("chartwrap").innerHTML=`<svg viewBox="0 0 ${W} ${H}">${grid}${yl}${xl}<path class="magline" d="${d}"/></svg>`;
+}
+
+/* count-up (comma-formatted) */
+function countUp(el){
+  const target=parseFloat(el.getAttribute("data-target"))||0;
+  const prefix=el.getAttribute("data-prefix")||"";
+  let t0=null;
+  function step(ts){if(!t0)t0=ts;const p=Math.min((ts-t0)/1000,1),e=1-Math.pow(1-p,3);
+    el.textContent=prefix+Math.round(target*e).toLocaleString("en-US");
+    if(p<1)requestAnimationFrame(step);}
+  requestAnimationFrame(step);
+}
+function runCountUps(){document.querySelectorAll("#view-insights .countup").forEach(countUp);}
+
+/* editing */
+function bindEdits(){
+  document.querySelectorAll("[data-edit]").forEach(el=>{
+    el.setAttribute("contenteditable",editing());
+    el.oninput=()=>{
+      const k=el.getAttribute("data-edit"),v=el.textContent;let m;
+      if(m=k.match(/^tool-(\d+)$/))DATA.tools[+m[1]].name=v;
+      else if(m=k.match(/^bar-(\d+)-(\w+)$/))DATA.bars[+m[1]][m[2]]=v;
+      else DATA[k]=v;
+      save();
+      if(k==="reached"){rescaleSeries();renderIgPanels();renderChart();}
+    };
+  });
+}
+document.getElementById("editBtn").addEventListener("click",function(){
+  const on=document.body.classList.toggle("editing");
+  this.classList.toggle("on",on);this.textContent=on?"✓ Done":"✎ Edit";bindEdits();
+});
+document.getElementById("resetBtn").addEventListener("click",()=>{
+  if(confirm("Reset this dashboard to its original values?")){
+    localStorage.removeItem(KEY);DATA=structuredClone(DEFAULT_DATA);
+    renderAll();restoreScalars();bindEdits();
+  }
+});
+function restoreScalars(){
+  document.querySelectorAll("[data-edit]").forEach(el=>{
+    const k=el.getAttribute("data-edit");
+    if(/^(tool|bar)-/.test(k)||el.classList.contains("countup"))return;
+    if(DATA[k]!==undefined)el.textContent=DATA[k];
+  });
+}
+
+/* router: dashboard <-> insights */
+function showScreen(name){
+  document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id==="view-"+name));
+  document.getElementById("screen").scrollTop=0;
+  if(name==="insights"){renderChart();renderBars();runCountUps();}
+  bindEdits();
+}
+document.querySelectorAll("[data-open]").forEach(el=>{
+  el.addEventListener("click",()=>{if(!editing())showScreen(el.getAttribute("data-open"));});
+});
+/* sub-tabs (Overview/Content/Audience) */
+/* These used to move the underline and nothing else. Now each tab
+   swaps the panel underneath it; Overview is the original screen. */
+document.getElementById("igTabs").addEventListener("click",e=>{
+  const t=e.target.closest(".tab"); if(!t||editing())return;
+  document.querySelectorAll("#igTabs .tab").forEach(x=>x.classList.toggle("on",x===t));
+  const which=t.dataset.it;
+  document.getElementById("igCt").style.display = which==="ct" ? "block" : "none";
+  document.getElementById("igAu").style.display = which==="au" ? "block" : "none";
+  // everything between the tabs and the bottom nav is the Overview panel
+  document.querySelectorAll(".allrow, .mcards, .chartcard, .bars, .secttl, .toolsec")
+    .forEach(el=>{ if(!el.closest("#igCt") && !el.closest("#igAu")) el.style.display = which==="ov" ? "" : "none"; });
+  bindEdits();
+});
+
+function renderAll(){renderTools();renderBars();renderIgPanels();renderChart();}
+renderAll();restoreScalars();bindEdits();
+</script>
+<!-- krypt:app:start -->
+<script src="../../assets/krypt-app.js" data-root="../../" data-label="Halo" defer></script>
+<script src="../../assets/krypt-desktop.js" defer></script>
+<script src="../../assets/push.js" defer></script>
+<!-- krypt:app:end -->
+</body>
+</html>

@@ -38,6 +38,24 @@ contextBridge.exposeInMainWorld('krypt', {
     },
   },
 
+  /* Dashboards the user imported. Reads and writes go to userData via
+     the main process — the renderer never touches the filesystem, and
+     an imported dashboard never sees any of this: it renders inside a
+     sandboxed iframe with no same-origin access to the page that
+     holds these functions. */
+  custom: {
+    list: () => ipcRenderer.invoke('custom:list'),
+    read: (id) => ipcRenderer.invoke('custom:read', id),
+    import: () => ipcRenderer.invoke('custom:import'),
+    importHtml: (payload) => ipcRenderer.invoke('custom:importHtml', payload),
+    importPaths: (files) => ipcRenderer.invoke('custom:importPaths', files),
+    rename: (id, name) => ipcRenderer.invoke('custom:rename', id, name),
+    replace: (id, html) => ipcRenderer.invoke('custom:replace', id, html),
+    remove: (id) => ipcRenderer.invoke('custom:remove', id),
+    export: (id) => ipcRenderer.invoke('custom:export', id),
+    reveal: () => ipcRenderer.invoke('custom:reveal'),
+  },
+
   onboarding: {
     seen: () => ipcRenderer.invoke('onboarding:seen'),
     markSeen: () => ipcRenderer.invoke('onboarding:markSeen'),

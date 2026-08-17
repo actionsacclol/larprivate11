@@ -1,0 +1,30 @@
+{
+  "name": "Bastion — Krypt LARP",
+  "short_name": "Bastion",
+  "description": "Bastion — a fictional Crypto Exchange mock-up. Part of the Krypt LARP collection.",
+  "start_url": "../../dashboards/bastion/index.html",
+  "scope": "../../",
+  "display": "standalone",
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
+  "background_color": "#FFFFFF",
+  "theme_color": "#2E5AAE",
+  "icons": [
+    {
+      "src": "../icons/bastion-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../icons/bastion-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

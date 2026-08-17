@@ -1,0 +1,30 @@
+{
+  "name": "Quill Cash — Krypt LARP",
+  "short_name": "Quill",
+  "description": "Quill Cash — a fictional Money · Banking mock-up. Part of the Krypt LARP collection.",
+  "start_url": "../../dashboards/quill/index.html",
+  "scope": "../../",
+  "display": "standalone",
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
+  "background_color": "#FFFFFF",
+  "theme_color": "#1FBB78",
+  "icons": [
+    {
+      "src": "../icons/quill-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../icons/quill-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

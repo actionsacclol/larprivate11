@@ -1,0 +1,30 @@
+{
+  "name": "Halo Insights — Krypt LARP",
+  "short_name": "Halo",
+  "description": "Halo Insights — a fictional Creator Analytics mock-up. Part of the Krypt LARP collection.",
+  "start_url": "../../dashboards/halo-insights/index.html",
+  "scope": "../../",
+  "display": "standalone",
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
+  "background_color": "#0D0D10",
+  "theme_color": "#A9469E",
+  "icons": [
+    {
+      "src": "../icons/halo-insights-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../icons/halo-insights-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

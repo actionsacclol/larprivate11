@@ -1,0 +1,30 @@
+{
+  "name": "Dwell — Krypt LARP",
+  "short_name": "Dwell",
+  "description": "Dwell — a fictional Digital Wellbeing mock-up. Part of the Krypt LARP collection.",
+  "start_url": "../../dashboards/dwell/index.html",
+  "scope": "../../",
+  "display": "standalone",
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
+  "background_color": "#0B0B10",
+  "theme_color": "#6B63DA",
+  "icons": [
+    {
+      "src": "../icons/dwell-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../icons/dwell-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

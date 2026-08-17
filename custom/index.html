@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0a0b">
+<title>Your dashboards — Krypt LARP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/ui.css">
+<style>
+  /* Local names are aliases onto the shared set in assets/ui.css, so
+     this page's own rules keep reading --card / --line / --accent
+     while the palette itself is defined in exactly one file. */
+  :root{
+    --bg:var(--k-bg); --card:var(--k-surface); --card2:var(--k-surface-2);
+    --line:var(--k-line);
+    --text:var(--k-text); --muted:var(--k-muted); --dim:var(--k-dim);
+    --accent:var(--k-accent-strong); --accent2:var(--k-amber);
+    --font:var(--k-font);
+  }
+  body{padding:0 0 80px;}
+  .wrap{max-width:1240px;margin:0 auto;padding:0 24px;}
+
+  /* ---- header ---- */
+  .top{display:flex;align-items:center;justify-content:space-between;gap:16px;
+    padding:26px 0 0;flex-wrap:wrap;}
+  .back{display:inline-flex;align-items:center;gap:7px;background:#17171d;color:#fff;
+    border:1px solid var(--line);text-decoration:none;padding:9px 15px;border-radius:11px;
+    font-size:13px;font-weight:600;}
+  .back:hover{background:#22222a;}
+  .top .rgt{display:flex;gap:9px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);
+    background:#17171d;color:#fff;font:600 13px/1 var(--font);padding:10px 16px;
+    border-radius:11px;cursor:pointer;text-decoration:none;}
+  .btn:hover{background:#22222a;}
+  .btn.primary{background:linear-gradient(135deg,var(--accent),#5b21b6);border-color:transparent;}
+  .btn.primary:hover{filter:brightness(1.12);}
+  .btn svg{width:15px;height:15px;flex:none;}
+  .btn[disabled]{opacity:.45;cursor:default;}
+
+  h1{font-size:clamp(30px,5vw,44px);font-weight:900;letter-spacing:-.03em;margin:34px 0 10px;}
+  .sub{color:var(--muted);font-size:15px;max-width:60ch;line-height:1.6;}
+  .kicker{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#8b7bd8;
+    font-weight:700;margin-top:8px;}
+
+  .modeline{margin-top:18px;display:inline-flex;align-items:center;gap:9px;
+    background:#15151b;border:1px solid var(--line);border-radius:11px;
+    padding:10px 15px;font-size:13px;color:var(--muted);}
+  .modeline b{color:var(--text);font-weight:600;}
+  .modeline .dotc{width:7px;height:7px;border-radius:50%;background:#3ad17c;flex:none;}
+  .modeline.ro .dotc{background:#f0a82e;}
+  .modeline.off .dotc{background:#6e6e7c;}
+
+  /* ---- drop zone ---- */
+  .drop{margin-top:26px;border:1.5px dashed #33333f;border-radius:18px;padding:34px 24px;
+    text-align:center;transition:.15s;background:#101015;}
+  .drop.hot{border-color:var(--accent);background:#16121f;}
+  .drop h2{font-size:16px;font-weight:700;margin-bottom:6px;}
+  .drop p{color:var(--muted);font-size:13.5px;line-height:1.6;max-width:52ch;margin:0 auto;}
+  .drop .row{margin-top:16px;display:flex;gap:9px;justify-content:center;flex-wrap:wrap;}
+
+  /* ---- grid ---- */
+  .head{display:flex;align-items:baseline;justify-content:space-between;
+    margin:40px 0 14px;gap:16px;}
+  .head h2{font-size:19px;font-weight:800;letter-spacing:-.02em;}
+  .head span{color:var(--dim);font-size:13px;}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;}
+  .item{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    overflow:hidden;display:flex;flex-direction:column;transition:.16s;}
+  .item:hover{border-color:#3a3a46;transform:translateY(-2px);
+    box-shadow:0 18px 40px rgba(0,0,0,.45);}
+  .item .face{display:flex;align-items:center;gap:13px;padding:16px;text-decoration:none;
+    color:inherit;min-width:0;}
+  .tile{width:52px;height:52px;border-radius:13px;flex:none;display:flex;
+    align-items:center;justify-content:center;font-size:23px;font-weight:800;color:#fff;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);}
+  .item .nm{min-width:0;flex:1;}
+  .item .nm b{display:block;font-size:15px;font-weight:700;letter-spacing:-.01em;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .item .nm span{display:block;color:var(--dim);font-size:12px;margin-top:3px;}
+  .item .acts{display:flex;border-top:1px solid var(--line);}
+  .item .acts button{flex:1;background:transparent;border:0;border-right:1px solid var(--line);
+    color:var(--muted);font:600 12px/1 var(--font);padding:11px 6px;cursor:pointer;}
+  .item .acts button:last-child{border-right:0;}
+  .item .acts button:hover{background:#1d1d24;color:#fff;}
+  .item .acts button.danger:hover{background:#2a1618;color:#ff8a8a;}
+
+  /* ---- empty ---- */
+  .empty{border:1px solid var(--line);border-radius:18px;padding:44px 28px;text-align:center;
+    background:var(--card);}
+  .empty h3{font-size:17px;font-weight:700;margin-bottom:8px;}
+  .empty p{color:var(--muted);font-size:14px;line-height:1.65;max-width:48ch;margin:0 auto 18px;}
+
+  .notes{
+    margin-top:40px;display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;
+  }
+  .note{
+    background:var(--card);border:1px solid var(--line);
+    border-radius:var(--k-r-lg);padding:18px 20px;
+  }
+  .note h3{font-size:13.5px;font-weight:700;color:var(--text);margin-bottom:7px;}
+  .note p{color:var(--muted);font-size:13px;line-height:1.65;}
+
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;z-index:40;
+    padding:11px 18px;border-radius:999px;background:#1c1c24;color:#fff;
+    border:1px solid #33333f;font-size:13px;font-weight:600;
+    opacity:0;transition:opacity .3s ease;pointer-events:none;
+    box-shadow:0 14px 34px rgba(0,0,0,.5);}
+  .toast.on{opacity:1;}
+
+  @media (max-width:560px){
+    body{padding:0 16px 60px;}
+    h1{margin-top:24px;}
+    .grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <a class="back" href="../index.html">← Collection</a>
+    <div class="rgt">
+      <a class="btn" href="../about.html">What is this?</a>
+      <a class="btn" href="guide.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M8 7.5h7M8 11h5"/></svg>
+        How to make one
+      </a>
+      <button class="btn primary" id="importBtn" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5"/><path d="M4 16v2.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V16"/></svg>
+        Import HTML
+      </button>
+    </div>
+  </div>
+
+  <div class="kicker">Your collection</div>
+  <h1>Dashboards you made</h1>
+  <p class="sub">Screenshot any interface, ask an AI to rebuild it as a single HTML file, and drop
+    it in here. It joins the gallery, edits and animates like the built-in ones, and installs to
+    your Home Screen with an icon of its own.</p>
+
+  <div class="modeline" id="modeline"><span class="dotc"></span><span id="modeText">Checking…</span></div>
+
+  <div class="drop" id="drop">
+    <h2>Drop an .html file here</h2>
+    <p id="dropHelp">Or use Import HTML above. One self-contained file per dashboard —
+      see <a href="guide.html" style="color:#a78bfa">the guide</a> for a prompt that produces exactly that.</p>
+    <div class="row">
+      <a class="btn" href="guide.html">Read the guide</a>
+      <button class="btn" id="revealBtn" type="button">Open the folder</button>
+    </div>
+  </div>
+
+  <div class="head">
+    <h2>Imported</h2>
+    <span id="count"></span>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="empty" id="empty" style="display:none">
+    <h3>Nothing imported yet</h3>
+    <p>Take a screenshot of an interface you like, paste it into an AI chat with the prompt from
+      the guide, save what comes back as <b>something.html</b>, and import it here.</p>
+    <a class="btn primary" href="guide.html">Show me the prompt</a>
+  </div>
+
+  <!-- Three separate facts, so they read as three separate facts. As one
+       paragraph with bold run-in headings they were a wall nobody finishes. -->
+  <div class="notes">
+    <div class="note">
+      <h3>Where these live</h3>
+      <p>Files in your own user folder, not inside the app — so they survive updates, and
+        nothing is uploaded anywhere.</p>
+    </div>
+    <div class="note">
+      <h3>How they run</h3>
+      <p>Each one opens in a sandbox with no access to the rest of the app, so a file from
+        somewhere you don't fully trust still can't read anything else.</p>
+    </div>
+    <div class="note">
+      <h3>What to put in them</h3>
+      <p>Same rule as the built-in collection: invent the brand. Copying a real company's
+        name and logo into a mock-up is the one thing that turns a design study into a
+        problem.</p>
+    </div>
+  </div>
+
+  <footer class="k-foot">
+    <a href="../index.html">All dashboards</a>
+    <a href="../about.html">What is this?</a>
+    <a href="guide.html">Make your own</a>
+    <span class="k-spacer"></span>
+    <span>Nothing leaves your machine</span>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="krypt-custom.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var C = window.kryptCustom;
+  var grid = document.getElementById('grid');
+  var empty = document.getElementById('empty');
+  var countEl = document.getElementById('count');
+  var drop = document.getElementById('drop');
+
+  var toastTimer = null;
+  function toast(text) {
+    var t = document.getElementById('toast');
+    t.textContent = text;
+    t.classList.add('on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.remove('on'); }, 3000);
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  function size(bytes) {
+    if (!bytes && bytes !== 0) return '';
+    return bytes < 1024 ? bytes + ' B'
+      : bytes < 1024 * 1024 ? (bytes / 1024).toFixed(0) + ' KB'
+      : (bytes / 1048576).toFixed(1) + ' MB';
+  }
+
+  function when(ms) {
+    if (!ms) return '';
+    var d = Math.floor((Date.now() - ms) / 86400000);
+    if (d <= 0) return 'today';
+    if (d === 1) return 'yesterday';
+    if (d < 30) return d + ' days ago';
+    return new Date(ms).toLocaleDateString();
+  }
+
+  /* ---------------- what this page can do here ---------------- */
+
+  function describeMode() {
+    var line = document.getElementById('modeline');
+    var text = document.getElementById('modeText');
+    if (C.mode === 'desktop') {
+      text.innerHTML = 'Reading from <b>this computer</b> — you can import, rename and delete here.';
+    } else if (C.mode === 'server') {
+      line.className = 'modeline ro';
+      text.innerHTML = 'Served from the <b>computer running Krypt LARP</b>. You can open your ' +
+        'dashboards and add them to your Home Screen; importing happens over there.';
+    } else {
+      line.className = 'modeline off';
+      text.innerHTML = 'Opened as a plain file, so there is <b>nowhere to read from</b>. ' +
+        'Open the Krypt LARP app, or start the phone server, to see your imported dashboards.';
+    }
+
+    if (!C.canWrite) {
+      document.getElementById('importBtn').disabled = true;
+      document.getElementById('revealBtn').style.display = 'none';
+      drop.style.display = 'none';
+    }
+  }
+
+  /* ---------------- render ---------------- */
+
+  function tileFor(rec) {
+    var ch = (String(rec.name).trim().match(/[A-Za-z0-9]/) || ['?'])[0].toUpperCase();
+    var c = rec.theme || '#3B4FD0';
+    return '<span class="tile" style="background:linear-gradient(140deg,' +
+      esc(c) + '33,' + esc(c) + ')">' + esc(ch) + '</span>';
+  }
+
+  function render(items) {
+    countEl.textContent = items.length
+      ? items.length + (items.length === 1 ? ' dashboard' : ' dashboards') : '';
+    empty.style.display = items.length ? 'none' : '';
+    grid.innerHTML = items.map(function (rec) {
+      return '<div class="item" data-id="' + esc(rec.id) + '">' +
+        '<a class="face" href="' + esc(C.viewUrl(rec.id)) + '">' +
+          tileFor(rec) +
+          '<span class="nm"><b>' + esc(rec.name) + '</b>' +
+          '<span>' + esc([size(rec.bytes), when(rec.updated)].filter(Boolean).join(' · ')) +
+          '</span></span>' +
+        '</a>' +
+        (C.canWrite
+          ? '<div class="acts">' +
+              '<button type="button" data-act="rename">Rename</button>' +
+              '<button type="button" data-act="export">Export</button>' +
+              '<button type="button" data-act="remove" class="danger">Delete</button>' +
+            '</div>'
+          : '') +
+      '</div>';
+    }).join('');
+  }
+
+  function refresh() {
+    return C.list().then(render).catch(function (e) {
+      toast(e.message || 'Could not read your collection');
+      render([]);
+    });
+  }
+
+  grid.addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-act]');
+    if (!b) return;
+    var id = b.closest('.item').dataset.id;
+    var act = b.dataset.act;
+
+    if (act === 'rename') {
+      C.get(id).then(function (rec) {
+        var next = prompt('Name this dashboard', rec ? rec.name : '');
+        if (next == null) return null;
+        return C.rename(id, next).then(function () { toast('Renamed'); return refresh(); });
+      }).catch(function (err) { toast(err.message); });
+    } else if (act === 'export') {
+      C.export(id).then(function (r) {
+        if (r && !r.canceled) toast('Saved to ' + r.path);
+      }).catch(function (err) { toast(err.message); });
+    } else if (act === 'remove') {
+      C.remove(id).then(function (r) {
+        if (r && r.removed) { toast('Deleted'); return refresh(); }
+      }).catch(function (err) { toast(err.message); });
+    }
+  });
+
+  /* ---------------- import ---------------- */
+
+  document.getElementById('importBtn').addEventListener('click', function () {
+    C.import().then(function (r) {
+      if (!r || r.canceled) return;
+      if (r.errors && r.errors.length) {
+        toast(r.errors[0].file + ': ' + r.errors[0].message);
+      } else if (r.added && r.added.length) {
+        toast('Imported ' + r.added.length +
+          (r.added.length === 1 ? ' dashboard' : ' dashboards'));
+      }
+      return refresh();
+    }).catch(function (e) { toast(e.message); });
+  });
+
+  document.getElementById('revealBtn').addEventListener('click', function () {
+    C.reveal().catch(function (e) { toast(e.message); });
+  });
+
+  /* Drag and drop. Electron gives dropped files a real path, so the
+     main process can read them itself; when it doesn't (a drag out of a
+     browser, say) fall back to reading the text here and sending that. */
+  ['dragenter', 'dragover'].forEach(function (t) {
+    drop.addEventListener(t, function (e) {
+      e.preventDefault();
+      drop.classList.add('hot');
+    });
+  });
+  ['dragleave', 'drop'].forEach(function (t) {
+    drop.addEventListener(t, function () { drop.classList.remove('hot'); });
+  });
+
+  drop.addEventListener('drop', function (e) {
+    e.preventDefault();
+    if (!C.canWrite) return;
+    var files = [].slice.call(e.dataTransfer.files || []);
+    var html = files.filter(function (f) { return /\.html?$/i.test(f.name); });
+    if (!html.length) return toast('Drop an .html file');
+
+    var paths = html.map(function (f) { return f.path; }).filter(Boolean);
+    if (paths.length === html.length) {
+      C.importPaths(paths).then(function (r) {
+        toast(r.errors.length ? r.errors[0].message
+          : 'Imported ' + r.added.length + (r.added.length === 1 ? ' dashboard' : ' dashboards'));
+        return refresh();
+      }).catch(function (err) { toast(err.message); });
+      return;
+    }
+
+    Promise.all(html.map(function (f) {
+      return f.text().then(function (text) {
+        return C.importHtml(f.name.replace(/\.html?$/i, ''), text);
+      });
+    })).then(function () {
+      toast('Imported ' + html.length + (html.length === 1 ? ' dashboard' : ' dashboards'));
+      return refresh();
+    }).catch(function (err) { toast(err.message); });
+  });
+
+  // Same treatment anywhere on the page, so a miss doesn't open the file
+  // in the window and lose the collection behind it.
+  window.addEventListener('dragover', function (e) { e.preventDefault(); });
+  window.addEventListener('drop', function (e) { e.preventDefault(); });
+
+  describeMode();
+  refresh();
+})();
+</script>
+</body>
+</html>

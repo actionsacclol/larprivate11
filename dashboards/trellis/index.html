@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en" data-krypt-status="translucent">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Trellis — Krypt LARP</title>
+<style>
+  /* ============================================================
+     TRELLIS DASHBOARD (mobile app) — a learning recreation
+     Everything is data-driven. Look for the DATA object in the
+     script below to change the account, gross volume, stats,
+     balance and the recent payments / payouts.
+     Toggle "Edit" (top-right) to click-edit values in the page;
+     changes are saved to your browser (localStorage).
+     ============================================================ */
+
+  :root{
+    --indigo:#4D6BE0;      /* Trellis primary accent */
+    --indigo-d:#3B4FD0;
+    --bg-page:#0a0a0a;
+    --bg:#f6f8fa;          /* app background */
+    --card:#ffffff;
+    --ink:#1a1f36;         /* dark navy text */
+    --muted:#697386;       /* secondary text */
+    --line:#e6e8eb;        /* card borders */
+    --green:#3fb67a;       /* positive */
+    --red:#df1b41;         /* negative / failed */
+    --amber:#e0a500;       /* pending / test */
+    --gray:#8792a2;
+    --radius:12px;
+    --font:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg-page);
+    font-family:var(--font);
+    color:var(--ink);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+    padding:24px;
+  }
+
+  /* ---- Phone frame ---- */
+  .phone{
+    position:relative;
+    width:390px;
+    max-width:100%;
+    height:844px;
+    background:var(--bg);
+    border-radius:44px;
+    box-shadow:0 0 0 12px #111, 0 40px 90px rgba(0,0,0,.7);
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* ---- Status bar ---- */
+  .statusbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:15px 30px 4px;font-size:15px;font-weight:600;
+    color:var(--ink);letter-spacing:.2px;flex:0 0 auto;
+  }
+  .statusbar .right{display:flex;align-items:center;gap:7px;}
+  .battery{border:1.5px solid var(--ink);border-radius:4px;width:26px;height:13px;position:relative;display:flex;align-items:center;padding:1.5px;}
+  .battery::after{content:"";position:absolute;right:-4px;top:4px;width:2px;height:5px;background:var(--ink);border-radius:0 2px 2px 0;}
+  .battery i{display:block;height:100%;background:var(--ink);border-radius:1.5px;width:82%;}
+  .signal{display:flex;align-items:flex-end;gap:2px;height:12px;}
+  .signal b{width:3px;background:var(--ink);border-radius:1px;display:block;}
+  .signal b:nth-child(1){height:5px}.signal b:nth-child(2){height:7px}
+  .signal b:nth-child(3){height:9px}.signal b:nth-child(4){height:12px}
+
+  /* ---- Top account bar ---- */
+  .accbar{
+    display:flex;align-items:center;gap:10px;padding:8px 18px 12px;flex:0 0 auto;
+    border-bottom:1px solid var(--line);background:var(--bg);
+  }
+  .acclogo{
+    width:32px;height:32px;border-radius:9px;flex:0 0 auto;
+    background:linear-gradient(135deg,#4D6BE0,#7d76ff);
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-weight:800;font-size:16px;
+    box-shadow:0 2px 6px rgba(99,91,255,.35);
+  }
+  .accname{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.15;}
+  .accname .n{font-size:15px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .accname .w{font-size:10.5px;font-weight:700;color:var(--indigo);letter-spacing:.3px;}
+  .testpill{
+    display:flex;align-items:center;gap:5px;background:#fdf3d3;color:#8a6d00;
+    border:1px solid #f3dd8f;font-size:11px;font-weight:700;
+    padding:5px 10px;border-radius:20px;cursor:pointer;white-space:nowrap;
+  }
+  .testpill .dot{width:6px;height:6px;border-radius:50%;background:var(--amber);}
+  .accav{
+    width:32px;height:32px;border-radius:50%;flex:0 0 auto;
+    background:linear-gradient(135deg,#2a3142,#4a5568);
+    color:#fff;display:flex;align-items:center;justify-content:center;
+    font-size:12.5px;font-weight:700;
+  }
+
+  /* ---- Scroll area ---- */
+  .screen{flex:1;overflow-y:auto;padding:16px 16px 96px;scrollbar-width:none;}
+  .screen::-webkit-scrollbar{display:none;}
+
+  /* ---- Section heads ---- */
+  .today{display:flex;align-items:baseline;gap:10px;margin:2px 2px 14px;}
+  .today h1{font-size:24px;font-weight:800;letter-spacing:-.6px;color:var(--ink);}
+  .today .date{font-size:13px;font-weight:600;color:var(--muted);}
+  .sec-head{display:flex;align-items:center;justify-content:space-between;margin:22px 2px 10px;}
+  .sec-head .h{font-size:16px;font-weight:700;color:var(--ink);}
+  .sec-head .link{font-size:13px;font-weight:700;color:var(--indigo);text-decoration:none;cursor:pointer;}
+
+  /* ---- generic card ---- */
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:0 1px 2px rgba(26,31,54,.04);
+    opacity:0;transform:translateY(12px);animation:rise .5s ease forwards;
+  }
+  @keyframes rise{to{opacity:1;transform:none;}}
+
+  /* ---- Gross volume hero card ---- */
+  .gv{padding:18px 18px 6px;margin-bottom:4px;}
+  .gv .lbl{font-size:13px;font-weight:600;color:var(--muted);}
+  .gv .valrow{display:flex;align-items:flex-end;gap:10px;margin-top:4px;}
+  .gv .val{font-size:32px;font-weight:800;letter-spacing:-1px;color:var(--ink);line-height:1;}
+  .gv .delta{font-size:13px;font-weight:700;color:var(--green);padding-bottom:3px;display:flex;align-items:center;gap:2px;}
+  .gv .delta.neg{color:var(--red);}
+  .chartwrap{margin:14px -6px 0;}
+  .chartwrap svg{display:block;width:100%;height:132px;}
+  .chart-area{opacity:0;animation:fadein 1.4s ease forwards .5s;}
+  @keyframes fadein{to{opacity:1;}}
+  .chart-line{fill:none;stroke:var(--indigo);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;
+    stroke-dasharray:2000;stroke-dashoffset:2000;animation:draw 1.7s ease forwards .25s;}
+  @keyframes draw{to{stroke-dashoffset:0;}}
+  .chart-cmp{fill:none;stroke:#b9c0cc;stroke-width:1.6;stroke-dasharray:4 4;stroke-linecap:round;
+    opacity:0;animation:fadein 1s ease forwards 1s;}
+  .chart-x{display:flex;justify-content:space-between;padding:6px 8px 2px;}
+  .chart-x span{font-size:10.5px;font-weight:600;color:var(--muted);}
+  .gv .legend{display:flex;gap:16px;padding:2px 8px 12px;}
+  .gv .legend span{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--muted);}
+  .gv .legend i{width:14px;height:0;border-top:2px solid var(--indigo);display:inline-block;}
+  .gv .legend i.cmp{border-top:2px dashed #b9c0cc;}
+
+  /* ---- Quick stats row ---- */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px;}
+  .stat{padding:13px 12px;}
+  .stat .sl{font-size:11.5px;font-weight:600;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .stat .sv{font-size:18px;font-weight:800;letter-spacing:-.4px;color:var(--ink);margin-top:5px;}
+  .stat .sd{font-size:11px;font-weight:700;color:var(--green);margin-top:3px;}
+  .stat .sd.neg{color:var(--red);}
+
+  /* ---- Balance card ---- */
+  .bal{padding:16px 18px;}
+  .bal-top{display:flex;justify-content:space-between;align-items:flex-start;}
+  .bal .bl{font-size:12.5px;font-weight:600;color:var(--muted);}
+  .bal .bv{font-size:26px;font-weight:800;letter-spacing:-.7px;color:var(--ink);margin-top:3px;}
+  .bal .payout-ico{width:38px;height:38px;border-radius:10px;background:#eef0ff;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+  .bal .payout-ico svg{width:20px;height:20px;stroke:var(--indigo);fill:none;stroke-width:2;}
+  .bal-sub{display:flex;justify-content:space-between;margin-top:14px;padding-top:13px;border-top:1px solid var(--line);}
+  .bal-sub .item .k{font-size:11.5px;font-weight:600;color:var(--muted);}
+  .bal-sub .item .v{font-size:14.5px;font-weight:700;color:var(--ink);margin-top:2px;}
+  .bal-sub .item.r{text-align:right;}
+  .bal-sub .item .v.acc{color:var(--indigo);}
+
+  /* ---- Payments list ---- */
+  .plist{overflow:hidden;}
+  .prow{
+    display:flex;align-items:center;gap:12px;padding:13px 15px;cursor:pointer;
+    transition:background .15s;
+    opacity:0;transform:translateY(10px);animation:rise .5s ease forwards;
+  }
+  .prow:hover{background:#f7f9fb;}
+  .prow:active{background:#eef0f3;}
+  .prow + .prow{border-top:1px solid var(--line);}
+  .prow .pmid{flex:1;min-width:0;}
+  .prow .pemail{font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .prow .pmeta{font-size:11.5px;color:var(--muted);margin-top:3px;display:flex;align-items:center;gap:6px;}
+  .prow .pmeta .brand{display:inline-flex;align-items:center;gap:3px;}
+  .prow .pright{text-align:right;flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;gap:5px;}
+  .prow .pamt{font-size:14.5px;font-weight:800;color:var(--ink);letter-spacing:-.2px;}
+  .prow .pamt.ref{color:var(--muted);text-decoration:line-through;}
+  .pill{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.2px;white-space:nowrap;}
+  .pill.succeeded{background:#e3f6ec;color:#1e7a4d;}
+  .pill.pending{background:#fdf3d3;color:#8a6d00;}
+  .pill.refunded{background:#eceef1;color:#697386;}
+  .pill.failed{background:#fce4e9;color:#b3123a;}
+
+  /* ---- View router ---- */
+  .view{display:none;}
+  .view.active{display:block;animation:vfade .28s ease;}
+  @keyframes vfade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+  .vhead{font-size:24px;font-weight:800;letter-spacing:-.6px;color:var(--ink);padding:2px 2px 14px;}
+
+  /* ---- Search + filter chips (payments) ---- */
+  .search{display:flex;align-items:center;gap:9px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;margin-bottom:12px;}
+  .search svg{width:17px;height:17px;stroke:var(--muted);fill:none;stroke-width:2;flex:0 0 auto;}
+  .search input{border:none;outline:none;background:transparent;width:100%;font-family:var(--font);font-size:14px;color:var(--ink);}
+  .chips{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+  .chip{border:1px solid var(--line);background:#fff;color:var(--muted);font-family:var(--font);font-size:12.5px;font-weight:700;padding:7px 15px;border-radius:20px;cursor:pointer;transition:.15s;}
+  .chip:hover{border-color:#cdd3db;}
+  .chip.on{background:var(--indigo);color:#fff;border-color:var(--indigo);}
+
+  /* ---- Balances tab cards ---- */
+  .bcards{display:flex;flex-direction:column;gap:12px;margin-bottom:8px;}
+  .bcard{display:flex;align-items:center;gap:14px;padding:16px;}
+  .bcard .bico{width:44px;height:44px;border-radius:12px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;}
+  .bcard .bico svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:2;}
+  .bcard .bmid{flex:1;min-width:0;}
+  .bcard .bt{font-size:14px;font-weight:700;color:var(--ink);}
+  .bcard .bs{font-size:12px;color:var(--muted);margin-top:2px;}
+  .bcard .ba{font-size:17px;font-weight:800;letter-spacing:-.4px;color:var(--ink);text-align:right;white-space:nowrap;}
+
+  /* ---- Bottom tab bar ---- */
+  .tabbar{
+    position:absolute;left:0;right:0;bottom:0;height:76px;
+    background:#fff;border-top:1px solid var(--line);
+    display:flex;align-items:flex-start;justify-content:space-around;
+    padding:9px 6px 0;box-shadow:0 -4px 20px rgba(0,0,0,.04);
+  }
+  .tab{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;color:var(--gray);flex:1;}
+  .tab svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.9;}
+  .tab .tl{font-size:10px;font-weight:600;}
+  .tab.active{color:var(--indigo);}
+
+  /* ---- Edit toolbar + back (outside phone) ---- */
+  .toolbar{position:fixed;top:18px;right:18px;display:flex;gap:8px;z-index:50;}
+  .toolbar button{
+    background:#1c1c1e;color:#fff;border:1px solid #333;
+    padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;
+    cursor:pointer;font-family:var(--font);transition:.15s;
+  }
+  .toolbar button:hover{background:#2a2a2c;}
+  .toolbar button.on{background:var(--indigo);color:#fff;border-color:var(--indigo);}
+  .back{
+    position:fixed;top:18px;left:18px;z-index:50;
+    background:#1c1c1e;color:#fff;border:1px solid #333;text-decoration:none;
+    padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;
+    font-family:var(--font);transition:.15s;
+  }
+  .back:hover{background:#2a2a2c;}
+
+  /* Editing state */
+  body.editing [data-edit]{outline:1.5px dashed var(--indigo);outline-offset:2px;border-radius:4px;cursor:text;}
+  [data-edit]:focus{outline:1.5px solid var(--indigo);}
+  .hint{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);color:#555;font-size:12px;font-family:var(--font);}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+</style>
+<!-- krypt:phone:start -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Trellis">
+<meta name="theme-color" content="#4D6BE0">
+<link rel="manifest" href="../../assets/manifests/trellis.webmanifest">
+<link rel="apple-touch-icon" href="../../assets/icons/trellis-180.png">
+<link rel="icon" type="image/png" sizes="512x512" href="../../assets/icons/trellis-512.png">
+<link rel="stylesheet" href="../../assets/phone.css">
+<!-- krypt:phone:end -->
+</head>
+<body>
+
+<a class="back" href="../../index.html">← Collection</a>
+<div class="toolbar">
+  <button id="editBtn">✎ Edit</button>
+  <button id="resetBtn">↺ Reset</button>
+</div>
+
+<div class="phone">
+  <!-- Status bar -->
+  <div class="statusbar">
+    <span>9:41</span>
+    <span class="right">
+      <span class="signal"><b></b><b></b><b></b><b></b></span>
+      <svg width="18" height="14" viewBox="0 0 18 14" fill="none"><path d="M9 3C11.5 3 13.8 4 15.5 5.6M9 7C10.4 7 11.7 7.6 12.7 8.5M4.3 5.6C6 4 8.3 3 9 3M6.3 8.5C7.3 7.6 8 7.4 9 7.4" stroke="#1a1f36" stroke-width="1.6" stroke-linecap="round"/><circle cx="9" cy="11" r="1.2" fill="#1a1f36"/></svg>
+      <span class="battery"><i></i></span>
+    </span>
+  </div>
+
+  <!-- Account bar -->
+  <div class="accbar">
+    <div class="acclogo" id="acclogo">K</div>
+    <div class="accname">
+      <span class="n" data-edit="account">Krypt Labs</span>
+      <span class="w">trellis</span>
+    </div>
+    <div class="testpill" id="testPill"><span class="dot"></span>Test mode</div>
+    <div class="accav" id="accav">KL</div>
+  </div>
+
+  <div class="screen">
+
+   <!-- ============ HOME view ============ -->
+   <section class="view active" data-view="home">
+    <div class="today">
+      <h1>Today</h1>
+      <span class="date" data-edit="date">Jul 20</span>
+    </div>
+
+    <!-- Gross volume card -->
+    <div class="card gv" style="animation-delay:.02s">
+      <div class="lbl">Gross volume</div>
+      <div class="valrow">
+        <span class="val cv" data-edit="gross" data-prefix="$" data-dec="2">24,318.55</span>
+        <span class="delta" data-edit="grossDelta">▲ 11.2%</span>
+      </div>
+      <div class="chartwrap">
+        <svg viewBox="0 0 340 132" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="gvFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#4D6BE0" stop-opacity="0.22"/>
+              <stop offset="100%" stop-color="#4D6BE0" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <!-- previous-period dashed comparison -->
+          <path class="chart-cmp" d="M8,108 L48,101 L88,99 L128,92 L168,89 L208,80 L248,78 L288,70 L332,64"/>
+          <!-- area fill -->
+          <path class="chart-area" fill="url(#gvFill)" d="M8,100 L48,89 L88,93 L128,71 L168,79 L208,56 L248,61 L288,41 L332,34 L332,132 L8,132 Z"/>
+          <!-- main line -->
+          <path class="chart-line" d="M8,100 L48,89 L88,93 L128,71 L168,79 L208,56 L248,61 L288,41 L332,34"/>
+        </svg>
+      </div>
+      <div class="chart-x">
+        <span>12a</span><span>6a</span><span>12p</span><span>6p</span><span>now</span>
+      </div>
+      <div class="legend">
+        <span><i></i>Today</span>
+        <span><i class="cmp"></i>Previous period</span>
+      </div>
+    </div>
+
+    <!-- Quick stats -->
+    <div class="stats">
+      <div class="card stat" style="animation-delay:.08s">
+        <div class="sl">Net volume</div>
+        <div class="sv cv" data-edit="netVol" data-prefix="$" data-dec="0">21,904</div>
+        <div class="sd" data-edit="netDelta">+9.4%</div>
+      </div>
+      <div class="card stat" style="animation-delay:.13s">
+        <div class="sl">New customers</div>
+        <div class="sv cv" data-edit="newCust" data-prefix="" data-dec="0">48</div>
+        <div class="sd" data-edit="custDelta">+6</div>
+      </div>
+      <div class="card stat" style="animation-delay:.18s">
+        <div class="sl">Payments</div>
+        <div class="sv cv" data-edit="payCount" data-prefix="" data-dec="0">312</div>
+        <div class="sd" data-edit="payDelta">+18</div>
+      </div>
+    </div>
+
+    <!-- Balance card -->
+    <div class="sec-head"><div class="h">Balance</div><a class="link" data-goto="balances">View</a></div>
+    <div class="card bal" style="animation-delay:.22s">
+      <div class="bal-top">
+        <div>
+          <div class="bl">Available balance</div>
+          <div class="bv"><span class="cv" data-edit="avail" data-prefix="$" data-dec="2">18,240.60</span></div>
+        </div>
+        <div class="payout-ico">
+          <svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 20h14" stroke-linecap="round"/></svg>
+        </div>
+      </div>
+      <div class="bal-sub">
+        <div class="item"><div class="k">Pending</div><div class="v">$<span data-edit="pending">2,410.10</span></div></div>
+        <div class="item r"><div class="k">Next payout</div><div class="v acc" data-edit="nextPayout">Jul 22</div></div>
+      </div>
+    </div>
+
+    <!-- Payments -->
+    <div class="sec-head"><div class="h">Payments</div><a class="link" data-goto="payments">See all</a></div>
+    <div class="card plist" id="homePayments" style="animation-delay:.26s"></div>
+   </section>
+
+   <!-- ============ BALANCES view ============ -->
+   <section class="view" data-view="balances">
+    <div class="vhead">Balances</div>
+    <div class="bcards">
+      <div class="card bcard" style="animation-delay:.02s">
+        <div class="bico" style="background:linear-gradient(135deg,#3fb67a,#2f9d66)">
+          <svg viewBox="0 0 24 24"><path d="M12 2v20M17 6H9.5a3 3 0 0 0 0 6H14a3 3 0 0 1 0 6H6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="bmid"><div class="bt" data-edit="b-availT">Available</div><div class="bs" data-edit="b-availS">Ready to pay out</div></div>
+        <div class="ba">$<span data-edit="b-availA">18,240.60</span></div>
+      </div>
+      <div class="card bcard" style="animation-delay:.07s">
+        <div class="bico" style="background:linear-gradient(135deg,#e0a500,#c89100)">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="bmid"><div class="bt" data-edit="b-pendT">Pending</div><div class="bs" data-edit="b-pendS">Clearing soon</div></div>
+        <div class="ba">$<span data-edit="b-pendA">2,410.10</span></div>
+      </div>
+      <div class="card bcard" style="animation-delay:.12s">
+        <div class="bico" style="background:linear-gradient(135deg,#4D6BE0,#7d76ff)">
+          <svg viewBox="0 0 24 24"><path d="M3 12h13M11 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 5v14" stroke-linecap="round"/></svg>
+        </div>
+        <div class="bmid"><div class="bt" data-edit="b-transT">In transit to bank</div><div class="bs" data-edit="b-transS">•••• 4021 · arrives Jul 22</div></div>
+        <div class="ba">$<span data-edit="b-transA">6,120.00</span></div>
+      </div>
+    </div>
+
+    <div class="sec-head"><div class="h">Recent payouts</div></div>
+    <div class="card plist" id="payoutList" style="animation-delay:.16s"></div>
+   </section>
+
+   <!-- ============ PAYMENTS view ============ -->
+   <section class="view" data-view="payments">
+    <div class="vhead">Payments</div>
+    <div class="search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4" stroke-linecap="round"/></svg>
+      <input id="paySearch" type="text" placeholder="Search by email or amount" autocomplete="off">
+    </div>
+    <div class="chips">
+      <button class="chip on" data-filter="all">All</button>
+      <button class="chip" data-filter="succeeded">Succeeded</button>
+      <button class="chip" data-filter="refunded">Refunded</button>
+      <button class="chip" data-filter="failed">Failed</button>
+    </div>
+    <div class="card plist" id="fullPayments"></div>
+   </section>
+
+   <!-- ============ CUSTOMERS view ============ -->
+   <section class="view" data-view="customers">
+    <div class="vhead">Customers</div>
+    <div class="search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4" stroke-linecap="round"/></svg>
+      <input id="custSearch" type="text" placeholder="Search customers" autocomplete="off">
+    </div>
+    <div class="card plist" id="custList"></div>
+   </section>
+
+   <!-- ============ MORE view ============ -->
+   <section class="view" data-view="more">
+    <div class="vhead">More</div>
+    <div class="card plist">
+      <div class="prow"><div class="pmid"><div class="pemail" data-edit="m-1">Payouts &amp; bank accounts</div><div class="pmeta">Manage where funds land</div></div></div>
+      <div class="prow"><div class="pmid"><div class="pemail" data-edit="m-2">Products &amp; pricing</div><div class="pmeta">Catalog and subscriptions</div></div></div>
+      <div class="prow"><div class="pmid"><div class="pemail" data-edit="m-3">Developers &amp; API keys</div><div class="pmeta">Webhooks, logs, secrets</div></div></div>
+      <div class="prow"><div class="pmid"><div class="pemail" data-edit="m-4">Team &amp; permissions</div><div class="pmeta">Invite and manage roles</div></div></div>
+      <div class="prow"><div class="pmid"><div class="pemail" data-edit="m-5">Settings</div><div class="pmeta">Account, branding, tax</div></div></div>
+    </div>
+   </section>
+
+  </div>
+
+  <!-- Bottom tab bar -->
+  <div class="tabbar">
+    <div class="tab active" data-view="home">
+      <svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9h12v-9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="tl">Home</span>
+    </div>
+    <div class="tab" data-view="balances">
+      <svg viewBox="0 0 24 24"><path d="M12 3l8 4v2H4V7l8-4z" stroke-linejoin="round"/><path d="M6 11v6M10 11v6M14 11v6M18 11v6M4 20h16" stroke-linecap="round"/></svg>
+      <span class="tl">Balances</span>
+    </div>
+    <div class="tab" data-view="payments">
+      <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 9h18M7 15h4" stroke-linecap="round"/></svg>
+      <span class="tl">Payments</span>
+    </div>
+    <div class="tab" data-view="customers">
+      <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M4 19c0-3 2.4-5 5-5s5 2 5 5" stroke-linecap="round"/><path d="M16 6.5a3 3 0 0 1 0 5.6M17 14c2.2.4 4 2.3 4 5" stroke-linecap="round"/></svg>
+      <span class="tl">Customers</span>
+    </div>
+    <div class="tab" data-view="more">
+      <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg>
+      <span class="tl">More</span>
+    </div>
+  </div>
+</div>
+
+<div class="hint">Toggle Edit (top-right) to change values · tap the bottom tabs to switch screens</div>
+
+<script>
+/* ============================================================
+   DATA — edit this to change the dashboard.
+   - account / date / gross drive the top bar + gross-volume card.
+   - stats (netVol / newCust / payCount) feed the quick-stats row.
+   - avail / pending / nextPayout feed the balance card.
+   - payments[]: recent-payments rows.
+       email  : customer email (fictional)
+       amount : numeric amount text (e.g. "128.00")
+       status : "succeeded" | "pending" | "refunded" | "failed"
+       time   : short time / date label
+       brand  : card last-4 (e.g. "4242")
+   - payouts[]: recent-payouts rows (Balances tab).
+   - customers[]: customer rows (Customers tab).
+   ============================================================ */
+const DEFAULT_DATA = {
+  account:"Krypt Labs",
+  date:"Jul 20",
+  gross:"24,318.55", grossDelta:"▲ 11.2%",
+  netVol:"21,904", netDelta:"+9.4%",
+  newCust:"48", custDelta:"+6",
+  payCount:"312", payDelta:"+18",
+  avail:"18,240.60", pending:"2,410.10", nextPayout:"Jul 22",
+  payments:[
+    {email:"emma@example.com",      amount:"128.00", status:"succeeded", time:"2:14 PM", brand:"4242"},
+    {email:"liam.wong@example.com", amount:"64.50",  status:"succeeded", time:"1:52 PM", brand:"5588"},
+    {email:"noah@acme.io",          amount:"249.00", status:"pending",   time:"1:20 PM", brand:"0341"},
+    {email:"ava.p@example.com",     amount:"39.99",  status:"refunded",  time:"12:47 PM",brand:"9021"},
+    {email:"mia@studioloop.co",     amount:"512.00", status:"succeeded", time:"11:38 AM",brand:"1187"},
+    {email:"oliver@example.com",    amount:"88.00",  status:"failed",    time:"10:59 AM",brand:"7742"},
+    {email:"sofia.k@example.com",   amount:"156.25", status:"succeeded", time:"10:12 AM",brand:"3310"},
+    {email:"james@northwind.dev",   amount:"420.00", status:"succeeded", time:"9:41 AM", brand:"4242"},
+  ],
+  payouts:[
+    {email:"Payout to •••• 4021", amount:"6,120.00", status:"transit",   time:"Est. Jul 22", brand:""},
+    {email:"Payout to •••• 4021", amount:"9,845.30", status:"paid",      time:"Jul 18",      brand:""},
+    {email:"Payout to •••• 4021", amount:"7,410.75", status:"paid",      time:"Jul 15",      brand:""},
+    {email:"Payout to •••• 4021", amount:"5,220.00", status:"paid",      time:"Jul 11",      brand:""},
+  ],
+  customers:[
+    {email:"emma@example.com",      amount:"1,284.00", status:"succeeded", time:"6 payments", brand:""},
+    {email:"james@northwind.dev",   amount:"3,910.00", status:"succeeded", time:"14 payments",brand:""},
+    {email:"mia@studioloop.co",     amount:"512.00",   status:"succeeded", time:"1 payment",  brand:""},
+    {email:"liam.wong@example.com", amount:"742.50",   status:"succeeded", time:"9 payments", brand:""},
+    {email:"sofia.k@example.com",   amount:"156.25",   status:"succeeded", time:"2 payments", brand:""},
+  ]
+};
+
+const STORE_KEY = "trellis-dash-v2";
+let DATA = load();
+
+/* Snapshot original text of static [data-edit] fields (Balances/More screens)
+   so Reset can restore them even though they aren't part of DATA. */
+const INITIAL = {};
+document.querySelectorAll("[data-edit]").forEach(el=>{
+  const k=el.getAttribute("data-edit");
+  if(!/^(pay|payout|cust)-/.test(k) && INITIAL[k]===undefined) INITIAL[k]=el.textContent;
+});
+
+function load(){
+  try{ const s=localStorage.getItem(STORE_KEY); if(s) return Object.assign(structuredClone(DEFAULT_DATA), JSON.parse(s)); }catch(e){}
+  return structuredClone(DEFAULT_DATA);
+}
+function save(){ localStorage.setItem(STORE_KEY, JSON.stringify(DATA)); }
+function editing(){ return document.body.classList.contains("editing"); }
+
+const STATUS_LABEL={succeeded:"Succeeded",pending:"Pending",refunded:"Refunded",failed:"Failed",paid:"Paid",transit:"In transit"};
+function pillClass(s){ return (s==="paid")?"succeeded":(s==="transit")?"pending":s; }
+
+/* Render a payment-style list from a data array into a container */
+function renderRows(containerId, arr, keyPrefix, opts){
+  opts = opts||{};
+  const box=document.getElementById(containerId);
+  if(!box) return;
+  box.innerHTML="";
+  arr.forEach((r,i)=>{
+    const row=document.createElement("div");
+    row.className="prow";
+    row.style.animationDelay=(120+i*55)+"ms";
+    row.dataset.status=r.status;
+    const amtCls = (r.status==="refunded") ? "pamt ref" : "pamt";
+    const brand = (r.brand && !opts.noBrand)
+      ? `<span class="brand"><svg width="20" height="13" viewBox="0 0 20 13" fill="none"><rect x="0.5" y="0.5" width="19" height="12" rx="2" stroke="#c3c9d2"/><path d="M0.5 4h19" stroke="#c3c9d2"/></svg>•••• ${r.brand}</span>` : "";
+    const metaSep = (brand && r.time) ? " · " : "";
+    row.innerHTML=`
+      <div class="pmid">
+        <div class="pemail" data-edit="${keyPrefix}-${i}-email">${r.email}</div>
+        <div class="pmeta"><span data-edit="${keyPrefix}-${i}-time">${r.time}</span>${metaSep}${brand}</div>
+      </div>
+      <div class="pright">
+        <div class="${amtCls}">$<span data-edit="${keyPrefix}-${i}-amount">${r.amount}</span></div>
+        <span class="pill ${pillClass(r.status)}">${STATUS_LABEL[r.status]||r.status}</span>
+      </div>`;
+    row.addEventListener("click",()=>{ if(!editing()) pulse(row); });
+    box.appendChild(row);
+  });
+}
+
+function pulse(el){
+  el.animate([{transform:"scale(1)"},{transform:"scale(0.985)"},{transform:"scale(1)"}],{duration:200,easing:"ease"});
+}
+
+/* Avatar / logo initials from account name */
+function syncAvatar(){
+  const n=(DATA.account||"").trim();
+  const parts=n.split(/\s+/).filter(Boolean);
+  let initials="ST";
+  if(parts.length>=2) initials=(parts[0][0]+parts[1][0]);
+  else if(parts.length===1) initials=parts[0].slice(0,2);
+  initials=initials.toUpperCase();
+  document.getElementById("accav").textContent=initials;
+  document.getElementById("acclogo").textContent=initials[0];
+}
+
+/* Animated count-up for every .cv value */
+function animateCounts(){
+  document.querySelectorAll(".cv").forEach(el=>{
+    const key=el.getAttribute("data-edit");
+    const raw=(DATA[key] ?? el.textContent);
+    const prefix=el.getAttribute("data-prefix")||"";
+    const dec=parseInt(el.getAttribute("data-dec")||"0",10);
+    const target=parseFloat(String(raw).replace(/,/g,""))||0;
+    let t0=null, dur=950;
+    function fmt(v){ return prefix + v.toLocaleString("en-US",{minimumFractionDigits:dec,maximumFractionDigits:dec}); }
+    function step(ts){
+      if(!t0)t0=ts; const p=Math.min((ts-t0)/dur,1);
+      const eased=1-Math.pow(1-p,3);
+      el.textContent=fmt(target*eased);
+      if(p<1) requestAnimationFrame(step);
+      else el.textContent=prefix+String(raw);
+    }
+    requestAnimationFrame(step);
+  });
+}
+
+/* Edit mode: contenteditable + persistence */
+function bindEdits(){
+  document.querySelectorAll("[data-edit]").forEach(el=>{
+    el.setAttribute("contenteditable", editing());
+    el.oninput=()=>{
+      const key=el.getAttribute("data-edit");
+      const val=el.textContent;
+      let m;
+      if((m=key.match(/^pay-(\d+)-(\w+)$/)))         DATA.payments[+m[1]][m[2]]=val;
+      else if((m=key.match(/^payout-(\d+)-(\w+)$/))) DATA.payouts[+m[1]][m[2]]=val;
+      else if((m=key.match(/^cust-(\d+)-(\w+)$/)))   DATA.customers[+m[1]][m[2]]=val;
+      else                                           DATA[key]=val;
+      if(key==="account") syncAvatar();
+      save();
+    };
+  });
+}
+
+/* Restore edited scalar (non-list) values into the DOM */
+function restoreScalars(){
+  document.querySelectorAll("[data-edit]").forEach(el=>{
+    const key=el.getAttribute("data-edit");
+    if(/^(pay|payout|cust)-/.test(key)) return;   // list items rendered from DATA
+    if(el.classList.contains("cv")) return;       // handled by count-up
+    if(DATA[key]!==undefined) el.textContent=DATA[key];
+    else if(INITIAL[key]!==undefined) el.textContent=INITIAL[key];
+  });
+}
+
+document.getElementById("editBtn").addEventListener("click",function(){
+  const on=document.body.classList.toggle("editing");
+  this.classList.toggle("on",on);
+  this.textContent=on?"✓ Done":"✎ Edit";
+  bindEdits();
+});
+document.getElementById("resetBtn").addEventListener("click",()=>{
+  if(confirm("Reset this dashboard to its original values?")){
+    localStorage.removeItem(STORE_KEY);
+    DATA=structuredClone(DEFAULT_DATA);
+    renderAll(); animateCounts();
+    document.body.classList.remove("editing");
+    const b=document.getElementById("editBtn"); b.classList.remove("on"); b.textContent="✎ Edit";
+  }
+});
+
+/* ---- View router ---- */
+function showView(name){
+  document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active", v.dataset.view===name));
+  document.querySelectorAll(".tab[data-view]").forEach(t=>t.classList.toggle("active", t.dataset.view===name));
+  const sc=document.querySelector(".screen"); if(sc) sc.scrollTop=0;
+}
+function bindTabs(){
+  document.querySelectorAll(".tab").forEach(t=>{
+    t.addEventListener("click",()=>{ if(editing()) return; if(t.dataset.view) showView(t.dataset.view); });
+  });
+  document.querySelectorAll("[data-goto]").forEach(a=>{
+    a.addEventListener("click",()=>{ if(!editing()) showView(a.dataset.goto); });
+  });
+}
+
+/* Payments tab: search + status filter chips ; Customers search */
+function bindFilters(){
+  const chips=Array.from(document.querySelectorAll(".view[data-view='payments'] .chip"));
+  const search=document.getElementById("paySearch");
+  let filter="all";
+  function apply(){
+    const q=(search?.value||"").toLowerCase().trim();
+    document.querySelectorAll("#fullPayments .prow").forEach(r=>{
+      const st=r.dataset.status;
+      const email=(r.querySelector(".pemail")?.textContent||"").toLowerCase();
+      const amt=(r.querySelector(".pamt")?.textContent||"").toLowerCase();
+      const okF = filter==="all" || filter===st;
+      const okQ = !q || email.includes(q) || amt.includes(q);
+      r.style.display=(okF&&okQ)?"":"none";
+    });
+  }
+  chips.forEach(c=>c.addEventListener("click",()=>{
+    if(editing()) return;
+    chips.forEach(x=>x.classList.remove("on"));
+    c.classList.add("on"); filter=c.dataset.filter; apply();
+  }));
+  if(search) search.addEventListener("input",apply);
+
+  const cs=document.getElementById("custSearch");
+  if(cs) cs.addEventListener("input",()=>{
+    const q=cs.value.toLowerCase().trim();
+    document.querySelectorAll("#custList .prow").forEach(r=>{
+      const email=(r.querySelector(".pemail")?.textContent||"").toLowerCase();
+      r.style.display=(!q||email.includes(q))?"":"none";
+    });
+  });
+}
+
+function renderAll(){
+  renderRows("homePayments", DATA.payments.slice(0,4), "pay");
+  renderRows("fullPayments", DATA.payments, "pay");
+  renderRows("payoutList", DATA.payouts, "payout");
+  renderRows("custList", DATA.customers, "cust", {noBrand:true});
+  restoreScalars();
+  syncAvatar();
+  bindEdits();
+}
+
+/* Init */
+renderAll();
+bindTabs();
+bindFilters();
+if(document.visibilityState==="visible")animateCounts();
+else document.addEventListener("visibilitychange",function h(){if(document.visibilityState==="visible"){animateCounts();document.removeEventListener("visibilitychange",h);}});
+</script>
+<!-- krypt:app:start -->
+<script src="../../assets/krypt-app.js" data-root="../../" data-label="Trellis" defer></script>
+<script src="../../assets/krypt-desktop.js" defer></script>
+<script src="../../assets/push.js" defer></script>
+<!-- krypt:app:end -->
+</body>
+</html>

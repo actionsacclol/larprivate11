@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en" data-krypt-status="translucent">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Codenest · Learning Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     CODENEST (mobile) — a learning recreation (TEST demo).
+     Dark "dimmed" theme + the contribution graph (the hero).
+     Bottom nav: Profile (default) · Home · Notifications · Explore.
+     Contribution grid + language dots are generated; entrance
+     animations pure CSS. Data-driven — see DEFAULT_DATA.
+     ============================================================ */
+  :root{
+    --bg:#101318; --card:#161b22; --card2:#1c2128; --line:#30363d;
+    --text:#e6edf3; --muted:#7d8590; --dim:#484f58;
+    --blue:#2f81f7; --green:#3fb950;
+    --font:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{background:#0a0a0a;font-family:var(--font);color:var(--text);display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;-webkit-font-smoothing:antialiased;}
+
+  .back{position:fixed;top:18px;left:18px;z-index:50;background:#1c1c1e;color:#fff;border:1px solid #333;text-decoration:none;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;font-family:var(--font);transition:.15s;}
+  .back:hover{background:#2a2a2c;}
+  .toolbar{position:fixed;top:18px;right:18px;display:flex;gap:8px;z-index:50;}
+  .toolbar button{background:#1c1c1e;color:#fff;border:1px solid #333;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);transition:.15s;}
+  .toolbar button:hover{background:#2a2a2c;}
+  .toolbar button.on{background:var(--green);color:#04240f;border-color:var(--green);}
+
+  .phone{position:relative;width:390px;max-width:100%;height:844px;background:var(--bg);border-radius:44px;box-shadow:0 0 0 12px #111,0 40px 90px rgba(0,0,0,.7);overflow:hidden;display:flex;flex-direction:column;}
+
+  .statusbar{display:flex;align-items:center;justify-content:space-between;padding:15px 30px 4px;font-size:15px;font-weight:600;flex:0 0 auto;color:#e6edf3;}
+  .statusbar .right{display:flex;align-items:center;gap:7px;}
+  .battery{border:1.5px solid #e6edf3;border-radius:4px;width:26px;height:13px;position:relative;display:flex;align-items:center;padding:1.5px;}
+  .battery::after{content:"";position:absolute;right:-4px;top:4px;width:2px;height:5px;background:#e6edf3;border-radius:0 2px 2px 0;}
+  .battery i{display:block;height:100%;background:#e6edf3;border-radius:1.5px;width:82%;}
+  .signal{display:flex;align-items:flex-end;gap:2px;height:12px;}
+  .signal b{width:3px;background:#e6edf3;border-radius:1px;display:block;}
+  .signal b:nth-child(1){height:5px}.signal b:nth-child(2){height:7px}.signal b:nth-child(3){height:9px}.signal b:nth-child(4){height:12px;opacity:.4}
+
+  .header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 16px 10px;flex:0 0 auto;border-bottom:1px solid var(--line);}
+  .header .ttl{font-size:20px;font-weight:800;}
+  .header .search{flex:1;display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 12px;color:var(--muted);font-size:14px;}
+  .header .search svg{width:16px;height:16px;stroke:var(--muted);fill:none;stroke-width:2;}
+  .header .hi{width:22px;height:22px;stroke:var(--text);fill:none;stroke-width:2;cursor:pointer;flex:0 0 auto;}
+
+  .screen{flex:1;overflow-y:auto;scrollbar-width:none;}
+  .screen::-webkit-scrollbar{display:none;}
+  .view{display:none;padding:16px 16px 96px;}
+  .view.on{display:block;animation:vfade .22s ease;}
+  @keyframes vfade{from{opacity:0}to{opacity:1}}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+  /* ============ PROFILE ============ */
+  .pf-id{display:flex;align-items:center;gap:16px;}
+  .pf-id .av{width:74px;height:74px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#fff;background:linear-gradient(135deg,#2f81f7,#a371f7);border:1px solid var(--line);}
+  .pf-id .nm{font-size:22px;font-weight:800;}
+  .pf-id .un{font-size:16px;color:var(--muted);margin-top:1px;}
+  .pf-bio{font-size:15px;margin-top:14px;line-height:1.45;}
+  .pf-meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:12px;font-size:14px;color:var(--muted);}
+  .pf-meta .m{display:flex;align-items:center;gap:6px;}
+  .pf-meta .m b{color:var(--text);}
+  .pf-meta svg{width:16px;height:16px;stroke:var(--muted);fill:none;stroke-width:2;}
+
+  .contrib{border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:18px;background:var(--card);}
+  .contrib .ch{font-size:15px;font-weight:600;margin-bottom:12px;}
+  .contrib .ch b{color:var(--text);}
+  .gridscroll{overflow-x:auto;scrollbar-width:none;padding-bottom:4px;}
+  .gridscroll::-webkit-scrollbar{display:none;}
+  .months{display:flex;font-size:10px;color:var(--muted);margin-bottom:4px;height:12px;}
+  .cgrid{display:flex;gap:3px;}
+  .cweek{display:flex;flex-direction:column;gap:3px;}
+  .cday{width:11px;height:11px;border-radius:2px;flex:0 0 auto;}
+  .legend{display:flex;align-items:center;justify-content:flex-end;gap:5px;font-size:11px;color:var(--muted);margin-top:10px;}
+  .legend .cday{width:10px;height:10px;}
+
+  .sec-h{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin:22px 2px 10px;}
+  .repo{border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:10px;background:var(--card);
+    opacity:0;transform:translateY(12px);animation:rise .5s ease forwards;}
+  .repo .rn{font-size:15px;font-weight:700;color:var(--blue);display:flex;align-items:center;gap:7px;}
+  .repo .rn svg{width:15px;height:15px;stroke:var(--muted);fill:none;stroke-width:2;}
+  .repo .rd{font-size:13px;color:var(--muted);margin:7px 0 12px;line-height:1.4;}
+  .repo .rmeta{display:flex;align-items:center;gap:16px;font-size:12px;color:var(--muted);}
+  .repo .rmeta .m{display:flex;align-items:center;gap:5px;}
+  .repo .rmeta .dot{width:11px;height:11px;border-radius:50%;}
+  .repo .rmeta svg{width:14px;height:14px;stroke:var(--muted);fill:none;stroke-width:2;}
+
+  .ach{display:flex;gap:12px;flex-wrap:wrap;}
+  .ach .badge{display:flex;flex-direction:column;align-items:center;gap:5px;width:64px;text-align:center;}
+  .ach .badge .bi{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;}
+  .ach .badge .bn{font-size:10px;color:var(--muted);}
+
+  /* ============ HOME / my work ============ */
+  .worktiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .wt{border:1px solid var(--line);border-radius:10px;padding:14px;background:var(--card);cursor:pointer;
+    opacity:0;transform:translateY(12px);animation:rise .5s ease forwards;}
+  .wt .wtt{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:600;}
+  .wt .wtt svg{width:18px;height:18px;stroke:var(--text);fill:none;stroke-width:2;}
+  .wt .wtn{font-size:24px;font-weight:800;margin-top:8px;}
+  .feed .fitem{display:flex;gap:12px;padding:14px 2px;border-bottom:1px solid var(--line);
+    opacity:0;transform:translateY(10px);animation:rise .45s ease forwards;}
+  .feed .fi{width:32px;height:32px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;}
+  .feed .fm{flex:1;font-size:14px;line-height:1.45;}
+  .feed .fm .lnk{color:var(--blue);font-weight:600;}
+  .feed .ft{font-size:12px;color:var(--dim);margin-top:3px;}
+
+  /* ============ NOTIFICATIONS ============ */
+  .nrow{display:flex;gap:12px;padding:14px 2px;border-bottom:1px solid var(--line);
+    opacity:0;transform:translateY(10px);animation:rise .45s ease forwards;}
+  .nrow .ni{width:22px;height:22px;flex:0 0 auto;margin-top:2px;}
+  .nrow .ni svg{width:22px;height:22px;fill:none;stroke-width:2;}
+  .nrow .nm{flex:1;}
+  .nrow .nrepo{font-size:12px;color:var(--muted);}
+  .nrow .nt{font-size:15px;font-weight:600;margin-top:2px;}
+  .nrow .unread{width:8px;height:8px;border-radius:50%;background:var(--blue);flex:0 0 auto;margin-top:6px;}
+
+  /* ============ bottom nav ============ */
+  .nav{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-around;align-items:center;padding:9px 6px 24px;background:#010409;border-top:1px solid var(--line);z-index:20;}
+  .nb{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;flex:1;position:relative;}
+  .nb svg{width:25px;height:25px;stroke:#7d8590;fill:none;stroke-width:2;}
+  .nb .nlab{font-size:10px;font-weight:600;color:#7d8590;}
+  .nb.on svg{stroke:var(--text);}
+  .nb.on .nlab{color:var(--text);}
+  .nb .nbadge{position:absolute;top:-3px;left:calc(50% + 7px);background:#f85149;color:#fff;font-size:9px;font-weight:800;min-width:16px;height:16px;padding:0 4px;border-radius:8px;display:flex;align-items:center;justify-content:center;}
+  .nb .pfav{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#2f81f7,#a371f7);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;border:1px solid transparent;}
+  .nb.on .pfav{border-color:var(--text);}
+
+  body.editing [data-edit]{outline:1.5px dashed var(--green);outline-offset:3px;border-radius:4px;cursor:text;}
+  [data-edit]:focus{outline:1.5px solid var(--green);}
+  .hint{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);color:#666;font-size:12px;text-align:center;max-width:90vw;}
+</style>
+<!-- krypt:phone:start -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Codenest">
+<meta name="theme-color" content="#2A2F38">
+<link rel="manifest" href="../../assets/manifests/codenest.webmanifest">
+<link rel="apple-touch-icon" href="../../assets/icons/codenest-180.png">
+<link rel="icon" type="image/png" sizes="512x512" href="../../assets/icons/codenest-512.png">
+<link rel="stylesheet" href="../../assets/phone.css">
+<!-- krypt:phone:end -->
+</head>
+<body>
+
+<a class="back" href="../../index.html">← Collection</a>
+<div class="toolbar">
+  <button id="editBtn">✎ Edit</button>
+  <button id="resetBtn">↺ Reset</button>
+</div>
+
+<div class="phone">
+  <div class="statusbar">
+    <span>9:41</span>
+    <span class="right">
+      <span class="signal"><b></b><b></b><b></b><b></b></span>
+      <svg width="18" height="14" viewBox="0 0 18 14" fill="none"><path d="M9 3C11.5 3 13.8 4 15.5 5.6M9 7C10.4 7 11.7 7.6 12.7 8.5M4.3 5.6C6 4 8.3 3 9 3M6.3 8.5C7.3 7.6 8 7.4 9 7.4" stroke="#e6edf3" stroke-width="1.6" stroke-linecap="round"/><circle cx="9" cy="11" r="1.2" fill="#e6edf3"/></svg>
+      <span class="battery"><i></i></span>
+    </span>
+  </div>
+
+  <div class="header">
+    <div class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4" stroke-linecap="round"/></svg>Search or jump to…</div>
+    <svg class="hi" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
+  </div>
+
+  <div class="screen" id="screen">
+
+    <!-- ============ PROFILE ============ -->
+    <div class="view on" data-view="profile">
+      <div class="pf-id">
+        <div class="av" data-edit="avInit">JR</div>
+        <div><div class="nm" data-edit="name">Jordan Rivera</div><div class="un" data-edit="handle">jrivera</div></div>
+      </div>
+      <div class="pf-bio" data-edit="bio">Systems &amp; frontend engineer. Building tools for developers. Open-source enthusiast ☕</div>
+      <div class="pf-meta">
+        <div class="m"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6" stroke-linecap="round"/></svg><b data-edit="followers">1,204</b> followers · <b data-edit="following">318</b> following</div>
+        <div class="m"><svg viewBox="0 0 24 24"><path d="M12 21s7-5 7-11a7 7 0 10-14 0c0 6 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span data-edit="loc">Boulder, CO</span></div>
+      </div>
+
+      <div class="contrib">
+        <div class="ch"><b class="cu" data-edit="contribCount" data-count="1247" data-fmt="n">1,247</b> contributions in the last year</div>
+        <div class="gridscroll" id="gridScroll">
+          <div class="months" id="months"></div>
+          <div class="cgrid" id="cgrid"></div>
+        </div>
+        <div class="legend">Less <span class="cday" style="background:#161b22;border:1px solid #21262d"></span><span class="cday" style="background:#0e4429"></span><span class="cday" style="background:#006d32"></span><span class="cday" style="background:#26a641"></span><span class="cday" style="background:#39d353"></span> More</div>
+      </div>
+
+      <div class="sec-h">Pinned</div>
+      <div id="pinnedList"></div>
+      <div class="sec-h">Achievements</div>
+      <div class="ach" id="achList"></div>
+    </div>
+
+    <!-- ============ HOME ============ -->
+    <div class="view" data-view="home">
+      <div class="sec-h" style="margin-top:0">My Work</div>
+      <div class="worktiles" id="workTiles"></div>
+      <div class="sec-h">Recent Activity</div>
+      <div class="feed" id="feedList"></div>
+    </div>
+
+    <!-- ============ NOTIFICATIONS ============ -->
+    <div class="view" data-view="notifs">
+      <div class="sec-h" style="margin-top:0">Inbox</div>
+      <div id="notifList"></div>
+    </div>
+
+    <!-- ============ EXPLORE ============ -->
+    <div class="view" data-view="explore">
+      <div class="sec-h" style="margin-top:0">Trending repositories</div>
+      <div id="trendList"></div>
+    </div>
+
+  </div>
+
+  <!-- bottom nav -->
+  <div class="nav">
+    <div class="nb" data-tab="home"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7M5 10v10h14V10" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="nlab">Home</span></div>
+    <div class="nb" data-tab="notifs"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="nlab">Notifications</span><span class="nbadge" data-edit="notifBadge">5</span></div>
+    <div class="nb" data-tab="explore"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5 5-2z" stroke-linejoin="round"/></svg><span class="nlab">Explore</span></div>
+    <div class="nb on" data-tab="profile"><span class="pfav" data-edit="avInit2">JR</span><span class="nlab">Profile</span></div>
+  </div>
+</div>
+
+<div class="hint">Bottom nav switches screens · the contribution graph scrolls · Toggle Edit (top-right) to change values</div>
+
+<script>
+/* ============================================================
+   DATA — fictional profile & repos. Edit freely.
+   ============================================================ */
+const LANG={js:"#f1e05a",ts:"#3178c6",py:"#3572a5",go:"#00add8",rust:"#dea584",css:"#563d7c",html:"#e34c26",swift:"#f05138"};
+const DEFAULT_DATA = {
+  avInit:"JR", avInit2:"JR", name:"Jordan Rivera", handle:"jrivera",
+  bio:"Systems & frontend engineer. Building tools for developers. Open-source enthusiast ☕",
+  followers:"1,204", following:"318", loc:"Boulder, CO",
+  contribCount:"1,247", notifBadge:"5",
+
+  pinned:[
+    {n:"flux-router", d:"A tiny, type-safe client-side router with zero dependencies.", lang:"ts", langN:"TypeScript", stars:"3.2k", forks:"184"},
+    {n:"pixel-forge", d:"GPU-accelerated 2D sprite engine for the browser.", lang:"rust", langN:"Rust", stars:"1.8k", forks:"92"},
+    {n:"dotfiles", d:"My terminal, editor & shell config. zsh + neovim.", lang:"js", langN:"Shell", stars:"642", forks:"71"},
+    {n:"quickchart", d:"Render charts to SVG on the edge. No canvas needed.", lang:"go", langN:"Go", stars:"927", forks:"58"},
+  ],
+  achievements:[
+    {e:"🦈",n:"Pull Shark"},{e:"⭐",n:"Starstruck"},{e:"🧠",n:"Galaxy Brain"},{e:"🎯",n:"Quickdraw"},{e:"🤝",n:"Pair"},
+  ],
+  work:[
+    {n:"Issues",ic:"issue",v:"14"},{n:"Pull requests",ic:"pr",v:"6"},
+    {n:"Discussions",ic:"disc",v:"3"},{n:"Projects",ic:"proj",v:"2"},
+  ],
+  feed:[
+    {av:"MC",bg:"#f78166",who:"maya-chen",act:"opened a pull request in",repo:"flux-router",t:"#218 Add nested route guards · 12m ago"},
+    {av:"DK",bg:"#3fb950",who:"dana-k",act:"starred",repo:"pixel-forge",t:"2h ago"},
+    {av:"SP",bg:"#a371f7",who:"sam.p",act:"commented on issue in",repo:"quickchart",t:"#77 Edge runtime timeout · 5h ago"},
+  ],
+  notifs:[
+    {ic:"pr",col:"#3fb950",repo:"jrivera/flux-router",t:"Review requested on #218",unread:true},
+    {ic:"issue",col:"#f85149",repo:"jrivera/quickchart",t:"New issue: Edge runtime timeout",unread:true},
+    {ic:"mention",col:"#a371f7",repo:"acme/design-system",t:"@jrivera mentioned you",unread:false},
+    {ic:"pr",col:"#8957e5",repo:"jrivera/pixel-forge",t:"PR #92 merged",unread:false},
+  ],
+  trending:[
+    {n:"llm-runtime",owner:"vela-ai",d:"Run open-weight models locally with one command.",lang:"py",langN:"Python",stars:"18.4k"},
+    {n:"zeroui",owner:"gridforge",d:"Headless, accessible React components. 6kb.",lang:"ts",langN:"TypeScript",stars:"9.1k"},
+    {n:"greptide",owner:"quillsearch",d:"A blazing-fast terminal UI for code search.",lang:"rust",langN:"Rust",stars:"7.7k"},
+  ],
+};
+
+const KEY="codenest-dash-v1";
+let DATA=load();
+function load(){try{const s=localStorage.getItem(KEY);if(s)return{...structuredClone(DEFAULT_DATA),...JSON.parse(s)};}catch(e){}return structuredClone(DEFAULT_DATA);}
+function save(){localStorage.setItem(KEY,JSON.stringify(DATA));}
+function editing(){return document.body.classList.contains("editing");}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+/* ---- contribution graph ---- */
+const LEVELS=["#161b22","#0e4429","#006d32","#26a641","#39d353"];
+/* The year's shape comes from a fixed seed so the graph is stable
+   across reloads, but the *volume* is scaled to the contribution count
+   printed above it — edit that number and the squares re-shade to
+   match. Days below the quiet threshold stay empty, or the graph would
+   lose the gaps that make it look like a real year. */
+function renderGraph(){
+  const weeks=53, seed0=20260720;
+  let s=seed0;function rnd(){s=(s*9301+49297)%233280;return s/233280;}
+
+  const raw=[];
+  for(let w=0;w<weeks;w++){
+    for(let d=0;d<7;d++){
+      const wk=(d===0||d===6);            // weekends quieter than weekdays
+      const roll=rnd()*(wk?0.7:1.15);
+      raw.push(roll>0.3 ? roll : 0);      // ~a third of days are empty
+    }
+  }
+  const total=parseFloat(String(DATA.contribCount).replace(/,/g,""))||0;
+  const rawSum=raw.reduce((a,b)=>a+b,0);
+  const counts=rawSum>0 ? raw.map(v=>v*total/rawSum) : raw.map(()=>0);
+  // Absolute thresholds, the way Codenest shades its own graph. Levels
+  // relative to the busiest day would repaint an identical year at any
+  // total — 200 contributions would look exactly like 4,000.
+  const lvlOf=c=>c<1?0:c<3?1:c<6?2:c<10?3:4;
+
+  const grid=document.getElementById("cgrid");let html="";
+  for(let w=0;w<weeks;w++){
+    html+='<div class="cweek">';
+    for(let d=0;d<7;d++){
+      const c=counts[w*7+d], lvl=lvlOf(c);
+      const border=lvl===0?';border:1px solid #21262d':'';
+      html+=`<span class="cday" title="${Math.round(c)} contributions" style="background:${LEVELS[lvl]}${border}"></span>`;
+    }
+    html+='</div>';
+  }
+  grid.innerHTML=html;
+  // month labels roughly every ~4.4 weeks
+  const mo=["Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar","Apr","May","Jun","Jul"];
+  const cellW=14; // 11px + 3 gap
+  let m="";mo.forEach((name,i)=>{m+=`<span style="position:relative;left:${Math.round(i*weeks/12*cellW)}px">${name}</span>`;});
+  document.getElementById("months").innerHTML=m;
+  document.getElementById("months").style.position="relative";
+  document.getElementById("months").style.display="block";
+  // scroll to most-recent (right) end
+  const sc=document.getElementById("gridScroll");sc.scrollLeft=sc.scrollWidth;
+}
+
+/* ---- renderers ---- */
+const RICON={issue:`<svg viewBox="0 0 24 24" stroke="${'#3fb950'}"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2" fill="#3fb950" stroke="none"/></svg>`,
+  pr:`<svg viewBox="0 0 24 24" stroke="#8957e5"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M6 8.5v7M18 15.5V11a3 3 0 00-3-3H9"/></svg>`,
+  disc:`<svg viewBox="0 0 24 24" stroke="#3fb950"><path d="M4 5h13a1 1 0 011 1v8a1 1 0 01-1 1H9l-4 3v-3H4a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg>`,
+  proj:`<svg viewBox="0 0 24 24" stroke="#7d8590"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 4v16M15 4v16"/></svg>`};
+function wIcon(k){return {issue:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/>',
+  pr:'<circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M6 8.5v7M18 15.5V11a3 3 0 00-3-3H9"/>',
+  disc:'<path d="M4 5h13a1 1 0 011 1v8a1 1 0 01-1 1H9l-4 3v-3H4a1 1 0 01-1-1V6a1 1 0 011-1z"/>',
+  proj:'<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 4v16M15 4v16"/>'}[k]||"";}
+
+function repoHtml(r,i,showOwner){
+  return `<div class="repo" style="animation-delay:${i*50}ms">
+    <div class="rn"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 012-2h12v16H6a2 2 0 00-2 2V5z" stroke-linejoin="round"/></svg>${showOwner?esc(r.owner)+" / ":""}${esc(r.n)}</div>
+    <div class="rd">${esc(r.d)}</div>
+    <div class="rmeta">
+      <span class="m"><span class="dot" style="background:${LANG[r.lang]||'#888'}"></span>${esc(r.langN)}</span>
+      <span class="m"><svg viewBox="0 0 24 24"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.6 7.1 18.2l.9-5.5-4-3.9L9.5 8z" stroke-linejoin="round"/></svg>${esc(r.stars)}</span>
+      ${r.forks?`<span class="m"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M6 8.5V10a2 2 0 002 2h8a2 2 0 002-2V8.5M12 12v3.5"/></svg>${esc(r.forks)}</span>`:""}
+    </div>
+  </div>`;
+}
+function renderPinned(){document.getElementById("pinnedList").innerHTML=DATA.pinned.map((r,i)=>repoHtml(r,i,false)).join("");}
+function renderTrend(){document.getElementById("trendList").innerHTML=DATA.trending.map((r,i)=>repoHtml(r,i,true)).join("");}
+function renderAch(){document.getElementById("achList").innerHTML=DATA.achievements.map(a=>`<div class="badge"><div class="bi" style="background:radial-gradient(circle at 40% 35%,#30363d,#161b22)">${a.e}</div><div class="bn">${esc(a.n)}</div></div>`).join("");}
+function renderWork(){document.getElementById("workTiles").innerHTML=DATA.work.map((w,i)=>`<div class="wt" style="animation-delay:${i*50}ms"><div class="wtt"><svg viewBox="0 0 24 24">${wIcon(w.ic)}</svg>${esc(w.n)}</div><div class="wtn">${esc(w.v)}</div></div>`).join("");}
+function renderFeed(){document.getElementById("feedList").innerHTML=DATA.feed.map((f,i)=>`<div class="fitem" style="animation-delay:${i*55}ms"><div class="fi" style="background:${f.bg}">${esc(f.av)}</div><div><div class="fm"><span class="lnk">${esc(f.who)}</span> ${esc(f.act)} <span class="lnk">${esc(f.repo)}</span></div><div class="ft">${esc(f.t)}</div></div></div>`).join("");}
+function renderNotifs(){document.getElementById("notifList").innerHTML=DATA.notifs.map((n,i)=>`<div class="nrow" style="animation-delay:${i*50}ms"><div class="ni"><svg viewBox="0 0 24 24" stroke="${n.col}" fill="none" stroke-width="2">${wIcon(n.ic)||'<circle cx="12" cy="12" r="9"/>'}</svg></div><div class="nm"><div class="nrepo">${esc(n.repo)}</div><div class="nt">${esc(n.t)}</div></div>${n.unread?'<div class="unread"></div>':''}</div>`).join("");}
+
+/* ---- count-up (visible-only) ---- */
+function countUp(){document.querySelectorAll(".cu").forEach(el=>{if(el.dataset.done)return;const target=parseFloat(String(el.dataset.count).replace(/,/g,""));if(isNaN(target))return;const dur=1200,start=performance.now();function step(now){const p=Math.min((now-start)/dur,1),e=1-Math.pow(1-p,3);el.textContent=Math.round(target*e).toLocaleString("en-US");if(p<1)requestAnimationFrame(step);else{el.textContent=Math.round(target).toLocaleString("en-US");el.dataset.done="1";}}requestAnimationFrame(step);});}
+function maybeCountUp(){if(document.visibilityState==="visible")countUp();else document.addEventListener("visibilitychange",function h(){if(document.visibilityState==="visible"){countUp();document.removeEventListener("visibilitychange",h);}});}
+
+/* ---- editing ---- */
+function bindEdits(){document.querySelectorAll("[data-edit]").forEach(el=>{el.setAttribute("contenteditable",editing());el.oninput=()=>{const k=el.getAttribute("data-edit");DATA[k]=el.textContent;save();if(k==="contribCount")renderGraph();};});}
+document.getElementById("editBtn").addEventListener("click",function(){const on=document.body.classList.toggle("editing");this.classList.toggle("on",on);this.textContent=on?"✓ Done":"✎ Edit";bindEdits();});
+document.getElementById("resetBtn").addEventListener("click",()=>{if(confirm("Reset this dashboard to its original values?")){localStorage.removeItem(KEY);DATA=structuredClone(DEFAULT_DATA);renderAll();restoreScalars();bindEdits();}});
+function restoreScalars(){document.querySelectorAll("[data-edit]").forEach(el=>{const k=el.getAttribute("data-edit");if(DATA[k]!==undefined)el.textContent=DATA[k];});}
+
+/* ---- router ---- */
+function showView(name){
+  document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.dataset.view===name));
+  document.querySelectorAll(".nb").forEach(b=>b.classList.toggle("on",b.dataset.tab===name));
+  document.getElementById("screen").scrollTop=0;
+  if(name==="profile")renderGraph();
+  bindEdits();
+}
+document.querySelectorAll(".nb").forEach(b=>b.addEventListener("click",()=>{if(!editing())showView(b.dataset.tab);}));
+
+/* ---- init ---- */
+function renderAll(){renderGraph();renderPinned();renderTrend();renderAch();renderWork();renderFeed();renderNotifs();}
+renderAll();restoreScalars();bindEdits();maybeCountUp();
+</script>
+<!-- krypt:app:start -->
+<script src="../../assets/krypt-app.js" data-root="../../" data-label="Codenest" defer></script>
+<script src="../../assets/krypt-desktop.js" defer></script>
+<script src="../../assets/push.js" defer></script>
+<!-- krypt:app:end -->
+</body>
+</html>

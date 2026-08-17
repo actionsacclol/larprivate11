@@ -1,7 +1,7 @@
 {
   "name": "Bet Slip — Krypt LARP",
   "short_name": "Bet Slip",
-  "description": "Bet Slip, recreated. Part of the Krypt LARP collection.",
+  "description": "Bet Slip — a fictional Sportsbook mock-up. Part of the Krypt LARP collection.",
   "start_url": "../../dashboards/bet-slip/index.html",
   "scope": "../../",
   "display": "standalone",

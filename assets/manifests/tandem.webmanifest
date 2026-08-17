@@ -1,0 +1,30 @@
+{
+  "name": "Tandem — Krypt LARP",
+  "short_name": "Tandem",
+  "description": "Tandem — a fictional Social Payments mock-up. Part of the Krypt LARP collection.",
+  "start_url": "../../dashboards/tandem/index.html",
+  "scope": "../../",
+  "display": "standalone",
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
+  "background_color": "#F4F6F8",
+  "theme_color": "#1892C8",
+  "icons": [
+    {
+      "src": "../icons/tandem-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../icons/tandem-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

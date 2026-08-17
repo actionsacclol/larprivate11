@@ -1,0 +1,30 @@
+{
+  "name": "Airwave Rewind — Krypt LARP",
+  "short_name": "Rewind",
+  "description": "Airwave Rewind — a fictional Year in Music mock-up. Part of the Krypt LARP collection.",
+  "start_url": "../../dashboards/airwave-rewind/index.html",
+  "scope": "../../",
+  "display": "standalone",
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
+  "background_color": "#0B0B0D",
+  "theme_color": "#F0A82E",
+  "icons": [
+    {
+      "src": "../icons/airwave-rewind-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../icons/airwave-rewind-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

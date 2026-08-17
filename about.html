@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>What Krypt LARP is — Krypt LARP</title>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/ui.css">
+<style>
+  /* ============================================================
+     The explaining page.
+
+     It exists because every feature in this app lives behind a
+     gesture — tap three times — and a gesture cannot document
+     itself. The gallery teaches the gesture once; this page is
+     where you go when "once" was a week ago.
+
+     Written to be read top to bottom in about two minutes, and to
+     still make sense printed, offline, or with JS off.
+     ============================================================ */
+
+  body{padding-bottom:0;}
+
+  .lead{max-width:62ch;}
+
+  section{margin-top:var(--k-s8);}
+  section > h2{
+    font-size:var(--k-t-h1);font-weight:700;letter-spacing:-.022em;
+    margin-bottom:var(--k-s3);
+  }
+  section > .intro{color:var(--k-muted);font-size:var(--k-t-body);line-height:1.65;max-width:62ch;}
+
+  /* A two-column feature row: what it is on the left, how to reach
+     it on the right. Collapses to one column on a phone. */
+  .rows{margin-top:var(--k-s5);display:grid;gap:1px;
+    background:var(--k-line);border:1px solid var(--k-line);border-radius:var(--k-r-lg);
+    overflow:hidden;}
+  .row{
+    display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--k-s5);
+    background:var(--k-surface);padding:var(--k-s5);align-items:start;
+  }
+  .row h3{font-size:var(--k-t-h3);font-weight:700;margin-bottom:6px;letter-spacing:-.01em;}
+  .row p{color:var(--k-muted);font-size:var(--k-t-small);line-height:1.65;}
+  .row .how{
+    color:var(--k-muted);font-size:var(--k-t-small);line-height:1.9;
+    background:var(--k-bg);border:1px solid var(--k-line);border-radius:var(--k-r);
+    padding:var(--k-s3) var(--k-s4);
+  }
+  .row .how b{color:var(--k-text);font-weight:600;}
+  .row .how .lbl{
+    display:block;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--k-dim);font-weight:700;margin-bottom:4px;
+  }
+
+  /* The gesture, drawn. Three rings that pulse in sequence, because
+     "tap three times" is one of those things a picture settles
+     faster than a sentence. */
+  .gesture{
+    display:flex;align-items:center;gap:var(--k-s4);margin-top:var(--k-s4);
+    background:var(--k-bg);border:1px solid var(--k-line);border-radius:var(--k-r);
+    padding:var(--k-s4);
+  }
+  .gesture .taps{display:flex;gap:9px;flex:none;}
+  .gesture i{
+    width:16px;height:16px;border-radius:50%;display:block;
+    background:rgba(var(--k-accent-rgb),.22);
+    border:1.5px solid rgba(var(--k-accent-rgb),.55);
+    animation:tap 2.1s infinite;
+  }
+  .gesture i:nth-child(2){animation-delay:.22s;}
+  .gesture i:nth-child(3){animation-delay:.44s;}
+  @keyframes tap{
+    0%,55%,100%{transform:scale(1);background:rgba(var(--k-accent-rgb),.14);}
+    12%{transform:scale(1.35);background:rgba(var(--k-accent-rgb),.62);}
+  }
+  .gesture span{font-size:var(--k-t-small);color:var(--k-muted);line-height:1.6;}
+  .gesture b{color:var(--k-text);font-weight:600;}
+
+  /* The honesty section gets its own weight — a bordered card in
+     amber rather than another grey row, because it is the one part
+     of this page that is not a feature. */
+  .straight{
+    margin-top:var(--k-s5);border:1px solid rgba(var(--k-amber-rgb),.3);
+    background:rgba(var(--k-amber-rgb),.05);border-radius:var(--k-r-lg);
+    padding:var(--k-s5);
+  }
+  .straight h3{
+    font-size:var(--k-t-h3);font-weight:700;color:var(--k-amber);
+    margin-bottom:var(--k-s3);letter-spacing:-.01em;
+  }
+  .straight p{color:#dcd2c0;font-size:var(--k-t-small);line-height:1.7;max-width:64ch;}
+  .straight p + p{margin-top:var(--k-s3);}
+  .straight b{color:#fff;font-weight:600;}
+
+  .cols{
+    margin-top:var(--k-s5);display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:var(--k-s4);
+  }
+  .col{
+    background:var(--k-surface);border:1px solid var(--k-line);
+    border-radius:var(--k-r-lg);padding:var(--k-s5);
+  }
+  .col h3{font-size:var(--k-t-small);font-weight:700;margin-bottom:7px;}
+  .col p{color:var(--k-muted);font-size:var(--k-t-small);line-height:1.65;}
+
+  .next{
+    margin-top:var(--k-s7);display:flex;gap:var(--k-s3);flex-wrap:wrap;align-items:center;
+  }
+
+  @media (max-width:720px){
+    .row{grid-template-columns:1fr;gap:var(--k-s3);}
+  }
+</style>
+</head>
+<body>
+
+<div class="k-wrap">
+
+  <nav class="k-top">
+    <a class="k-brand" href="index.html"><span class="k-dot"></span>Krypt LARP</a>
+    <span class="k-spacer"></span>
+    <a class="k-btn" href="index.html">← All dashboards</a>
+    <a class="k-btn" href="custom/guide.html">Make your own</a>
+  </nav>
+
+  <header class="k-head">
+    <div class="k-kicker">What this is</div>
+    <h1 class="k-h1">Thirty-one apps that don't exist</h1>
+    <p class="k-lede lead">Krypt LARP is a collection of <b>interface studies</b> — working
+      mock-ups of banking, payments, trading and analytics screens for products that were
+      invented for the purpose. Every number is editable, every screen animates, and all of
+      it runs on your own machine.</p>
+  </header>
+
+  <!-- ---------------------------------------------------------- -->
+  <section>
+    <h2>How to use it</h2>
+    <p class="intro">Four things worth knowing. The first one is the only one you have to
+      remember, because everything else lives behind it.</p>
+
+    <div class="rows">
+
+      <div class="row">
+        <div>
+          <h3>The controls are hidden on purpose</h3>
+          <p>There is no toolbar and no settings icon — a mock with a settings icon bolted
+            to it stops looking like the thing it is imitating. Instead the whole control
+            panel is behind one gesture, on every dashboard including ones you import. It
+            differs by device, because a phone has no cursor to put a corner control under:</p>
+          <div class="gesture">
+            <span class="taps"><i></i><i></i><i></i></span>
+            <span><b>On a phone:</b> tap three times anywhere on the screen.<br>
+              <b>On a desktop:</b> click the small dot in the bottom-left corner.</span>
+          </div>
+        </div>
+        <div class="how">
+          <span class="lbl">What's in there</span>
+          <b>Edit values</b> · <b>Reset</b> · <b>Currency</b> · <b>Home-screen icon</b> ·
+          <b>Demo watermark</b> · <b>Fullscreen</b> · <b>Your dashboards</b> · back to the gallery
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <h3>Every number is yours to change</h3>
+          <p>Turn on <b>Edit values</b> and the editable fields become live text boxes —
+            balances, names, transaction amounts, chart labels. What you type is saved to
+            that dashboard on that device, so it's still there next time. <b>Reset</b> puts
+            the whole screen back to how it shipped.</p>
+        </div>
+        <div class="how">
+          <span class="lbl">Where</span>
+          Open the panel → <b>Edit values</b><br>
+          Tap a highlighted number, type, tap away.<br>
+          Open the panel → <b>Reset</b> to undo all of it.
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <h3>It goes on your phone properly</h3>
+          <p>Run the Wi-Fi server and scan the QR code, and the whole collection opens on
+            your phone over your own network — nothing is published to the internet. From
+            there any dashboard can be added to your Home Screen, where it launches
+            full-screen with no browser chrome, like an installed app.</p>
+        </div>
+        <div class="how">
+          <span class="lbl">Where</span>
+          Desktop app → <b>Phone</b>, or run <code class="k-key">npm run serve</code><br>
+          Then on the phone: Share → <b>Add to Home Screen</b>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <h3>The icon and name are yours too</h3>
+          <p>Before you add one to your Home Screen you can give it any icon you like — a
+            photo from your camera roll, or a plain lettered tile in one of eight colours —
+            and any name up to 24 characters. It's stored per dashboard, on your device.
+            Nothing is uploaded.</p>
+        </div>
+        <div class="how">
+          <span class="lbl">Where</span>
+          Open the panel → <b>Home-screen icon</b><br>
+          Set it <b>before</b> you add to Home Screen — that's the moment the phone reads it.
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ---------------------------------------------------------- -->
+  <section>
+    <h2>Make your own</h2>
+    <p class="intro">The collection isn't fixed. Screenshot any interface you like, hand it
+      to an AI with the prompt this app ships, and import what comes back — it edits,
+      animates and installs exactly like the built-in ones.</p>
+
+    <ol class="k-steps" style="margin-top:var(--k-s5);">
+      <li class="k-step">
+        <span class="k-n">1</span><h4>Screenshot something</h4>
+        <p>An app screen, a web dashboard, a concept off a portfolio site. A full-screen
+          phone screenshot works best — the model needs the whole layout, not a crop of one card.</p>
+      </li>
+      <li class="k-step">
+        <span class="k-n">2</span><h4>Paste it into an AI chat with the prompt</h4>
+        <p>Any model that reads images will do. The prompt does the work: it specifies the
+          file format, the phone frame, the edit mode and the naming rule, so what comes back
+          behaves like a dashboard instead of being a flat picture in HTML.</p>
+      </li>
+      <li class="k-step">
+        <span class="k-n">3</span><h4>Save the reply as one .html file, and import it</h4>
+        <p>Drag it onto <b>Your dashboards</b>. It gets an icon, joins the collection, and
+          shows up on your phone too when the Wi-Fi server is running.</p>
+      </li>
+    </ol>
+
+    <div class="next">
+      <a class="k-btn k-btn--primary" href="custom/guide.html">Open the guide and copy the prompt</a>
+      <a class="k-btn" href="custom/index.html">Your dashboards</a>
+    </div>
+  </section>
+
+  <!-- ---------------------------------------------------------- -->
+  <section>
+    <h2>What it isn't</h2>
+    <p class="intro">Worth saying plainly, because a collection of editable balances is easy
+      to misread and the name doesn't help.</p>
+
+    <div class="straight">
+      <h3>These are not evidence of anything</h3>
+      <p>They are studies in how a good interface is put together. They are <b>not</b> proof
+        that you hold money, an asset, a position, a payout or an account. Presenting a mock
+        as a real balance to get money, credit, investment or goodwill out of somebody is
+        fraud in most places, and <b>"it came from a demo app" is not a defence.</b></p>
+      <p>That is why every screen carries a small <b>LARP · not a real app</b> chip in the
+        bottom-right corner, drawn inside the mock's own frame so a cropped screenshot keeps
+        it. It is on by default. You can turn it off — open the panel → <b>Demo watermark</b>
+        — and the app tells you in plain words what your screenshots will stop showing when
+        you do. What you do with an unmarked screenshot is yours, and so is what follows.</p>
+    </div>
+
+    <div class="cols">
+      <div class="col">
+        <h3>Every company here is invented</h3>
+        <p>Meridian is not a bank, Quill is not a payments app, Bodega doesn't sell anything.
+          Names, logos, icons and palettes all belong to companies that do not exist — the
+          same reason a set-design student builds a fake storefront.</p>
+      </div>
+      <div class="col">
+        <h3>Assets are the exception</h3>
+        <p>BTC, ETH, SOL and USDC are real, with real artwork. A ticker names <i>what an asset
+          is</i>, not who makes it — a wallet listing an invented token would be broken rather
+          than careful. Stock tickers on invented P&amp;L <i>are</i> renamed.</p>
+      </div>
+      <div class="col">
+        <h3>Nothing leaves your machine</h3>
+        <p>Edits, icons and settings live in your browser's local storage on your own device.
+          The Wi-Fi server serves to your own network only. There is no account and no upload.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="k-foot">
+    <a href="index.html">All dashboards</a>
+    <a href="custom/guide.html">Make your own</a>
+    <a href="custom/index.html">Your dashboards</a>
+    <span class="k-spacer"></span>
+    <span>Fictional apps · learning demos · nothing leaves your machine</span>
+  </footer>
+
+</div>
+
+</body>
+</html>

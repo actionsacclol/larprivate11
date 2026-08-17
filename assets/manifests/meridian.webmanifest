@@ -1,0 +1,30 @@
+{
+  "name": "Meridian Bank — Krypt LARP",
+  "short_name": "Meridian",
+  "description": "Meridian Bank — a fictional Retail Banking mock-up. Part of the Krypt LARP collection.",
+  "start_url": "../../dashboards/meridian/index.html",
+  "scope": "../../",
+  "display": "standalone",
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
+  "background_color": "#FFFFFF",
+  "theme_color": "#2A4F9E",
+  "icons": [
+    {
+      "src": "../icons/meridian-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../icons/meridian-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

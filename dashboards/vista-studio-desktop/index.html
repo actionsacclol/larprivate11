@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en" data-krypt-status="translucent">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vista Studio · Desktop · Learning Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     VISTA STUDIO (desktop web app) — TEST learning demo.
+     Dark theme, browser-window frame, sidebar routes
+     Dashboard / Content / Analytics / Comments.
+     Built from general knowledge — no reference screenshots.
+     Channel, videos, comments, and numbers are all fictional.
+     ============================================================ */
+  :root{
+    --bg:#0f0f0f;
+    --panel:#1f1f1f;
+    --line:#282828;
+    --line2:#303030;
+    --text:#f1f1f1;
+    --muted:#aaaaaa;
+    --dim:#717171;
+    --red:#E04A32;
+    --blue:#3ea6ff;
+    --font:'Roboto',-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{background:#080808;font-family:var(--font);color:var(--text);display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;-webkit-font-smoothing:antialiased;}
+
+  .back{position:fixed;top:18px;left:18px;z-index:50;background:#1c1c1e;color:#fff;border:1px solid #333;text-decoration:none;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:500;font-family:var(--font);transition:.15s;}
+  .back:hover{background:#2a2a2c;}
+  .toolbar{position:fixed;top:18px;right:18px;display:flex;gap:8px;z-index:50;}
+  .toolbar button{background:#1c1c1e;color:#fff;border:1px solid #333;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font);transition:.15s;}
+  .toolbar button:hover{background:#2a2a2c;}
+  .toolbar button.on{background:var(--blue);color:#03253f;border-color:var(--blue);}
+
+  /* ============ browser window frame ============ */
+  .browser{width:1200px;max-width:100%;border-radius:14px;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.08),0 40px 90px rgba(0,0,0,.7);display:flex;flex-direction:column;background:var(--bg);}
+  .btop{display:flex;align-items:center;gap:8px;background:#232323;padding:10px 14px;flex:0 0 auto;}
+  .lights{display:flex;gap:7px;margin-right:8px;}
+  .lights i{width:12px;height:12px;border-radius:50%;display:block;}
+  .lights i:nth-child(1){background:#ff5f57}.lights i:nth-child(2){background:#febc2e}.lights i:nth-child(3){background:#28c840}
+  .urlbar{flex:1;max-width:460px;background:#161616;border-radius:8px;padding:6px 14px;font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:7px;}
+  .urlbar svg{width:11px;height:11px;stroke:#8a8f9f;fill:none;stroke-width:2;}
+
+  /* ============ studio top bar ============ */
+  .ytbar{display:flex;align-items:center;gap:14px;padding:0 16px;height:56px;flex:0 0 auto;border-bottom:1px solid var(--line);background:var(--bg);}
+  .burger{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.15s;}
+  .burger:hover{background:#272727;}
+  .burger svg{width:20px;height:20px;fill:var(--text);}
+  .logo{display:flex;align-items:center;gap:5px;cursor:pointer;}
+  .logo svg{width:30px;height:21px;display:block;}
+  .logo .wm{font-size:19px;font-weight:500;letter-spacing:-.5px;color:var(--text);}
+  .ytsearch{flex:1;max-width:560px;margin:0 auto;display:flex;align-items:center;gap:10px;background:#121212;border:1px solid var(--line2);border-radius:20px;padding:9px 16px;font-size:14px;color:var(--dim);}
+  .ytsearch svg{width:16px;height:16px;fill:#8a8f9f;}
+  .ytbar .sp{flex:1;}
+  .createbtn{display:flex;align-items:center;gap:7px;border:1px solid var(--line2);color:var(--red);background:transparent;font-family:var(--font);font-size:14px;font-weight:500;padding:8px 15px;border-radius:18px;cursor:pointer;transition:.15s;}
+  .createbtn:hover{background:#271b1b;border-color:#3a2a2a;}
+  .createbtn svg{width:15px;height:15px;fill:var(--red);}
+  .bell{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.15s;}
+  .bell:hover{background:#272727;}
+  .bell svg{width:20px;height:20px;fill:var(--muted);}
+  .chip{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#ff4e50,#f9436b 45%,#c724b1);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto;}
+
+  .app{display:flex;height:660px;min-height:0;}
+
+  /* ============ sidebar ============ */
+  .sidebar{width:240px;flex:0 0 auto;background:var(--bg);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:22px 0 14px;overflow-y:auto;}
+  .chhead{display:flex;flex-direction:column;align-items:center;gap:10px;padding:0 16px 20px;border-bottom:1px solid var(--line);margin-bottom:10px;}
+  .bigav{width:96px;height:96px;border-radius:50%;background:linear-gradient(135deg,#ff4e50,#f9436b 45%,#c724b1);color:#fff;font-size:38px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+  .chhead .cn{font-size:15px;font-weight:500;}
+  .chhead .ch{font-size:12.5px;color:var(--muted);}
+  .nav{display:flex;flex-direction:column;}
+  .ni{display:flex;align-items:center;gap:22px;padding:11px 24px;font-size:14px;font-weight:400;color:var(--muted);cursor:pointer;transition:.12s;border-left:3px solid transparent;}
+  .ni:hover{background:#1d1d1d;color:var(--text);}
+  .ni:active{background:#2c2c2c;}
+  .ni svg{width:22px;height:22px;fill:currentColor;flex:0 0 auto;}
+  .ni.on{color:var(--red);background:#1f1f1f;border-left-color:var(--red);font-weight:500;}
+  .ni.on svg{fill:var(--red);}
+
+  /* ============ main column ============ */
+  .main{flex:1;display:flex;flex-direction:column;min-width:0;}
+  .content{flex:1;overflow-y:auto;padding:24px 28px 42px;min-height:0;}
+  .content::-webkit-scrollbar{width:10px;}
+  .content::-webkit-scrollbar-thumb{background:#3c3c3c;border-radius:5px;}
+  .view{display:none;}
+  .view.on{display:block;animation:vfade .2s ease;}
+  @keyframes vfade{from{opacity:0}to{opacity:1}}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+  .h1row{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:20px;}
+  .h1row h1{font-size:23px;font-weight:500;letter-spacing:-.2px;}
+  .h1row .lnk{font-size:13.5px;font-weight:500;color:var(--blue);cursor:pointer;}
+
+  /* ============ cards ============ */
+  .dashgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;align-items:start;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;opacity:0;animation:rise .45s ease forwards;}
+  .card .pad{padding:16px 18px;}
+  .card h3{font-size:15px;font-weight:500;margin-bottom:2px;}
+  .card .sub{font-size:12px;color:var(--muted);}
+  .divider{height:1px;background:var(--line);margin:14px 0;}
+  .blink{display:inline-block;font-size:13.5px;font-weight:500;color:var(--blue);cursor:pointer;margin-top:14px;}
+
+  .bigthumb{position:relative;width:100%;aspect-ratio:16/9;background:linear-gradient(135deg,#ff512f,#dd2476);border-radius:8px 8px 0 0;}
+  .bigthumb::after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);border-style:solid;border-width:13px 0 13px 22px;border-color:transparent transparent transparent rgba(255,255,255,.9);filter:drop-shadow(0 2px 6px rgba(0,0,0,.5));}
+  .lv-title{font-size:14px;font-weight:500;line-height:1.35;margin-bottom:2px;}
+  .statline{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px;color:var(--muted);}
+  .statline:last-of-type{border-bottom:none;}
+  .statline b{color:var(--text);font-weight:500;font-size:13.5px;}
+
+  .subs-big{font-size:34px;font-weight:400;letter-spacing:-.5px;margin-top:4px;}
+  .subs-delta{font-size:12.5px;color:var(--muted);margin-top:4px;}
+  .mini-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px 0;font-size:13px;}
+  .mini-row .t{color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mini-row .v{color:var(--muted);flex:0 0 auto;}
+  .seclabel{font-size:13px;font-weight:500;margin-bottom:2px;}
+  .secsub{font-size:11.5px;color:var(--muted);margin-bottom:6px;}
+
+  .news{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);}
+  .news:last-child{border-bottom:none;}
+  .news .ic{width:40px;height:40px;border-radius:8px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;}
+  .news .ic svg{width:20px;height:20px;fill:#fff;}
+  .news .nt{font-size:13.5px;font-weight:500;line-height:1.3;}
+  .news .ns{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.4;}
+
+  /* ============ analytics ============ */
+  .atabs{display:flex;gap:28px;border-bottom:1px solid var(--line);margin-bottom:20px;}
+  .atab{padding:0 2px 12px;font-size:13.5px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:.15s;}
+  .atab:hover{color:var(--text);}
+  .atab.on{color:var(--text);border-bottom-color:var(--text);}
+  .cols{display:flex;gap:18px;align-items:stretch;}
+  .bigchart{flex:2.1;display:flex;flex-direction:column;}
+  .rtcard{flex:1;}
+  .statstrip{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line);}
+  .stat{padding:14px 10px 12px;text-align:center;border-right:1px solid var(--line);cursor:pointer;border-bottom:3px solid transparent;transition:.15s;}
+  .stat:last-child{border-right:none;}
+  .stat:hover{background:#242424;}
+  .stat.on{border-bottom-color:var(--blue);background:#242424;}
+  .stat .k{font-size:12px;color:var(--muted);margin-bottom:5px;}
+  .stat .n{font-size:19px;font-weight:400;}
+  .chartbox{position:relative;height:230px;padding:18px 18px 0;flex:1;}
+  .chartbox svg{width:100%;height:100%;display:block;overflow:visible;}
+  .cline{stroke-dasharray:1500;stroke-dashoffset:1500;animation:draw 1.4s .2s ease forwards;}
+  .carea{opacity:0;animation:fin .8s .8s ease forwards;}
+  .cdot{opacity:0;animation:fin .3s 1.4s ease forwards;}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  @keyframes fin{to{opacity:1}}
+  .xaxis{display:flex;justify-content:space-between;font-size:11px;color:var(--dim);padding:8px 18px 14px;}
+
+  .rt-live{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);}
+  .rt-dot{width:8px;height:8px;border-radius:50%;background:var(--red);animation:blink 1.6s ease infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+  .rt-big{font-size:30px;font-weight:400;margin-top:12px;}
+  .rt-big small{font-size:14px;color:var(--muted);font-weight:400;}
+  .rt-sub{font-size:12px;color:var(--muted);margin-top:3px;}
+  .rt-bars{display:flex;align-items:flex-end;gap:2px;height:70px;margin-top:16px;}
+  .rtb{flex:1;background:var(--blue);border-radius:1px 1px 0 0;opacity:.9;transform-origin:bottom;animation:grow .5s cubic-bezier(.2,.7,.3,1) both;}
+  @keyframes grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+
+  /* ============ content table ============ */
+  .tblwrap{background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden;opacity:0;animation:rise .45s .08s ease forwards;}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  thead th{text-align:left;font-size:11.5px;font-weight:500;letter-spacing:.4px;text-transform:uppercase;color:var(--dim);padding:12px 16px;border-bottom:1px solid var(--line);}
+  tbody td{padding:12px 16px;border-bottom:1px solid #242424;vertical-align:middle;}
+  tbody tr{opacity:0;animation:rise .4s ease forwards;animation-delay:var(--d,0ms);}
+  tbody tr:hover{background:#242424;}
+  tbody tr:last-child td{border-bottom:none;}
+  td.num{text-align:right;color:var(--muted);white-space:nowrap;}
+  .vcell{display:flex;align-items:center;gap:14px;min-width:0;}
+  .vthumb{position:relative;width:76px;height:43px;border-radius:4px;flex:0 0 auto;}
+  .vthumb::after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);border-style:solid;border-width:5px 0 5px 9px;border-color:transparent transparent transparent rgba(255,255,255,.85);}
+  .vmeta .vt{font-size:13.5px;font-weight:400;color:var(--text);line-height:1.3;}
+  .vmeta .vv{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);margin-top:4px;}
+  .vmeta .vv svg{width:13px;height:13px;fill:var(--muted);}
+
+  /* ============ comments ============ */
+  .cmt{display:flex;gap:14px;padding:16px 0;border-bottom:1px solid var(--line);opacity:0;animation:rise .4s ease forwards;animation-delay:var(--d,0ms);}
+  .cmt:last-child{border-bottom:none;}
+  .cav{width:38px;height:38px;border-radius:50%;color:#fff;font-size:14px;font-weight:500;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+  .cbody{flex:1;min-width:0;}
+  .chandle{font-size:12.5px;color:var(--muted);}
+  .chandle b{color:var(--text);font-weight:500;}
+  .ctext{font-size:13.5px;line-height:1.45;margin-top:4px;}
+  .cvid{font-size:12px;color:var(--dim);margin-top:6px;}
+  .cacts{display:flex;align-items:center;gap:18px;margin-top:9px;font-size:12px;color:var(--muted);}
+  .cacts span{display:flex;align-items:center;gap:5px;cursor:pointer;}
+  .cacts svg{width:15px;height:15px;fill:var(--muted);}
+
+  body.editing [data-edit]{outline:1.5px dashed var(--blue);outline-offset:2px;border-radius:3px;cursor:text;}
+  [data-edit]:focus{outline:1.5px solid var(--blue);}
+  .hint{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);color:#666;font-size:12px;text-align:center;max-width:90vw;}
+</style>
+<!-- krypt:phone:start -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vista Web">
+<meta name="theme-color" content="#E04A32">
+<link rel="manifest" href="../../assets/manifests/vista-studio-desktop.webmanifest">
+<link rel="apple-touch-icon" href="../../assets/icons/vista-studio-desktop-180.png">
+<link rel="icon" type="image/png" sizes="512x512" href="../../assets/icons/vista-studio-desktop-512.png">
+<link rel="stylesheet" href="../../assets/desktop.css">
+<!-- krypt:phone:end -->
+</head>
+<body>
+
+<a class="back" href="../../index.html">← Collection</a>
+<div class="toolbar">
+  <button id="editBtn">✎ Edit</button>
+  <button id="resetBtn">↺ Reset</button>
+</div>
+
+<div class="browser">
+  <div class="btop">
+    <span class="lights"><i></i><i></i><i></i></span>
+    <span class="urlbar"><svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>studio.vista.tv/channel/demo</span>
+  </div>
+
+  <!-- ============ studio top bar ============ -->
+  <div class="ytbar">
+    <span class="burger"><svg viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg></span>
+    <span class="logo">
+      <svg viewBox="0 0 30 21"><circle cx="15" cy="10.5" r="9.5" fill="none" stroke="#E04A32" stroke-width="2.2"/><path d="M12.4 5.9l7 4.6-7 4.6z" fill="#E04A32"/></svg>
+      <span class="wm">Studio</span>
+    </span>
+    <span class="ytsearch"><svg viewBox="0 0 24 24"><path d="M20.87 20.17l-5.59-5.59A6.94 6.94 0 0016.5 10a7 7 0 10-7 7 6.94 6.94 0 004.58-1.72l5.59 5.59zM4.5 10a5 5 0 115 5 5 5 0 01-5-5z"/></svg>Search across your channel</span>
+    <span class="sp"></span>
+    <button class="createbtn"><svg viewBox="0 0 24 24"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg>Create</button>
+    <span class="bell"><svg viewBox="0 0 24 24"><path d="M12 22a2.1 2.1 0 002.1-2H9.9A2.1 2.1 0 0012 22zm6.5-6v-5.5c0-3.15-1.9-5.72-4.75-6.32V3.5a1.75 1.75 0 00-3.5 0v.68C7.4 4.78 5.5 7.35 5.5 10.5V16l-2 2v1h17v-1z"/></svg></span>
+    <span class="chip" data-edit="avatar">K</span>
+  </div>
+
+  <div class="app">
+
+    <!-- ============ sidebar ============ -->
+    <div class="sidebar">
+      <div class="chhead">
+        <div class="bigav" data-edit="avatar">K</div>
+        <div class="cn" data-edit="channel">Krypt Studio</div>
+        <div class="ch" data-edit="handle">@kryptstudio</div>
+      </div>
+      <div class="nav" id="nav">
+        <div class="ni on" data-nav="dash"><svg viewBox="0 0 24 24"><path d="M4 13h6V4H4zm0 7h6v-5H4zm10 0h6v-9h-6zm0-16v5h6V4z"/></svg>Dashboard</div>
+        <div class="ni" data-nav="content"><svg viewBox="0 0 24 24"><path d="M4 4h16a1 1 0 011 1v14a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1zm1 2v12h14V6zm5 2.5l5.5 3.5L10 15.5z"/></svg>Content</div>
+        <div class="ni" data-nav="analytics"><svg viewBox="0 0 24 24"><path d="M4 20h3v-8H4zm6.5 0h3V4h-3zm6.5 0h3v-5h-3z"/></svg>Analytics</div>
+        <div class="ni" data-nav="comments"><svg viewBox="0 0 24 24"><path d="M21 4H3v12h4v4l5-4h9zM5 6h14v8h-6.7L9 16.8V14H5z"/></svg>Comments</div>
+        <div class="ni" data-nav="earn"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 18a8 8 0 110-16 8 8 0 010 16zm.9-8.7c-1.6-.5-2.2-.9-2.2-1.5 0-.7.7-1.2 1.7-1.2s1.5.5 1.6 1.2h1.5c-.1-1.2-.9-2.1-2.2-2.4V6h-1.7v1.4c-1.3.3-2.3 1.2-2.3 2.5 0 1.6 1.3 2.3 3.2 2.8 1.7.4 2 1 2 1.6 0 .5-.4 1.2-1.8 1.2-1.3 0-1.9-.6-2-1.3H9.1c.1 1.4 1.2 2.3 2.5 2.6V18h1.7v-1.3c1.4-.3 2.4-1.1 2.4-2.5 0-1.9-1.6-2.5-3-2.9z"/></svg>Earn</div>
+        <div class="ni" data-nav="settings"><svg viewBox="0 0 24 24"><path d="M19.4 13a7.6 7.6 0 000-2l2.1-1.6-2-3.5-2.5 1a7.7 7.7 0 00-1.7-1L15 3.3H9l-.3 2.6a7.7 7.7 0 00-1.7 1l-2.5-1-2 3.5L4.6 11a7.6 7.6 0 000 2l-2.1 1.6 2 3.5 2.5-1a7.7 7.7 0 001.7 1l.3 2.6h6l.3-2.6a7.7 7.7 0 001.7-1l2.5 1 2-3.5zM12 15.5A3.5 3.5 0 1115.5 12 3.5 3.5 0 0112 15.5z"/></svg>Settings</div>
+      </div>
+    </div>
+
+    <!-- ============ main ============ -->
+    <div class="main">
+      <div class="content" id="content">
+
+        <!-- ============ DASHBOARD ============ -->
+        <div class="view on" data-view="dash">
+          <div class="h1row"><h1>Channel dashboard</h1></div>
+          <div class="dashgrid">
+
+            <div class="card">
+              <div class="bigthumb"></div>
+              <div class="pad">
+                <div class="sub" style="margin-bottom:8px;">Latest video performance</div>
+                <div class="lv-title" data-edit="lv-title">I Built a Secret Underground Base</div>
+                <div class="statline"><span>Views</span><b data-edit="lv-views">48.2K</b></div>
+                <div class="statline"><span>Impressions click-through rate</span><b data-edit="lv-ctr">6.1%</b></div>
+                <div class="statline"><span>Average view duration</span><b data-edit="lv-avd">4:12</b></div>
+                <span class="blink">Go to video analytics</span>
+              </div>
+            </div>
+
+            <div class="card" style="animation-delay:80ms">
+              <div class="pad">
+                <h3>Channel analytics</h3>
+                <div class="sub" style="margin-top:10px;">Current subscribers</div>
+                <div class="subs-big"><span class="cu" data-edit="subs">24,812</span></div>
+                <div class="subs-delta"><span data-edit="subs-delta">+312</span> in last 28 days</div>
+                <div class="divider"></div>
+                <div class="seclabel">Summary</div>
+                <div class="secsub">Last 28 days</div>
+                <div class="mini-row"><span class="t">Views</span><span class="v" data-edit="views-total">182.4K</span></div>
+                <div class="mini-row"><span class="t">Watch time (hours)</span><span class="v" data-edit="watch-total">8,240</span></div>
+                <div class="divider"></div>
+                <div class="seclabel">Top videos</div>
+                <div class="secsub">Last 48 hours · Views</div>
+                <div id="topVids"></div>
+                <span class="blink">Go to channel analytics</span>
+              </div>
+            </div>
+
+            <div class="card" style="animation-delay:160ms">
+              <div class="pad">
+                <h3>Studio news</h3>
+                <div id="newsList" style="margin-top:6px;"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ============ CONTENT ============ -->
+        <div class="view" data-view="content">
+          <div class="h1row"><h1>Channel content</h1><span class="lnk">Videos · Shorts · Live</span></div>
+          <div class="tblwrap">
+            <table>
+              <thead><tr><th style="width:44%;">Video</th><th>Date</th><th style="text-align:right;">Views</th><th style="text-align:right;">Comments</th><th style="text-align:right;">Likes (vs. dislikes)</th></tr></thead>
+              <tbody id="videoRows"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ============ ANALYTICS ============ -->
+        <div class="view" data-view="analytics">
+          <div class="h1row"><h1>Channel analytics</h1><span class="lnk">Advanced mode</span></div>
+          <div class="atabs" id="atabs">
+            <div class="atab on">Overview</div>
+            <div class="atab">Content</div>
+            <div class="atab">Audience</div>
+            <div class="atab">Revenue</div>
+          </div>
+          <div class="cols">
+            <div class="card bigchart">
+              <div class="statstrip">
+                <div class="stat on"><div class="k">Views</div><div class="n" data-edit="views-total">182.4K</div></div>
+                <div class="stat"><div class="k">Watch time (hours)</div><div class="n" data-edit="watch-total">8,240</div></div>
+                <div class="stat"><div class="k">Subscribers</div><div class="n" data-edit="an-subs">+312</div></div>
+                <div class="stat"><div class="k">Est. revenue</div><div class="n" data-edit="an-rev">$742.18</div></div>
+              </div>
+              <div class="chartbox">
+                <svg viewBox="0 0 640 200" preserveAspectRatio="none">
+                  <defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3ea6ff" stop-opacity=".28"/><stop offset="1" stop-color="#3ea6ff" stop-opacity="0"/></linearGradient></defs>
+                  <line x1="0" y1="196" x2="640" y2="196" stroke="#303030" stroke-width="1"/>
+                  <path class="carea" id="ytArea" d="" fill="url(#ag)"/>
+                  <path class="cline" id="ytLine" d="" fill="none" stroke="#3ea6ff" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+                  <circle class="cdot" id="ytDot" cx="640" cy="46" r="4.5" fill="#3ea6ff"/>
+                </svg>
+              </div>
+              <div class="xaxis"><span>Jun 24</span><span>Jul 2</span><span>Jul 10</span><span>Jul 21</span></div>
+            </div>
+            <div class="card rtcard" style="animation-delay:100ms">
+              <div class="pad">
+                <div style="display:flex;align-items:center;">
+                  <h3 style="flex:1;">Realtime</h3>
+                  <span class="rt-live"><span class="rt-dot"></span>Updating live</span>
+                </div>
+                <div class="rt-big"><span class="cu" data-edit="rt-subs">1,284</span> <small>subscribers</small></div>
+                <div class="rt-sub">Subscribers · Last 48 hours</div>
+                <div class="rt-bars" id="rtBars"></div>
+                <div class="divider"></div>
+                <div class="mini-row"><span class="t">Views · Last 48 hours</span><span class="v" data-edit="rt-views">12.4K</span></div>
+                <span class="blink">See live count</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ COMMENTS ============ -->
+        <div class="view" data-view="comments">
+          <div class="h1row"><h1>Comments</h1><span class="lnk">Published · Held for review</span></div>
+          <div class="card" style="animation-delay:0ms"><div class="pad" id="cmtList" style="padding-top:4px;padding-bottom:4px;"></div></div>
+        </div>
+
+
+        <!-- ============ EARN ============ -->
+        <div class="view" data-view="earn">
+          <div class="h1row"><h1>Earn</h1><span class="datepill">Last 28 days</span></div>
+          <div class="kgrid">
+            <div class="kcard"><div class="kl">Estimated revenue</div><div class="kv"><span data-edit="e-rev">$742.18</span></div><div class="ks">Down <span data-edit="e-revd">4%</span> vs prior 28 days</div></div>
+            <div class="kcard"><div class="kl">RPM</div><div class="kv"><span data-edit="e-rpm">$4.07</span></div><div class="ks">Per 1,000 views</div></div>
+            <div class="kcard"><div class="kl">Next payout</div><div class="kv"><span data-edit="e-next">$318.40</span></div><div class="ks">Estimated <span data-edit="e-when">Aug 21</span></div></div>
+          </div>
+          <h2 class="sec">Revenue sources</h2>
+          <div class="tblwrap">
+            <table>
+              <thead><tr><th>Source</th><th>Share</th><th style="text-align:right;">Revenue</th></tr></thead>
+              <tbody id="earnRows"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ============ SETTINGS ============ -->
+        <div class="view" data-view="settings">
+          <div class="h1row"><h1>Settings</h1><span class="datepill" data-edit="s-chan">Krypt Studio</span></div>
+          <div class="tblwrap">
+            <table>
+              <thead><tr><th>Setting</th><th>Value</th><th style="text-align:right;">Status</th></tr></thead>
+              <tbody id="ytSetRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="hint">Sidebar switches views · Toggle Edit (top-right) to change values · fictional test data only</div>
+
+<script>
+/* ============================================================
+   DATA — fictional channel, videos, comments, and numbers.
+   ============================================================ */
+const DEFAULT_DATA = {
+  channel:"Krypt Studio", handle:"@kryptstudio", avatar:"K",
+  "lv-title":"I Built a Secret Underground Base",
+  "lv-views":"48.2K", "lv-ctr":"6.1%", "lv-avd":"4:12",
+  subs:"24,812", "subs-delta":"+312",
+  "views-total":"182.4K", "watch-total":"8,240",
+  "an-subs":"+312", "an-rev":"$742.18",
+  "rt-subs":"1,284", "rt-views":"12.4K",
+  topvids:[
+    {t:"I Built a Secret Underground Base in 24 Hours", v:"84K"},
+    {t:"Ranking Every Programming Language (Tier List)", v:"52K"},
+    {t:"We Tried the World's Spiciest Ramen Challenge", v:"41K"},
+  ],
+  news:[
+    {t:"New analytics cards for Shorts", s:"Track remixes and Shorts-specific reach from a redesigned Analytics tab.", c:"#396afc"},
+    {t:"Faster replies from the Comments inbox", s:"Heart, reply, and filter comments across your whole channel in one place.", c:"#c724b1"},
+  ],
+  videos:[
+    {t:"I Built a Secret Underground Base in 24 Hours", vis:"Public",   dt:"Jul 14, 2026", vw:"84,102", cm:"1,204", lk:"97.8%", c1:"#ff512f", c2:"#dd2476"},
+    {t:"Ranking Every Programming Language (Tier List)", vis:"Public",   dt:"Jul 8, 2026",  vw:"52,377", cm:"861",   lk:"95.4%", c1:"#396afc", c2:"#2948ff"},
+    {t:"We Tried the World's Spiciest Ramen Challenge",  vis:"Public",   dt:"Jun 29, 2026", vw:"41,209", cm:"640",   lk:"96.1%", c1:"#11998e", c2:"#38ef7d"},
+    {t:"How One Studio Outbuilt Its Whole Industry (Case Study)", vis:"Public",   dt:"Jun 21, 2026", vw:"33,884", cm:"402",   lk:"94.7%", c1:"#f7971e", c2:"#ffd200"},
+    {t:"Studio Tour — Behind the Scenes (Draft Cut)",    vis:"Unlisted", dt:"Jun 12, 2026", vw:"1,032",  cm:"18",    lk:"98.9%", c1:"#4b5563", c2:"#6b7280"},
+  ],
+  comments:[
+    {init:"MV", handle:"@pixelmaya",    time:"2 hours ago", text:"The reveal at 8:42 genuinely got me. Best build video on this channel yet!", vid:"I Built a Secret Underground Base in 24 Hours", likes:"24", c:"#dd2476"},
+    {init:"DK", handle:"@devkota_codes", time:"5 hours ago", text:"Putting my favorite language in B tier is a crime, but honestly the reasoning was fair.", vid:"Ranking Every Programming Language (Tier List)", likes:"11", c:"#2948ff"},
+    {init:"RR", handle:"@ramen_rob",     time:"1 day ago",   text:"Your face at the final level had me crying laughing. Respect for finishing the bowl.", vid:"We Tried the World's Spiciest Ramen Challenge", likes:"38", c:"#11998e"},
+    {init:"TL", handle:"@tinaloops",     time:"2 days ago",  text:"This case study should be a business school lecture. Instantly subscribed!", vid:"How One Studio Outbuilt Its Whole Industry (Case Study)", likes:"7", c:"#f7971e"},
+  ],
+  rt:[2,3,2,4,3,5,4,6,5,4,7,6,8,7,9,6,8,10,9,11,8,10,12,9,13,11,14,10,12,15,13,11,14,16,12,15,18,14,16,13,17,15,19,16,14,18,20,17],
+
+  /* ---- rows for the Earn and Settings views ---- */
+  earnSrc:[
+    {nm:"Watch page ads",  sh:"68%", rv:"$504.68"},
+    {nm:"Shorts feed ads", sh:"19%", rv:"$141.01"},
+    {nm:"Vista Premium", sh:"9%",  rv:"$66.80"},
+    {nm:"Channel members", sh:"4%",  rv:"$29.69"},
+  ],
+  ytSettings:[
+    {nm:"Monetisation",     va:"On - all eligible videos", st:"Active"},
+    {nm:"Default visibility", va:"Private",                st:"Active"},
+    {nm:"Comments",         va:"Hold potentially inappropriate", st:"Active"},
+    {nm:"Channel country",  va:"United States",            st:"Active"},
+  ],
+};
+
+const KEY="vista-studio-desktop-dash-v1";
+let DATA=load();
+function load(){try{const s=localStorage.getItem(KEY);if(s)return{...structuredClone(DEFAULT_DATA),...JSON.parse(s)};}catch(e){}return structuredClone(DEFAULT_DATA);}
+function save(){localStorage.setItem(KEY,JSON.stringify(DATA));}
+function editing(){return document.body.classList.contains("editing");}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+
+/* ---- analytics curve ----
+   13 daily points that add up to the Views figure beside the chart, on a
+   fixed scale so a bigger number visibly lifts the line. */
+const REST_PER_DAY=182400/13*1.9;   // the shipped channel fills ~half the box
+const YT_DAYS=[8.2,9.0,8.6,10.4,9.9,11.8,11.2,13.4,12.7,15.1,16.6,17.9,18.9];
+function renderYtChart(){
+  const el=document.querySelector('[data-edit="views-total"]');
+  let txt = el ? el.textContent.trim() : "0";
+  let total = parseFloat(txt.replace(/[^0-9.]/g,"")) || 0;
+  if(/k/i.test(txt)) total*=1000; else if(/m/i.test(txt)) total*=1000000;
+  const base=YT_DAYS, sum=base.reduce(function(a,b){return a+b;},0);
+  const pts=sum>0?base.map(function(v){return v*total/sum;}):base.map(function(){return total/base.length;});
+  // Fixed scale, deliberately not derived from the total: scaling the
+  // axis with the data would redraw an identical curve at any view
+  // count. A bigger channel fills the box and tops out; a smaller one
+  // visibly sits lower.
+  const W=640,H=196,n=pts.length, scale=REST_PER_DAY;
+  const x=function(i){return i*(W/(n-1));}, y=function(v){return H-8-Math.min(1,v/scale)*(H-40);};
+  const line=pts.map(function(v,i){return (i?" ":"M")+x(i).toFixed(0)+","+y(v).toFixed(1);}).join("");
+  const L=document.getElementById("ytLine"),A=document.getElementById("ytArea"),D=document.getElementById("ytDot");
+  if(L)L.setAttribute("d",line);
+  if(A)A.setAttribute("d",line+" L640,196 L0,196 Z");
+  if(D)D.setAttribute("cy",y(pts[n-1]).toFixed(1));
+}
+function renderLists(){
+  renderYtChart();
+  /* Earn / Settings tables */
+  const _er=document.getElementById("earnRows");
+  if(_er)_er.innerHTML=DATA.earnSrc.map((r,i)=>`
+    <tr style="--d:${i*45}ms"><td data-edit="es-${i}-nm">${esc(r.nm)}</td>
+    <td class="mut" data-edit="es-${i}-sh">${esc(r.sh)}</td>
+    <td class="amt" style="text-align:right;" data-edit="es-${i}-rv">${esc(r.rv)}</td></tr>`).join("");
+  const _ys=document.getElementById("ytSetRows");
+  if(_ys)_ys.innerHTML=DATA.ytSettings.map((r,i)=>`
+    <tr style="--d:${i*45}ms"><td data-edit="ys-${i}-nm">${esc(r.nm)}</td>
+    <td class="mut" data-edit="ys-${i}-va">${esc(r.va)}</td>
+    <td style="text-align:right;"><span class="pill">${esc(r.st)}</span></td></tr>`).join("");
+
+  document.getElementById("topVids").innerHTML=DATA.topvids.map((v,i)=>`
+    <div class="mini-row"><span class="t" data-edit="tv-${i}-t">${esc(v.t)}</span><span class="v" data-edit="tv-${i}-v">${esc(v.v)}</span></div>`).join("");
+  document.getElementById("newsList").innerHTML=DATA.news.map((n,i)=>`
+    <div class="news"><span class="ic" style="background:${esc(n.c)}"><svg viewBox="0 0 24 24"><path d="M12 2l2.4 6.9H21l-5.7 4.2 2.2 6.9-5.5-4.2-5.5 4.2 2.2-6.9L3 8.9h6.6z"/></svg></span>
+    <div><div class="nt" data-edit="news-${i}-t">${esc(n.t)}</div><div class="ns" data-edit="news-${i}-s">${esc(n.s)}</div></div></div>`).join("");
+  document.getElementById("videoRows").innerHTML=DATA.videos.map((v,i)=>`
+    <tr style="--d:${i*55}ms"><td><div class="vcell">
+      <span class="vthumb" style="background:linear-gradient(135deg,${esc(v.c1)},${esc(v.c2)})"></span>
+      <div class="vmeta"><div class="vt" data-edit="vid-${i}-title">${esc(v.t)}</div>
+      <div class="vv"><svg viewBox="0 0 24 24"><path d="M12 5c-5 0-9 4.5-10 7 1 2.5 5 7 10 7s9-4.5 10-7c-1-2.5-5-7-10-7zm0 11.5A4.5 4.5 0 1116.5 12 4.5 4.5 0 0112 16.5zm0-7A2.5 2.5 0 1014.5 12 2.5 2.5 0 0012 9.5z"/></svg><span data-edit="vid-${i}-vis">${esc(v.vis)}</span></div></div>
+    </div></td>
+    <td class="num" style="text-align:left;color:var(--muted);" data-edit="vid-${i}-dt">${esc(v.dt)}</td>
+    <td class="num" data-edit="vid-${i}-vw">${esc(v.vw)}</td>
+    <td class="num" data-edit="vid-${i}-cm">${esc(v.cm)}</td>
+    <td class="num" data-edit="vid-${i}-lk">${esc(v.lk)}</td></tr>`).join("");
+  document.getElementById("cmtList").innerHTML=DATA.comments.map((c,i)=>`
+    <div class="cmt" style="--d:${i*70}ms"><span class="cav" style="background:${esc(c.c)}" data-edit="cm-${i}-init">${esc(c.init)}</span>
+    <div class="cbody">
+      <div class="chandle"><b data-edit="cm-${i}-handle">${esc(c.handle)}</b> · <span data-edit="cm-${i}-time">${esc(c.time)}</span></div>
+      <div class="ctext" data-edit="cm-${i}-text">${esc(c.text)}</div>
+      <div class="cvid">on: <span data-edit="cm-${i}-vid">${esc(c.vid)}</span></div>
+      <div class="cacts">
+        <span><svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.9-9.9-9.2C.5 8.9 2.4 5.5 5.7 5.1c1.9-.2 3.8.7 4.9 2.3H12c1.6-2.2 4.5-2.9 6.8-1.6 2.5 1.4 3.3 4.6 1.7 7-2.4 4.3-8.5 8.2-8.5 8.2z" fill="none" stroke="currentColor" stroke-width="1.8"/></svg><i style="font-style:normal;" data-edit="cm-${i}-likes">${esc(c.likes)}</i></span>
+        <span><svg viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>Reply</span>
+      </div>
+    </div></div>`).join("");
+  document.getElementById("rtBars").innerHTML=DATA.rt.map((v,i)=>`<div class="rtb" style="height:${(6+v/20*54).toFixed(0)}px;animation-delay:${200+i*16}ms"></div>`).join("");
+}
+
+/* ---- count-up (visible-only guard) ---- */
+function countUp(){
+  document.querySelectorAll(".cu").forEach(el=>{
+    if(el.dataset.done) return;
+    const target=parseFloat(String(el.dataset.count).replace(/[^0-9.]/g,"")); if(isNaN(target)) return;
+    const dur=1100, start=performance.now();
+    function step(now){const p=Math.min((now-start)/dur,1),e=1-Math.pow(1-p,3);
+      el.textContent=Math.round(target*e).toLocaleString("en-US");
+      if(p<1)requestAnimationFrame(step);else{el.textContent=target.toLocaleString("en-US");el.dataset.done="1";}}
+    requestAnimationFrame(step);
+  });
+}
+function maybeCountUp(){if(document.visibilityState==="visible")countUp();else document.addEventListener("visibilitychange",function h(){if(document.visibilityState==="visible"){countUp();document.removeEventListener("visibilitychange",h);}});}
+
+/* ---- editing ---- */
+function bindEdits(){document.querySelectorAll("[data-edit]").forEach(el=>{
+  el.setAttribute("contenteditable",editing());
+  el.oninput=()=>{const k=el.getAttribute("data-edit");DATA[k]=el.textContent;save();if(el.getAttribute("data-edit")==="views-total")renderYtChart();
+    document.querySelectorAll(`[data-edit="${k}"]`).forEach(o=>{if(o!==el)o.textContent=el.textContent;});};
+});}
+document.getElementById("editBtn").addEventListener("click",function(){const on=document.body.classList.toggle("editing");this.classList.toggle("on",on);this.textContent=on?"✓ Done":"✎ Edit";bindEdits();});
+document.getElementById("resetBtn").addEventListener("click",()=>{if(confirm("Reset this dashboard to its original values?")){localStorage.removeItem(KEY);DATA=structuredClone(DEFAULT_DATA);renderLists();restoreScalars();bindEdits();}});
+function restoreScalars(){document.querySelectorAll("[data-edit]").forEach(el=>{const k=el.getAttribute("data-edit");if(DATA[k]!==undefined)el.textContent=DATA[k];});}
+
+/* ---- sidebar router ---- */
+// Bound to the whole sidebar, not just #nav — the footer holds its
+// own .ni items (Settings) in a separate container.
+document.querySelector(".sidebar").addEventListener("click",e=>{
+  const n=e.target.closest(".ni"); if(!n||!n.dataset.nav||editing())return;
+  document.querySelectorAll(".ni").forEach(x=>x.classList.toggle("on",x===n));
+  document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.dataset.view===n.dataset.nav));
+  document.getElementById("content").scrollTop=0; bindEdits();
+});
+
+/* ---- analytics tabs (visual switch only; content stays Overview) ---- */
+document.getElementById("atabs").addEventListener("click",e=>{
+  const t=e.target.closest(".atab"); if(!t||editing())return;
+  document.querySelectorAll(".atab").forEach(x=>x.classList.toggle("on",x===t));
+});
+
+/* ---- init ---- */
+renderLists();restoreScalars();bindEdits();
+document.querySelectorAll(".cu").forEach(el=>{el.dataset.count=DATA[el.getAttribute("data-edit")];});
+maybeCountUp();
+</script>
+<!-- krypt:app:start -->
+<script src="../../assets/krypt-app.js" data-root="../../" data-label="Vista Web" defer></script>
+<script src="../../assets/krypt-desktop.js" defer></script>
+<script src="../../assets/push.js" defer></script>
+<!-- krypt:app:end -->
+</body>
+</html>

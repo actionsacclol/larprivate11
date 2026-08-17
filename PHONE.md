@@ -27,8 +27,8 @@ Open a dashboard, tap the **dim dot in the bottom-left corner**, then
 - **Android (Chrome)** — ⋮ → Add to Home screen → Add
 
 **Each dashboard installs as its own app**, with its own icon, its own name
-under the icon, and its own colour. Install Venmo, Cash App, Kalshi and
-Robinhood and you get four separate icons on your home screen. Install the
+under the icon, and its own colour. Install Tandem, Quill, Verity and
+Quiver and you get four separate icons on your home screen. Install the
 gallery itself and you get one icon that opens the whole collection.
 
 Installed, they open with no browser bars at all — the mock fills the screen
@@ -147,53 +147,79 @@ attribute on `<html>`, so it's all removable and all re-appliable.
 The dashboards used to carry a full-screen diagonal TEST watermark and a TEST
 badge of their own. Both are gone — they made the mocks unreadable on a phone
 and defeated the point of building them. The collection is labelled at its
-entry point instead, by the **TEST · LEARNING DEMOS · NOT REAL APPS** banner in
+entry point instead, by the **FICTIONAL APPS · LEARNING DEMOS** banner in
 the gallery header.
 
 ## About the icons
 
-Each dashboard's icon comes from one of two places.
+Every icon is drawn, from primitives, in `tools/icon-specs.js` and rendered by
+`tools/icon-render.js` — a small renderer doing stroked polylines, filled
+polygons and circles, antialiased into a PNG. No dependencies, no source images.
 
-**A screenshot in `appicons/`**, if there is one. Drop in a cropped screenshot
-of the real app icon and `make-icons.js` squares it up, rebuilds the rounded
-corners so it bleeds edge to edge (iOS re-rounds it anyway), and resamples it to
-180 and 512. `tools/png-import.js` does that — PNG decode via zlib, resampling
-by hand, no dependencies.
+There is deliberately **no path by which a screenshot of a real app becomes a
+shipped icon**. `make-icons.js` used to import PNGs out of an `appicons/`
+folder, which meant the committed tiles in `assets/icons` were resampled copies
+of other companies' logos. That importer is gone, along with the ones that built
+`assets/coins` and `assets/appstore` the same way — those are drawn now too, by
+`tools/make-art.js`.
 
-Naming: **a file named after the slug just works** (`appicons/paypal.png` →
-`paypal`), case-insensitively. The `SOURCES` table at the top of
-`tools/make-icons.js` only exists for slugs whose natural filename differs
-(`x-earnings` ← `x.png`, `apple-card` ← `wallet.png`). Entries pointing at files
-that don't exist are ignored, so the table doubles as a wishlist — run
-`make-icons.js` any time and it prints exactly which screenshots are still
-missing and what to call them.
-
-Desktop-mode dashboards reuse their mobile counterpart's screenshot with a
+Each mark belongs to the fictional product it sits on (see
+`tools/brand-map.js`): a crescent for Nocturne, a shopfront for Bodega, a shield
+for Bastion. The palettes are deliberately off the colour any real app is known
+for. Desktop-mode dashboards reuse their mobile counterpart's mark with a
 browser-window strip painted over the top, so the pair stays a family.
 
-**Otherwise a vector design** from `tools/icon-specs.js`, drawn by
-`tools/icon-render.js` — a small renderer doing stroked polylines, filled
-polygons and circles, antialiased into a PNG. These are original marks in each
-app's colour rather than copies of a logo. Two of them (`bet-slip`,
-`crypto-pnl`) have no real-world app at all, so they stay drawn by design.
+### Setting your own
+
+The shipped icon is ours; the one on your Home Screen is yours. On a phone, tap
+three times anywhere, then **Home-screen icon**: pick a photo from your camera
+roll or a plain lettered tile, and set the name it goes on the Home Screen with.
+
+Set it *before* you add the page — iOS reads `apple-touch-icon` and
+`apple-mobile-web-app-title` at the moment you tap Add, and Android reads the
+manifest, which we rebuild as a blob with your icon and name in it. Changing it
+afterwards won't move what's already on your Home Screen.
+
+It's kept in `localStorage`, keyed per dashboard, so each one can look like
+whatever you want. Nothing about it is uploaded, and nothing about it is part of
+what we distribute.
+
+## Dashboards you imported
+
+They are not in this folder. The desktop app writes them to its user data
+directory, because a packaged build is a read-only archive and cannot be written
+into. The server mounts that directory at `/custom/`, with the list at
+`/api/custom`, so a dashboard imported on the PC appears on the phone with its
+own icon and can be added to the Home Screen like any other.
+
+Importing is a PC job — that is where the `.html` file is. On the phone the
+page says so rather than showing a button that cannot work.
+
+Each one runs inside a sandboxed iframe with no same-origin access, so it cannot
+read the app around it. `localStorage` is shimmed through to the parent and kept
+separate per dashboard, so editing still saves.
 
 ## Files added
 
 ```
 Krypt LARP.cmd              double-click to start the server
 PHONE.md                    this file
-appicons/                   screenshots of real app icons (optional, per slug)
 assets/phone.css            phone layout overrides
-assets/krypt-app.js         corner control: gallery / fullscreen / install
+assets/krypt-app.js         corner control + phone panel (icon, currency, …)
 assets/manifest.webmanifest the gallery's own manifest
 assets/icon-*.png           the gallery's own icons
 assets/icons/               per-dashboard icons + _contact-sheet.png
 assets/manifests/           per-dashboard web-app manifests
 tools/serve.js              the server (zero dependencies)
-tools/png-import.js         screenshot -> clean square icon
+tools/custom-store.js       the dashboards you imported, on disk
+custom/                     import them, run them, and the AI guide
 tools/icon-render.js        vector -> PNG renderer
-tools/icon-specs.js         one icon design per dashboard
+tools/icon-specs.js         one drawn icon design per dashboard
 tools/make-icons.js         regenerates every icon and manifest
+tools/make-art.js           the in-page token and product tiles
+tools/brand-map.js          every fictional name, and the rules that keep them
+tools/rebrand.js            applies them; --check fails on a real mark
+tools/recolour.js           keeps signature colours off the real ones
 tools/patch-dashboards.js   re-applies the phone/app bits to every dashboard
 tools/allow-firewall.cmd    opens port 4173 if the firewall blocks it
 tools/vendor/               qrcode-generator (MIT), vendored so nothing installs
@@ -204,8 +230,8 @@ edits, still open fine by double-clicking them directly.
 
 ## Simulated notifications
 
-Dashboards that have them can show fake push banners — Shopify orders, Venmo
-payments, GitHub pull requests, and so on. They are **off until you ask for
+Dashboards that have them can show fake push banners — Bodega orders, Tandem
+payments, Codenest pull requests, and so on. They are **off until you ask for
 them**: tap 3× and switch **Notifications** on. Turning it on fires one
 straight away, then roughly one every 25 seconds.
 
@@ -241,7 +267,7 @@ seven days are up. Two ways out:
 
 | | |
 |---|---|
-| One page | add any query string — `http://192.168.1.20:4173/dashboards/venmo/?fresh` |
+| One page | add any query string — `http://192.168.1.20:4173/dashboards/tandem/?fresh` |
 | Everything | set `cacheDays` to `0` in `%APPDATA%/Krypt LARP/settings.json`, or run the CLI server with `CACHE_DAYS=0` |
 
 `cacheDays` also takes any other number if a week is the wrong window. The

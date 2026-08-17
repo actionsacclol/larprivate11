@@ -2,7 +2,7 @@
   "name": "krypt-larp",
   "productName": "Krypt LARP",
   "version": "1.1.0",
-  "description": "A collection of faithful, editable, animated recreations of app UIs \u2014 31 screens rebuilt from scratch, browsable on your desktop and servable to your phone over your own Wi-Fi. Part of the Krypt free tools suite.",
+  "description": "A collection of editable, animated mock-ups of fictional apps \u2014 31 original screens drawn from scratch, browsable on your desktop and servable to your phone over your own Wi-Fi. Part of the Krypt free tools suite.",
   "main": "electron/main.js",
   "author": {
     "name": "Krypt",
@@ -16,10 +16,12 @@
     "start": "electron .",
     "serve": "node tools/serve.js",
     "icons": "node tools/make-icons.js && node tools/make-app-icons.js",
-    "images": "electron tools/import-images.js",
+    "art": "node tools/make-art.js",
+    "brand": "node tools/rebrand.js",
+    "brand:check": "node tools/rebrand.js --check",
     "patch": "node tools/patch-dashboards.js",
-    "build": "npm run icons && npm run patch",
-    "dist": "npm run icons && npm run patch && electron-builder"
+    "build": "npm run icons && npm run art && npm run patch && npm run brand:check",
+    "dist": "npm run build && electron-builder"
   },
   "dependencies": {
     "discord-rpc": "^4.0.1"
@@ -34,9 +36,14 @@
     "files": [
       "electron/**",
       "index.html",
+      "about.html",
       "dashboards/**",
+      "custom/**",
       "assets/**",
       "tools/lan-server.js",
+      "tools/custom-store.js",
+      "tools/icon-render.js",
+      "tools/icon-specs.js",
       "tools/vendor/**",
       "tools/allow-firewall.cmd",
       "resources/**",
@@ -72,7 +79,7 @@
       "maintainer": "Krypt <hi@krypt.cc>",
       "desktop": {
         "Name": "Krypt LARP",
-        "Comment": "A collection of editable app-UI recreations"
+        "Comment": "Editable interface mock-ups for apps that do not exist"
       },
       "artifactName": "${productName}-${version}-${arch}.${ext}"
     },

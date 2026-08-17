@@ -4,11 +4,14 @@
 
        node tools/make-icons.js
 
-   Each dashboard's icon comes from one of two places:
-
-     1. a screenshot in appicons/ if SOURCES below names one — it gets
-        squared up, its rounded corners rebuilt, and resampled
-     2. otherwise the vector design in tools/icon-specs.js
+   Every icon is drawn from the vector design in tools/icon-specs.js.
+   There is deliberately no path by which a screenshot of a real app
+   becomes a shipped icon: this script used to import PNGs out of
+   appicons/, which meant the committed tiles in assets/icons were
+   resampled copies of other companies' logos. That import is gone. If
+   you want the real tile on your own phone, set it from the in-app
+   panel — it lives in your browser's storage and nothing about it is
+   committed or redistributed.
 
    Writes:
      assets/icons/<slug>-180.png        iOS "Add to Home Screen"
@@ -21,50 +24,12 @@
 const fs = require('fs');
 const path = require('path');
 const { writePng, renderIcon, flatten } = require('./icon-render.js');
-const { importIcon, roundCorners } = require('./png-import.js');
 const { SPECS, GALLERY } = require('./icon-specs.js');
+const { BRANDS } = require('./brand-map.js');
 
 const ROOT      = path.resolve(__dirname, '..');
 const ICONS     = path.join(ROOT, 'assets', 'icons');
 const MANIFESTS = path.join(ROOT, 'assets', 'manifests');
-const APPICONS  = path.join(ROOT, 'appicons');
-
-/* Extra filenames to accept for a slug, relative to appicons/.
-
-   Before consulting this table, a slug is matched against the obvious
-   filenames automatically — `apple-card` finds apple-card.png,
-   applecard.png or apple card.png on its own — all case-insensitively.
-   So this only lists the aliases that aren't derivable from the slug.
-
-   Names whose file doesn't exist are simply ignored, which makes the
-   list double as a wishlist: drop that file in and the icon switches
-   from drawn to photo on the next run, no edit needed.
-
-   One screenshot can serve both a mobile and a desktop dashboard — the
-   desktop one gets the browser-window strip painted over it. */
-const SOURCES = {
-  'phantom-wallet':         ['phantom.png'],
-  'venmo':                  ['venmno.png'],          // as named in appicons/
-  'x-earnings':             ['x.png', 'twitter.png'],
-  'kalshi-desktop':         ['kalshi.png'],
-  'shopify-desktop':        ['shopify.png'],
-  'stripe-desktop':         ['stripe.png'],
-  'github-desktop':         ['github.png'],
-  'tiktok-earnings':        ['tiktok.png'],
-  'youtube-studio':         ['ytstudio.png', 'youtube.png'],
-  'youtube-studio-desktop': ['ytstudio.png', 'youtube.png'],
-  'instagram-insights':     ['instagram.png'],
-  'apple-card':             ['wallet.png', 'applewallet.png'],
-  'crypto-pnl':             ['futures.png'],
-  'spotify-wrapped':        ['spotify.png'],
-};
-
-/* appicons/ indexed by lowercased filename, so lookups are case-insensitive. */
-const AVAILABLE = fs.existsSync(APPICONS)
-  ? new Map(fs.readdirSync(APPICONS)
-      .filter(f => /\.png$/i.test(f))
-      .map(f => [f.toLowerCase(), f]))
-  : new Map();
 
 fs.mkdirSync(ICONS, { recursive: true });
 fs.mkdirSync(MANIFESTS, { recursive: true });
@@ -75,39 +40,13 @@ fs.mkdirSync(MANIFESTS, { recursive: true });
 const square  = spec => ({ ...spec, radius: 0 });
 const rounded = spec => ({ ...spec, radius: 0.22 });
 
-/* Filenames to try for a slug, best first: the slug itself, then the
-   same thing with the hyphens closed up or turned into spaces, then any
-   aliases from SOURCES. `-desktop` variants fall back to their mobile
-   twin's name so one screenshot serves both. */
-function candidates(slug) {
-  const base = slug.replace(/-desktop$/, '');
-  const forms = new Set();
-  for (const s of [slug, base]) {
-    forms.add(`${s}.png`);
-    forms.add(`${s.replace(/-/g, '')}.png`);
-    forms.add(`${s.replace(/-/g, ' ')}.png`);
-  }
-  return [...forms, ...(SOURCES[slug] || [])];
-}
-
-function sourceFor(slug) {
-  for (const name of candidates(slug)) {
-    const actual = AVAILABLE.get(name.toLowerCase());
-    if (actual) return path.join(APPICONS, actual);
-  }
-  return null;
-}
-
 /** Square, opaque RGBA for a slug at `size`. */
 function iconFor(slug, spec, size) {
-  const src = sourceFor(slug);
-  if (src) return importIcon(src, size, { desktop: slug.endsWith('-desktop') });
   return flatten(renderIcon(size, square(spec)), size, spec.bgc);
 }
 
 let bytes = 0;
 const sheet = [];
-const drawn = [], photo = [];
 
 for (const [slug, spec] of Object.entries(SPECS)) {
   if (!fs.existsSync(path.join(ROOT, 'dashboards', slug))) {
@@ -122,7 +61,8 @@ for (const [slug, spec] of Object.entries(SPECS)) {
     JSON.stringify({
       name: `${spec.title} — Krypt LARP`,
       short_name: spec.label,
-      description: `${spec.title}, recreated. Part of the Krypt LARP collection.`,
+      description: `${spec.title} — a fictional ${(BRANDS[slug] || {}).tag || 'app'} ` +
+        'mock-up. Part of the Krypt LARP collection.',
       // Relative to this manifest file, i.e. assets/manifests/
       start_url: `../../dashboards/${slug}/index.html`,
       scope: '../../',
@@ -140,10 +80,8 @@ for (const [slug, spec] of Object.entries(SPECS)) {
     'utf8'
   );
 
-  const isPhoto = !!sourceFor(slug);
-  (isPhoto ? photo : drawn).push(slug);
-  sheet.push({ slug, spec, isPhoto });
-  console.log(`  ${isPhoto ? 'photo ' : 'drawn '} ${slug.padEnd(24)} ${spec.label}`);
+  sheet.push({ slug, spec });
+  console.log(`  drawn  ${slug.padEnd(24)} ${spec.label}`);
 }
 
 /* ---- the gallery's own icons ---- */
@@ -159,7 +97,7 @@ bytes += writePng(path.join(ROOT, 'assets', 'favicon-32.png'), 32, renderIcon(32
 /* ---- contact sheet, so they can all be checked at a glance ---- */
 {
   const CELL = 108, PAD = 12, COLS = 6;
-  const all = [{ slug: 'GALLERY', spec: GALLERY, isPhoto: false }, ...sheet];
+  const all = [{ slug: 'GALLERY', spec: GALLERY }, ...sheet];
   const rows = Math.ceil(all.length / COLS);
   const W = COLS * (CELL + PAD) + PAD;
   const H = rows * (CELL + PAD) + PAD;
@@ -169,9 +107,7 @@ bytes += writePng(path.join(ROOT, 'assets', 'favicon-32.png'), 32, renderIcon(32
     canvas[i * 4 + 3] = 255;
   }
   all.forEach((entry, i) => {
-    const icon = entry.isPhoto
-      ? roundCorners(iconFor(entry.slug, entry.spec, CELL), CELL)
-      : renderIcon(CELL, rounded(entry.spec));
+    const icon = renderIcon(CELL, rounded(entry.spec));
     const ox = PAD + (i % COLS) * (CELL + PAD);
     const oy = PAD + Math.floor(i / COLS) * (CELL + PAD);
     for (let y = 0; y < CELL; y++) {
@@ -221,13 +157,6 @@ function writeRect(file, w, h, rgba) {
   ]));
 }
 
-console.log(`\n  ${photo.length} from screenshots, ${drawn.length} still drawn`);
+console.log(`\n  ${sheet.length} icons drawn from tools/icon-specs.js`);
 console.log(`  ${(bytes / 1024).toFixed(0)} KB written to assets/icons and assets/manifests`);
-
-if (drawn.length) {
-  console.log('\n  Still drawn — drop a screenshot into appicons/ to replace one:');
-  for (const slug of drawn) {
-    console.log(`     ${slug.padEnd(24)} appicons/${candidates(slug)[0]}`);
-  }
-}
 console.log(`\n  Review them all at once: assets/icons/_contact-sheet.png\n`);

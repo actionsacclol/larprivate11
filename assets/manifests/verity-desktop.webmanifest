@@ -1,0 +1,30 @@
+{
+  "name": "Verity Terminal (desktop) — Krypt LARP",
+  "short_name": "Verity Web",
+  "description": "Verity Terminal (desktop) — a fictional Prediction Markets mock-up. Part of the Krypt LARP collection.",
+  "start_url": "../../dashboards/verity-desktop/index.html",
+  "scope": "../../",
+  "display": "standalone",
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "any",
+  "background_color": "#FFFFFF",
+  "theme_color": "#1BB5A2",
+  "icons": [
+    {
+      "src": "../icons/verity-desktop-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../icons/verity-desktop-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

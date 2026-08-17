@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en" data-krypt-status="translucent">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bodega Admin · Desktop · Learning Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     BODEGA ADMIN (desktop web console) — TEST learning demo.
+     Browser-window frame, light Polaris-style theme: near-black
+     top bar, light gray sidebar, soft gray content, white cards.
+     Sidebar routes Home / Orders / Products / Customers / Analytics.
+     Built from general knowledge — no reference screenshots.
+     The store, people, emails, and amounts are all fictional.
+     ============================================================ */
+  :root{
+    --bg:#f1f2f4;
+    --side:#ebebeb;
+    --line:#e3e3e3;
+    --text:#303030;
+    --muted:#616161;
+    --dim:#8a8a8a;
+    --green:#5F8C2E;
+    --link:#005bd3;
+    --topbar:#1a1a1a;
+    --green-bg:#cdfee1; --green-tx:#014b40;
+    --yellow-bg:#ffeaa8;--yellow-tx:#5c4813;
+    --gray-bg:#e3e3e3;  --gray-tx:#4a4a4a;
+    --orange-bg:#ffe1c7;--orange-tx:#753b00;
+    --red:#d72c0d;
+    --font:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{background:#101014;font-family:var(--font);color:var(--text);display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;-webkit-font-smoothing:antialiased;}
+
+  .back{position:fixed;top:18px;left:18px;z-index:50;background:#1c1c1e;color:#fff;border:1px solid #333;text-decoration:none;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;font-family:var(--font);transition:.15s;}
+  .back:hover{background:#2a2a2c;}
+  .toolbar{position:fixed;top:18px;right:18px;display:flex;gap:8px;z-index:50;}
+  .toolbar button{background:#1c1c1e;color:#fff;border:1px solid #333;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);transition:.15s;}
+  .toolbar button:hover{background:#2a2a2c;}
+  .toolbar button.on{background:var(--green);color:#fff;border-color:var(--green);}
+
+  /* ============ browser window frame ============ */
+  .browser{width:1200px;max-width:100%;border-radius:14px;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.08),0 40px 90px rgba(0,0,0,.65);display:flex;flex-direction:column;background:var(--bg);}
+  .btop{display:flex;align-items:center;gap:8px;background:#e9ebf1;padding:10px 14px;flex:0 0 auto;}
+  .lights{display:flex;gap:7px;margin-right:8px;}
+  .lights i{width:12px;height:12px;border-radius:50%;display:block;}
+  .lights i:nth-child(1){background:#ff5f57}.lights i:nth-child(2){background:#febc2e}.lights i:nth-child(3){background:#28c840}
+  .urlbar{flex:1;max-width:460px;background:#fff;border-radius:8px;padding:6px 14px;font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:7px;}
+  .urlbar svg{width:11px;height:11px;stroke:#8a8f9f;fill:none;stroke-width:2;}
+
+  /* ============ bodega dark top bar ============ */
+  .shopbar{display:flex;align-items:center;gap:14px;background:var(--topbar);padding:9px 16px;flex:0 0 auto;}
+  .shopbar .bag{width:28px;height:28px;flex:0 0 auto;display:block;}
+  .shopbar .sp{flex:1;}
+  .gsearch{flex:0 1 480px;display:flex;align-items:center;gap:9px;background:#303030;border:1px solid #4a4a4a;border-radius:8px;padding:7px 12px;font-size:13px;color:#b5b5b5;cursor:pointer;transition:.15s;}
+  .gsearch:hover{border-color:#616161;}
+  .gsearch svg{width:14px;height:14px;stroke:#b5b5b5;fill:none;stroke-width:2;flex:0 0 auto;}
+  .gsearch .grow{flex:1;}
+  .gsearch kbd{font-family:var(--font);font-size:11px;font-weight:600;color:#8a8a8a;background:#1a1a1a;border:1px solid #4a4a4a;border-radius:5px;padding:2px 6px;}
+  .bell{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.15s;flex:0 0 auto;}
+  .bell:hover{background:#303030;}
+  .bell svg{width:17px;height:17px;stroke:#e3e3e3;fill:none;stroke-width:1.9;}
+  .storechip{display:flex;align-items:center;gap:8px;background:#303030;border-radius:8px;padding:5px 10px 5px 6px;cursor:pointer;transition:.15s;flex:0 0 auto;}
+  .storechip:hover{background:#404040;}
+  .storechip .sq{width:22px;height:22px;border-radius:6px;background:var(--green);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+  .storechip .snm{font-size:12.5px;font-weight:600;color:#e3e3e3;white-space:nowrap;}
+
+  .app{display:flex;height:640px;min-height:0;}
+
+  /* ============ sidebar ============ */
+  .sidebar{width:216px;flex:0 0 auto;background:var(--side);border-right:1px solid #d9d9d9;display:flex;flex-direction:column;padding:12px 8px;overflow-y:auto;}
+  .nav{display:flex;flex-direction:column;gap:1px;}
+  .ni{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:8px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;transition:.15s;}
+  .ni:hover{background:#e0e0e0;color:var(--text);}
+  .ni svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.7;flex:0 0 auto;}
+  .ni.on{color:var(--text);background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.08);}
+  .ni.on svg{stroke:var(--green);}
+  .nav .grp{font-size:11px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--dim);padding:16px 10px 5px;}
+  .sidebar .foot{margin-top:auto;padding-top:10px;}
+
+  /* ============ main column ============ */
+  .main{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg);}
+  .content{flex:1;overflow-y:auto;padding:22px 28px 40px;min-height:0;}
+  .content::-webkit-scrollbar{width:10px;}
+  .content::-webkit-scrollbar-thumb{background:#d6d8de;border-radius:5px;}
+  .view{display:none;max-width:960px;margin:0 auto;}
+  .view.on{display:block;animation:vfade .2s ease;}
+  @keyframes vfade{from{opacity:0}to{opacity:1}}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  @keyframes fin{to{opacity:1}}
+
+  .h1row{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px;}
+  .h1row h1{font-size:20px;font-weight:700;letter-spacing:-.3px;}
+  .h1row .datepill{font-size:12.5px;font-weight:600;color:var(--muted);background:#fff;border:1px solid var(--line);padding:6px 12px;border-radius:8px;box-shadow:0 1px 2px rgba(0,0,0,.05);}
+  h2.sec{font-size:14px;font-weight:700;letter-spacing:-.1px;margin:22px 0 10px;}
+
+  /* ============ cards & charts ============ */
+  .ccard{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 1px 2px rgba(0,0,0,.05);padding:16px 18px;opacity:0;animation:rise .45s ease forwards;}
+  .ccard .cl{font-size:13px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:8px;}
+  .ccard .cl .up{margin-left:auto;font-size:12px;font-weight:700;color:var(--green-tx);background:var(--green-bg);padding:2px 8px;border-radius:10px;}
+  .ccard .cl .up.dn{color:#8e1f0b;background:#fedad5;}
+  .ccard .cv{font-size:24px;font-weight:700;letter-spacing:-.5px;margin-top:6px;}
+  .ccard .cs{font-size:12px;color:var(--dim);margin-top:3px;}
+  .chartbox{position:relative;height:180px;margin-top:14px;}
+  .chartbox svg{width:100%;height:100%;display:block;overflow:visible;}
+  .dline{stroke-dasharray:1300;stroke-dashoffset:1300;animation:draw 1.2s .25s ease forwards;}
+  .darea{opacity:0;animation:fin .7s .7s ease forwards;}
+  .ddot{opacity:0;animation:fin .3s 1.25s ease forwards;}
+  .xaxis{display:flex;justify-content:space-between;font-size:11px;color:var(--dim);margin-top:8px;}
+  .statrow{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:16px;}
+
+  /* things to do */
+  .todo{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 1px 2px rgba(0,0,0,.05);overflow:hidden;opacity:0;animation:rise .45s .15s ease forwards;}
+  .trow{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid #efefef;cursor:pointer;transition:.12s;}
+  .trow:last-child{border-bottom:none;}
+  .trow:hover{background:#fafafa;}
+  .trow .tico{width:32px;height:32px;border-radius:8px;background:#f1f2f4;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+  .trow .tico svg{width:16px;height:16px;stroke:var(--green);fill:none;stroke-width:1.9;}
+  .trow .tmid{flex:1;min-width:0;}
+  .trow .tt{font-size:13.5px;font-weight:600;}
+  .trow .ts{font-size:12px;color:var(--dim);margin-top:2px;}
+  .trow .chev{width:16px;height:16px;stroke:var(--dim);fill:none;stroke-width:2.2;flex:0 0 auto;}
+
+  /* ============ tables ============ */
+  .tblwrap{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 1px 2px rgba(0,0,0,.05);overflow:hidden;opacity:0;animation:rise .45s .08s ease forwards;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead th{text-align:left;font-size:11.5px;font-weight:600;letter-spacing:.3px;color:var(--muted);padding:10px 16px;border-bottom:1px solid var(--line);background:#fafafa;}
+  tbody td{padding:11px 16px;border-bottom:1px solid #f0f0f0;color:var(--text);}
+  tbody tr{opacity:0;animation:rise .4s ease forwards;animation-delay:var(--d,0ms);}
+  tbody tr:hover{background:#fafafa;}
+  tbody tr:last-child td{border-bottom:none;}
+  td.amt{font-weight:600;white-space:nowrap;}
+  td.mut{color:var(--muted);}
+  td.dimc{color:var(--dim);white-space:nowrap;}
+  td.onum{font-weight:600;color:var(--link);}
+  .pill{display:inline-block;font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:10px;white-space:nowrap;}
+  .pill.paid{background:var(--green-bg);color:var(--green-tx);}
+  .pill.pend{background:var(--yellow-bg);color:var(--yellow-tx);}
+  .pill.ful{background:var(--gray-bg);color:var(--gray-tx);}
+  .pill.unful{background:var(--orange-bg);color:var(--orange-tx);}
+  .lowstock{color:var(--red);font-weight:600;}
+  .prodcell{display:flex;align-items:center;gap:11px;}
+  .prodcell .thumb{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;flex:0 0 auto;border:1px solid rgba(0,0,0,.05);}
+  .prodcell .pnm{font-weight:600;}
+
+  /* ============ analytics ============ */
+  .angrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  .ancard .sparkbox{margin-top:12px;height:36px;}
+  .ancard .sparkbox svg{width:100%;height:100%;display:block;overflow:visible;}
+  .spark{fill:none;stroke:var(--green);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:220;stroke-dashoffset:220;animation:draw .9s .3s ease forwards;}
+  .spark.dn{stroke:#b98900;}
+
+  body.editing [data-edit]{outline:1.5px dashed var(--green);outline-offset:2px;border-radius:3px;cursor:text;}
+  [data-edit]:focus{outline:1.5px solid var(--green);}
+  .hint{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);color:#666;font-size:12px;text-align:center;max-width:90vw;}
+</style>
+<!-- krypt:phone:start -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bodega Web">
+<meta name="theme-color" content="#86AE3A">
+<link rel="manifest" href="../../assets/manifests/bodega-desktop.webmanifest">
+<link rel="apple-touch-icon" href="../../assets/icons/bodega-desktop-180.png">
+<link rel="icon" type="image/png" sizes="512x512" href="../../assets/icons/bodega-desktop-512.png">
+<link rel="stylesheet" href="../../assets/desktop.css">
+<!-- krypt:phone:end -->
+</head>
+<body>
+
+<a class="back" href="../../index.html">← Collection</a>
+<div class="toolbar">
+  <button id="editBtn">✎ Edit</button>
+  <button id="resetBtn">↺ Reset</button>
+</div>
+
+<div class="browser">
+  <div class="btop">
+    <span class="lights"><i></i><i></i><i></i></span>
+    <span class="urlbar"><svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>admin.bodega.app/store/northwind-demo</span>
+  </div>
+
+  <!-- ============ dark admin top bar ============ -->
+  <div class="shopbar">
+    <!-- Bodega's mark: a shopfront — awning, walls, doorway. -->
+    <svg class="bag" viewBox="0 0 24 24" aria-hidden="true" fill="none"
+         stroke="#BCD84F" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3.5 10.2L12 3.5l8.5 6.7"/>
+      <path d="M5.6 10.2v10.3h12.8V10.2"/>
+      <path d="M10 20.5v-5.2h4v5.2"/>
+    </svg>
+    <span class="sp"></span>
+    <span class="gsearch"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21" stroke-linecap="round"/></svg><span class="grow">Search</span><kbd>⌘K</kbd></span>
+    <span class="sp"></span>
+    <span class="bell"><svg viewBox="0 0 24 24"><path d="M6 9a6 6 0 1112 0c0 4 1.7 5.5 2 6H4c.3-.5 2-2 2-6zM10 19a2.2 2.2 0 004 0" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    <span class="storechip"><span class="sq" data-edit="store-init">N</span><span class="snm" data-edit="store-name">Northwind Goods</span></span>
+  </div>
+
+  <div class="app">
+
+    <!-- ============ sidebar ============ -->
+    <div class="sidebar">
+      <div class="nav" id="nav">
+        <div class="ni on" data-nav="home"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v8a1.5 1.5 0 01-1.5 1.5h-13A1.5 1.5 0 014 19z" stroke-linejoin="round"/></svg>Home</div>
+        <div class="ni" data-nav="orders"><svg viewBox="0 0 24 24"><path d="M6 3l1.4 2.8h9.2L18 3" stroke-linecap="round" stroke-linejoin="round"/><rect x="4" y="5.8" width="16" height="15.2" rx="2"/><path d="M9 11h6" stroke-linecap="round"/></svg>Orders</div>
+        <div class="ni" data-nav="products"><svg viewBox="0 0 24 24"><path d="M20 7.5l-8-4-8 4 8 4 8-4z" stroke-linejoin="round"/><path d="M4 7.5v9l8 4 8-4v-9M12 11.5v9" stroke-linecap="round" stroke-linejoin="round"/></svg>Products</div>
+        <div class="ni" data-nav="customers"><svg viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3.2"/><circle cx="16.8" cy="9.6" r="2.5"/><path d="M3 19c0-3.4 2.8-5.4 6-5.4s6 2 6 5.4M16.4 14.4c2.7 0 4.8 1.7 4.8 4.2" stroke-linecap="round"/></svg>Customers</div>
+        <div class="ni" data-nav="analytics"><svg viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-7" stroke-linecap="round"/></svg>Analytics</div>
+        <div class="ni" data-nav="marketing"><svg viewBox="0 0 24 24"><path d="M3 11l14-6v14L3 13v-2z" stroke-linejoin="round"/><path d="M7 13v4a2 2 0 004 0" stroke-linecap="round"/></svg>Marketing</div>
+        <div class="ni" data-nav="discounts"><svg viewBox="0 0 24 24"><path d="M4 4h6l10 10-6 6L4 10V4z" stroke-linejoin="round"/><circle cx="8.5" cy="8.5" r="1.4"/></svg>Discounts</div>
+        <div class="grp">Sales channels</div>
+        <div class="ni" data-nav="store"><svg viewBox="0 0 24 24"><path d="M4 9l1.2-5h13.6L20 9M4 9v11h16V9M4 9a3 3 0 006 0 3 3 0 006 0 3 3 0 006 0M9.5 20v-6h5v6" stroke-linecap="round" stroke-linejoin="round"/></svg>Online Store</div>
+      </div>
+      <div class="foot nav">
+        <div class="ni" data-nav="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 4v2M12 18v2M20 12h-2M6 12H4M17.7 6.3l-1.4 1.4M7.7 16.3l-1.4 1.4M17.7 17.7l-1.4-1.4M7.7 7.7L6.3 6.3" stroke-linecap="round"/></svg>Settings</div>
+      </div>
+    </div>
+
+    <!-- ============ main ============ -->
+    <div class="main">
+      <div class="content" id="content">
+
+        <!-- ============ HOME ============ -->
+        <div class="view on" data-view="home">
+          <div class="h1row"><h1 data-edit="greet">Good afternoon, Alex</h1><span class="datepill" data-edit="today-date">Jul 21, 2026</span></div>
+
+          <div class="ccard">
+            <div class="cl">Total sales<span class="up" data-edit="sales-up">+12.5%</span></div>
+            <div class="cv"><span class="cu" data-edit="sales" data-count="12480.55">$12,480.55</span></div>
+            <div class="cs">Today · compared to <span data-edit="sales-cmp">$11,092.30</span> yesterday</div>
+            <div class="chartbox">
+              <svg viewBox="0 0 640 180" preserveAspectRatio="none">
+                <defs><linearGradient id="ga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5F8C2E" stop-opacity=".18"/><stop offset="1" stop-color="#5F8C2E" stop-opacity="0"/></linearGradient></defs>
+                <path class="darea" d="M0,150 60,138 120,144 180,118 240,128 300,96 360,106 420,72 480,84 540,50 600,38 640,26 L640,180 L0,180 Z" fill="url(#ga)"/>
+                <path class="dline" d="M0,150 60,138 120,144 180,118 240,128 300,96 360,106 420,72 480,84 540,50 600,38 640,26" fill="none" stroke="#5F8C2E" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+                <circle class="ddot" cx="640" cy="26" r="4.5" fill="#5F8C2E"/>
+              </svg>
+            </div>
+            <div class="xaxis"><span>12a</span><span>6a</span><span>12p</span><span>6p</span><span>11p</span></div>
+          </div>
+
+          <div class="statrow">
+            <div class="ccard" style="animation-delay:60ms"><div class="cl">Sessions</div><div class="cv" style="font-size:21px;"><span data-edit="st-sess">1,842</span></div><div class="cs"><span data-edit="st-sess-d">+6.8%</span> vs. yesterday</div></div>
+            <div class="ccard" style="animation-delay:120ms"><div class="cl">Orders</div><div class="cv" style="font-size:21px;"><span data-edit="st-ord">32</span></div><div class="cs"><span data-edit="st-ord-d">+10.3%</span> vs. yesterday</div></div>
+            <div class="ccard" style="animation-delay:180ms"><div class="cl">Conversion rate</div><div class="cv" style="font-size:21px;"><span data-edit="st-conv">2.4%</span></div><div class="cs"><span data-edit="st-conv-d">+0.3%</span> vs. yesterday</div></div>
+          </div>
+
+          <h2 class="sec">Things to do</h2>
+          <div class="todo">
+            <div class="trow">
+              <span class="tico"><svg viewBox="0 0 24 24"><path d="M6 3l1.4 2.8h9.2L18 3" stroke-linecap="round" stroke-linejoin="round"/><rect x="4" y="5.8" width="16" height="15.2" rx="2"/><path d="M9 11h6" stroke-linecap="round"/></svg></span>
+              <span class="tmid"><span class="tt" data-edit="task-0">12 orders to fulfill</span><div class="ts" data-edit="task-0-s">Ship them before 5 pm to meet delivery promises</div></span>
+              <svg class="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="trow">
+              <span class="tico"><svg viewBox="0 0 24 24"><path d="M20 7.5l-8-4-8 4 8 4 8-4z" stroke-linejoin="round"/><path d="M4 7.5v9l8 4 8-4v-9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <span class="tmid"><span class="tt" data-edit="task-1">3 products low on stock</span><div class="ts" data-edit="task-1-s">Restock soon to avoid missed sales</div></span>
+              <svg class="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ ORDERS ============ -->
+        <div class="view" data-view="orders">
+          <div class="h1row"><h1>Orders</h1><span class="datepill">Last 7 days</span></div>
+          <div class="tblwrap">
+            <table>
+              <thead><tr><th>Order</th><th>Date</th><th>Customer</th><th>Total</th><th>Payment status</th><th>Fulfillment</th></tr></thead>
+              <tbody id="orderRows"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ============ PRODUCTS ============ -->
+        <div class="view" data-view="products">
+          <div class="h1row"><h1>Products</h1><span class="datepill"><span data-edit="prod-n">5</span> products</span></div>
+          <div class="tblwrap">
+            <table>
+              <thead><tr><th>Product</th><th>Status</th><th>Inventory</th><th style="text-align:right;">Price</th></tr></thead>
+              <tbody id="prodRows"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ============ CUSTOMERS ============ -->
+        <div class="view" data-view="customers">
+          <div class="h1row"><h1>Customers</h1><span class="datepill"><span data-edit="cust-n">148</span> total</span></div>
+          <div class="tblwrap">
+            <table>
+              <thead><tr><th>Customer</th><th>Email</th><th>Orders</th><th style="text-align:right;">Amount spent</th></tr></thead>
+              <tbody id="custRows"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ============ ANALYTICS ============ -->
+        <div class="view" data-view="analytics">
+          <div class="h1row"><h1>Analytics</h1><span class="datepill">Today</span></div>
+          <div class="angrid">
+            <div class="ccard ancard">
+              <div class="cl">Total sales<span class="up" data-edit="an-sales-d">+12.5%</span></div>
+              <div class="cv" style="font-size:20px;"><span data-edit="an-sales">$12,480.55</span></div>
+              <div class="sparkbox" data-spark><svg viewBox="0 0 120 36" preserveAspectRatio="none"><polyline class="spark" points=""/></svg></div>
+            </div>
+            <div class="ccard ancard" style="animation-delay:60ms">
+              <div class="cl">Sessions<span class="up" data-edit="an-sess-d">+8.2%</span></div>
+              <div class="cv" style="font-size:20px;"><span data-edit="an-sess">1,842</span></div>
+              <div class="sparkbox" data-spark><svg viewBox="0 0 120 36" preserveAspectRatio="none"><polyline class="spark" style="animation-delay:.36s" points=""/></svg></div>
+            </div>
+            <div class="ccard ancard" style="animation-delay:120ms">
+              <div class="cl">Returning customer rate<span class="up dn" data-edit="an-ret-d">−1.1%</span></div>
+              <div class="cv" style="font-size:20px;"><span data-edit="an-ret">22.4%</span></div>
+              <div class="sparkbox" data-spark><svg viewBox="0 0 120 36" preserveAspectRatio="none"><polyline class="spark dn" style="animation-delay:.42s" points=""/></svg></div>
+            </div>
+            <div class="ccard ancard" style="animation-delay:180ms">
+              <div class="cl">Conversion rate<span class="up" data-edit="an-conv-d">+0.3%</span></div>
+              <div class="cv" style="font-size:20px;"><span data-edit="an-conv">2.4%</span></div>
+              <div class="sparkbox" data-spark><svg viewBox="0 0 120 36" preserveAspectRatio="none"><polyline class="spark" style="animation-delay:.48s" points=""/></svg></div>
+            </div>
+            <div class="ccard ancard" style="animation-delay:240ms">
+              <div class="cl">Average order value<span class="up" data-edit="an-aov-d">+3.9%</span></div>
+              <div class="cv" style="font-size:20px;"><span data-edit="an-aov">$76.30</span></div>
+              <div class="sparkbox" data-spark><svg viewBox="0 0 120 36" preserveAspectRatio="none"><polyline class="spark" style="animation-delay:.54s" points=""/></svg></div>
+            </div>
+            <div class="ccard ancard" style="animation-delay:300ms">
+              <div class="cl">Total orders<span class="up" data-edit="an-ord-d">+10.3%</span></div>
+              <div class="cv" style="font-size:20px;"><span data-edit="an-ord">32</span></div>
+              <div class="sparkbox" data-spark><svg viewBox="0 0 120 36" preserveAspectRatio="none"><polyline class="spark" style="animation-delay:.6s" points=""/></svg></div>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- ============ MARKETING ============ -->
+        <div class="view" data-view="marketing">
+          <div class="h1row"><h1>Marketing</h1><span class="datepill">Last 30 days</span></div>
+          <div class="sec">Sessions attributed to marketing &mdash; <b data-edit="mk-sessions">3,184</b>, converting at <b data-edit="mk-conv">2.8%</b></div>
+          <div class="tblwrap">
+            <table>
+              <thead><tr><th>Campaign</th><th>Channel</th><th>Sessions</th><th>Orders</th><th style="text-align:right;">Sales</th></tr></thead>
+              <tbody id="mktRows"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ============ DISCOUNTS ============ -->
+        <div class="view" data-view="discounts">
+          <div class="h1row"><h1>Discounts</h1><span class="datepill"><span data-edit="dc-active">4</span> active</span></div>
+          <div class="tblwrap">
+            <table>
+              <thead><tr><th>Code</th><th>Type</th><th>Value</th><th>Used</th><th style="text-align:right;">Status</th></tr></thead>
+              <tbody id="discRows"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ============ ONLINE STORE ============ -->
+        <div class="view" data-view="store">
+          <div class="h1row"><h1>Online Store</h1><span class="datepill" data-edit="st-domain">northwind-goods.bodega.shop</span></div>
+          <div class="sec">Theme <b data-edit="st-theme">Dawn 12.0.1</b> &mdash; published <span data-edit="st-pub">Jul 14, 2026</span></div>
+          <div class="tblwrap">
+            <table>
+              <thead><tr><th>Page</th><th>Handle</th><th>Views</th><th style="text-align:right;">Updated</th></tr></thead>
+              <tbody id="pageRows"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ============ SETTINGS ============ -->
+        <div class="view" data-view="settings">
+          <div class="h1row"><h1>Settings</h1><span class="datepill" data-edit="se-plan">Bodega plan</span></div>
+          <div class="sec">Store name <b data-edit="se-name">Northwind Goods</b> &mdash; <span data-edit="se-email">owner@northwind.test</span></div>
+          <div class="tblwrap">
+            <table>
+              <thead><tr><th>Setting</th><th>Value</th><th style="text-align:right;">Status</th></tr></thead>
+              <tbody id="setRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="hint">Sidebar switches views · Toggle Edit (top-right) to change values · fictional test data only</div>
+
+<script>
+/* ============================================================
+   DATA — fictional store, people, and amounts. Edit freely.
+   ============================================================ */
+const DEFAULT_DATA = {
+  "store-init":"N", "store-name":"Northwind Goods",
+  greet:"Good afternoon, Alex", "today-date":"Jul 21, 2026",
+  sales:"$12,480.55", "sales-up":"+12.5%", "sales-cmp":"$11,092.30",
+  "st-sess":"1,842","st-sess-d":"+6.8%",
+  "st-ord":"32","st-ord-d":"+10.3%",
+  "st-conv":"2.4%","st-conv-d":"+0.3%",
+  "task-0":"12 orders to fulfill","task-0-s":"Ship them before 5 pm to meet delivery promises",
+  "task-1":"3 products low on stock","task-1-s":"Restock soon to avoid missed sales",
+  "prod-n":"5","cust-n":"148",
+  "an-sales":"$12,480.55","an-sales-d":"+12.5%",
+  "an-sess":"1,842","an-sess-d":"+8.2%",
+  "an-ret":"22.4%","an-ret-d":"−1.1%",
+  "an-conv":"2.4%","an-conv-d":"+0.3%",
+  "an-aov":"$76.30","an-aov-d":"+3.9%",
+  "an-ord":"32","an-ord-d":"+10.3%",
+  orders:[
+    {num:"#1024", dt:"Today, 2:14 pm",     cust:"Emma Carter",   tot:"$86.40",  pay:"paid", ful:"unful"},
+    {num:"#1023", dt:"Today, 1:05 pm",     cust:"Liam Nguyen",   tot:"$132.00", pay:"paid", ful:"ful"},
+    {num:"#1022", dt:"Today, 11:38 am",    cust:"Sofia Martins", tot:"$54.25",  pay:"pend", ful:"unful"},
+    {num:"#1021", dt:"Today, 10:12 am",    cust:"Noah Bennett",  tot:"$212.80", pay:"paid", ful:"ful"},
+    {num:"#1020", dt:"Yesterday, 6:47 pm", cust:"Olivia Reyes",  tot:"$47.90",  pay:"paid", ful:"unful"},
+    {num:"#1019", dt:"Yesterday, 3:21 pm", cust:"Ethan Brooks",  tot:"$98.60",  pay:"pend", ful:"unful"},
+  ],
+  products:[
+    {nm:"Hearthstone Soy Candle",  emo:"🕯️", bg:"#fdf1e2", inv:"34 in stock", low:false, pr:"$24.00"},
+    {nm:"Harborline Canvas Tote",  emo:"👜", bg:"#e8f2ec", inv:"58 in stock", low:false, pr:"$38.00"},
+    {nm:"Meadow Crew Socks",       emo:"🧦", bg:"#eef0fa", inv:"3 in stock",  low:true,  pr:"$14.00"},
+    {nm:"Clay & Kiln Mug",         emo:"☕", bg:"#f4ece4", inv:"21 in stock", low:false, pr:"$22.00"},
+    {nm:"Cedar Grove Bar Soap",    emo:"🧴", bg:"#e9f0f4", inv:"4 in stock",  low:true,  pr:"$12.00"},
+  ],
+  customers:[
+    {nm:"Emma Carter",   em:"emma.carter@example.com",   n:"8",  sp:"$684.20"},
+    {nm:"Liam Nguyen",   em:"liam.nguyen@example.com",   n:"3",  sp:"$221.40"},
+    {nm:"Sofia Martins", em:"sofia.martins@example.com", n:"5",  sp:"$412.75"},
+    {nm:"Noah Bennett",  em:"noah.bennett@example.com",  n:"12", sp:"$1,038.90"},
+    {nm:"Olivia Reyes",  em:"olivia.reyes@example.com",  n:"2",  sp:"$96.10"},
+  ],
+
+  /* ---- rows for Marketing / Discounts / Online Store / Settings ---- */
+  campaigns:[
+    {nm:"Summer drop email", ch:"Email",   se:"1,204", or:"38", sa:"$2,410.00"},
+    {nm:"Retargeting - carts", ch:"Paid social", se:"962", or:"21", sa:"$1,180.50"},
+    {nm:"Search brand",      ch:"Paid search", se:"618", or:"14", sa:"$742.00"},
+    {nm:"Creator collab",    ch:"Referral", se:"400",   or:"9",  sa:"$518.20"},
+  ],
+  discounts:[
+    {cd:"SUMMER20",  ty:"Percentage", va:"20% off", us:"184", st:"Active"},
+    {cd:"FREESHIP",  ty:"Shipping",   va:"Free shipping", us:"96", st:"Active"},
+    {cd:"WELCOME10", ty:"Percentage", va:"10% off", us:"312", st:"Active"},
+    {cd:"VIP25",     ty:"Fixed",      va:"$25 off", us:"41",  st:"Active"},
+    {cd:"SPRING15",  ty:"Percentage", va:"15% off", us:"508", st:"Expired"},
+  ],
+  pages:[
+    {nm:"Home",        hd:"/",           vw:"8,412", up:"Jul 20, 2026"},
+    {nm:"Shop all",    hd:"/collections/all", vw:"3,286", up:"Jul 18, 2026"},
+    {nm:"About",       hd:"/pages/about", vw:"742",  up:"Jun 30, 2026"},
+    {nm:"Contact",     hd:"/pages/contact", vw:"318", up:"Jun 30, 2026"},
+  ],
+  settings:[
+    {nm:"Payments",  va:"Bodega Payments, Nimbus", st:"Active"},
+    {nm:"Shipping",  va:"3 zones, 5 rates",         st:"Active"},
+    {nm:"Taxes",     va:"Automatic (US)",           st:"Active"},
+    {nm:"Checkout",  va:"One-page, accounts optional", st:"Active"},
+    {nm:"Notifications", va:"12 templates",         st:"Active"},
+  ],
+};
+
+const KEY="bodega-desktop-dash-v1";
+let DATA=load();
+function load(){try{const s=localStorage.getItem(KEY);if(s)return{...structuredClone(DEFAULT_DATA),...JSON.parse(s)};}catch(e){}return structuredClone(DEFAULT_DATA);}
+function save(){localStorage.setItem(KEY,JSON.stringify(DATA));}
+function editing(){return document.body.classList.contains("editing");}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+const PAY={paid:["paid","Paid"],pend:["pend","Pending"]};
+const FUL={ful:["ful","Fulfilled"],unful:["unful","Unfulfilled"]};
+function pill(map,k){const p=map[k]||Object.values(map)[0];return `<span class="pill ${p[0]}">${p[1]}</span>`;}
+
+
+/* ---- KPI sparklines ----
+   Each line is drawn from its own card's delta, so a +12.5% card slopes
+   up and a -3% card slopes down. They used to be fixed points that never
+   agreed with the number beside them. */
+function renderSparks(){
+  document.querySelectorAll("[data-spark]").forEach(function(box){
+    const card = box.parentElement;
+    const dEl = card && card.querySelector('[data-edit$="-d"]');
+    const pct = dEl ? (parseFloat(dEl.textContent.replace(/[^0-9.-]/g,"")) || 0) : 0;
+    const line = box.querySelector("polyline");
+    if(!line) return;
+    const n=9, W=120, H=36, mag=Math.min(13, 2+Math.abs(pct)*0.55);
+    let seed=7; const pts=[];
+    for(let i=0;i<n;i++){
+      seed=(seed*9301+49297)%233280;
+      const wig=(seed/233280-0.5)*5, t=i/(n-1);
+      const y=H/2-(pct>=0?1:-1)*(t-0.5)*mag*2+wig;
+      pts.push((i*(W/(n-1))).toFixed(0)+","+Math.max(3,Math.min(H-3,y)).toFixed(1));
+    }
+    line.setAttribute("points", pts.join(" "));
+    line.classList.toggle("dn", pct<0);
+  });
+}
+function renderTables(){
+  renderSparks();
+  /* Marketing / Discounts / Online Store / Settings tables */
+  document.getElementById("mktRows").innerHTML=DATA.campaigns.map((r,i)=>`
+    <tr style="--d:${i*45}ms"><td data-edit="mk-${i}-nm">${esc(r.nm)}</td>
+    <td class="mut" data-edit="mk-${i}-ch">${esc(r.ch)}</td>
+    <td class="mut" data-edit="mk-${i}-se">${esc(r.se)}</td>
+    <td class="mut" data-edit="mk-${i}-or">${esc(r.or)}</td>
+    <td class="amt" style="text-align:right;" data-edit="mk-${i}-sa">${esc(r.sa)}</td></tr>`).join("");
+  document.getElementById("discRows").innerHTML=DATA.discounts.map((r,i)=>`
+    <tr style="--d:${i*45}ms"><td data-edit="dc-${i}-cd">${esc(r.cd)}</td>
+    <td class="mut" data-edit="dc-${i}-ty">${esc(r.ty)}</td>
+    <td class="mut" data-edit="dc-${i}-va">${esc(r.va)}</td>
+    <td class="mut" data-edit="dc-${i}-us">${esc(r.us)}</td>
+    <td style="text-align:right;"><span class="pill ${r.st==="Active"?"paid":""}">${esc(r.st)}</span></td></tr>`).join("");
+  document.getElementById("pageRows").innerHTML=DATA.pages.map((r,i)=>`
+    <tr style="--d:${i*45}ms"><td data-edit="pg-${i}-nm">${esc(r.nm)}</td>
+    <td class="mut" data-edit="pg-${i}-hd">${esc(r.hd)}</td>
+    <td class="mut" data-edit="pg-${i}-vw">${esc(r.vw)}</td>
+    <td class="mut" style="text-align:right;" data-edit="pg-${i}-up">${esc(r.up)}</td></tr>`).join("");
+  document.getElementById("setRows").innerHTML=DATA.settings.map((r,i)=>`
+    <tr style="--d:${i*45}ms"><td data-edit="se-${i}-nm">${esc(r.nm)}</td>
+    <td class="mut" data-edit="se-${i}-va">${esc(r.va)}</td>
+    <td style="text-align:right;"><span class="pill paid">${esc(r.st)}</span></td></tr>`).join("");
+
+  document.getElementById("orderRows").innerHTML=DATA.orders.map((o,i)=>`
+    <tr style="--d:${i*45}ms"><td class="onum" data-edit="ord-${i}-num">${esc(o.num)}</td>
+    <td class="dimc" data-edit="ord-${i}-dt">${esc(o.dt)}</td>
+    <td class="mut" data-edit="ord-${i}-cust">${esc(o.cust)}</td>
+    <td class="amt" data-edit="ord-${i}-tot">${esc(o.tot)}</td>
+    <td>${pill(PAY,o.pay)}</td><td>${pill(FUL,o.ful)}</td></tr>`).join("");
+  document.getElementById("prodRows").innerHTML=DATA.products.map((p,i)=>`
+    <tr style="--d:${i*45}ms"><td><span class="prodcell"><span class="thumb" style="background:${esc(p.bg)}">${esc(p.emo)}</span><span class="pnm" data-edit="pr-${i}-nm">${esc(p.nm)}</span></span></td>
+    <td><span class="pill paid">Active</span></td>
+    <td class="${p.low?"lowstock":"mut"}" data-edit="pr-${i}-inv">${esc(p.inv)}</td>
+    <td class="amt" style="text-align:right;" data-edit="pr-${i}-pr">${esc(p.pr)}</td></tr>`).join("");
+  document.getElementById("custRows").innerHTML=DATA.customers.map((c,i)=>`
+    <tr style="--d:${i*45}ms"><td style="font-weight:600;" data-edit="cu-${i}-nm">${esc(c.nm)}</td>
+    <td class="mut" data-edit="cu-${i}-em">${esc(c.em)}</td>
+    <td class="dimc" data-edit="cu-${i}-n">${esc(c.n)}</td>
+    <td class="amt" style="text-align:right;" data-edit="cu-${i}-sp">${esc(c.sp)}</td></tr>`).join("");
+}
+
+/* ---- count-up (visible-only guard) ---- */
+function countUp(){
+  document.querySelectorAll(".cu").forEach(el=>{
+    if(el.dataset.done) return;
+    const target=parseFloat(String(el.dataset.count).replace(/[$,]/g,"")); if(isNaN(target)) return;
+    const dur=1100, start=performance.now();
+    function step(now){const p=Math.min((now-start)/dur,1),e=1-Math.pow(1-p,3);
+      el.textContent="$"+(target*e).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+      if(p<1)requestAnimationFrame(step);else{el.textContent="$"+target.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});el.dataset.done="1";}}
+    requestAnimationFrame(step);
+  });
+}
+function maybeCountUp(){if(document.visibilityState==="visible")countUp();else document.addEventListener("visibilitychange",function h(){if(document.visibilityState==="visible"){countUp();document.removeEventListener("visibilitychange",h);}});}
+
+/* ---- editing ---- */
+function bindEdits(){document.querySelectorAll("[data-edit]").forEach(el=>{
+  el.setAttribute("contenteditable",editing());
+  el.oninput=()=>{const k=el.getAttribute("data-edit");DATA[k]=el.textContent;save();if(/-d$/.test(el.getAttribute("data-edit")))renderSparks();
+    document.querySelectorAll(`[data-edit="${k}"]`).forEach(o=>{if(o!==el)o.textContent=el.textContent;});};
+});}
+document.getElementById("editBtn").addEventListener("click",function(){const on=document.body.classList.toggle("editing");this.classList.toggle("on",on);this.textContent=on?"✓ Done":"✎ Edit";bindEdits();});
+document.getElementById("resetBtn").addEventListener("click",()=>{if(confirm("Reset this dashboard to its original values?")){localStorage.removeItem(KEY);DATA=structuredClone(DEFAULT_DATA);renderTables();restoreScalars();bindEdits();}});
+function restoreScalars(){document.querySelectorAll("[data-edit]").forEach(el=>{const k=el.getAttribute("data-edit");if(DATA[k]!==undefined)el.textContent=DATA[k];});}
+
+/* ---- sidebar router ---- */
+// Bound to the whole sidebar, not just #nav — the footer holds its
+// own .ni items (Settings) in a separate container.
+document.querySelector(".sidebar").addEventListener("click",e=>{
+  const n=e.target.closest(".ni"); if(!n||!n.dataset.nav||editing())return;
+  document.querySelectorAll(".ni").forEach(x=>x.classList.toggle("on",x===n));
+  document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.dataset.view===n.dataset.nav));
+  document.getElementById("content").scrollTop=0; bindEdits();
+});
+
+/* ---- init ---- */
+renderTables();restoreScalars();bindEdits();
+document.querySelector('[data-edit="sales"]').dataset.count=DATA.sales;
+maybeCountUp();
+</script>
+<!-- krypt:app:start -->
+<script src="../../assets/krypt-app.js" data-root="../../" data-label="Bodega Web" defer></script>
+<script src="../../assets/krypt-desktop.js" defer></script>
+<script src="../../assets/push.js" defer></script>
+<!-- krypt:app:end -->
+</body>
+</html>

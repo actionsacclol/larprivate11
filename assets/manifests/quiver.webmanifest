@@ -1,0 +1,30 @@
+{
+  "name": "Quiver — Krypt LARP",
+  "short_name": "Quiver",
+  "description": "Quiver — a fictional Investing mock-up. Part of the Krypt LARP collection.",
+  "start_url": "../../dashboards/quiver/index.html",
+  "scope": "../../",
+  "display": "standalone",
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
+  "background_color": "#0B0B0E",
+  "theme_color": "#26C97A",
+  "icons": [
+    {
+      "src": "../icons/quiver-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../icons/quiver-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

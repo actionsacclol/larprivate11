@@ -10,6 +10,10 @@ name: build
 # through it. Instead electron-builder uploads directly to a GitHub
 # Release, which doesn't count against that quota.
 #
+# (Note for whoever runs `npm run brand` next: "GitHub" here is the real
+# hosting service, not the Codenest mock. rebrand.js walks .yml, so it
+# will try to scrub this line. Leave it — the rule is about the mocks.)
+#
 # Run it from the Actions tab (Run workflow), or push a tag like v1.1.0.
 # A plain push to main builds nothing — it is tags only.
 # Either way the result is a DRAFT release you review before publishing.
@@ -55,9 +59,15 @@ jobs:
 
       - run: npm ci
 
+      # Nothing in this collection may carry a real company's name. The
+      # check is cheap and it runs before anything is packaged, so a mark
+      # that slips into a dashboard fails the build instead of shipping.
+      - name: Check for real trademarks
+        run: npm run brand:check
+
       # Icons and per-dashboard manifests are committed rather than
-      # regenerated here — their source images live outside the repo.
-      # See the note at the bottom of .gitignore.
+      # regenerated here. They need no inputs — see tools/icon-specs.js
+      # and the note at the bottom of .gitignore.
       - name: Package and publish
         run: npx electron-builder ${{ matrix.args }} --publish always
         env:

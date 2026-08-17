@@ -1,0 +1,342 @@
+/* ============================================================
+   KRYPT LARP — chrome UI
+   ============================================================
+
+   The shared design system for the pages that are *this app*, as
+   opposed to the pages that are a mock:
+
+       index.html          the gallery
+       about.html          what this is
+       custom/index.html   your own collection
+       custom/guide.html   how to make one
+
+   Dashboards do NOT load this. They are each their own visual world
+   and have to stay that way — a shared stylesheet reaching into them
+   is exactly the bug that would make thirty-one apps look like one.
+
+   Three rules hold the whole thing together:
+
+     1. ONE accent. Violet. If something needs to stand out from the
+        violet it gets amber, and there is at most one amber thing on
+        a screen. Four gradient buttons in a row is what this file
+        exists to prevent.
+
+     2. ONE primary action per screen. Everything else is quiet: a
+        bordered surface button, or a plain link. Weight is how the
+        user knows what to do first, and it only works if it's scarce.
+
+     3. Surfaces step up, never down. bg -> surface -> surface-2.
+        A raised thing is lighter than what it sits on, always.
+   ============================================================ */
+
+:root{
+  color-scheme: dark;
+
+  /* ---- surfaces ---- */
+  --k-bg:#0a0a0b;
+  --k-surface:#131318;
+  --k-surface-2:#1a1a21;
+  --k-surface-3:#22222b;
+  --k-line:#26262e;
+  --k-line-hi:#33333f;
+
+  /* ---- ink ---- */
+  --k-text:#e9e9ef;
+  --k-muted:#9a9aa8;
+  --k-dim:#6e6e7c;
+
+  /* ---- accent: violet, and only violet ---- */
+  --k-accent:#8B7CF6;
+  --k-accent-strong:#7C3AED;
+  --k-accent-ink:#0e0a1f;          /* text on a filled accent */
+  --k-accent-rgb:139,124,246;
+
+  /* ---- amber: the one exception, for the one thing that is not
+         navigation — "make your own", and the demo notice ---- */
+  --k-amber:#F0A82E;
+  --k-amber-rgb:240,168,46;
+
+  --k-ok:#3AD17C;
+
+  /* ---- type ---- */
+  --k-font:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,
+           Helvetica,Arial,sans-serif;
+  --k-mono:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;
+
+  /* A 1.25 scale, rounded to whole pixels, with the display size
+     fluid so a 60px headline doesn't wrap on a phone. */
+  --k-t-display:clamp(32px,5.2vw,52px);
+  --k-t-h1:clamp(26px,3.4vw,36px);
+  --k-t-h2:20px;
+  --k-t-h3:16px;
+  --k-t-body:15px;
+  --k-t-small:13.5px;
+  --k-t-micro:12px;
+
+  /* ---- rhythm: everything is a multiple of 4 ---- */
+  --k-s1:4px;  --k-s2:8px;   --k-s3:12px; --k-s4:16px;
+  --k-s5:24px; --k-s6:32px;  --k-s7:48px; --k-s8:64px;
+
+  --k-r-sm:8px; --k-r:11px; --k-r-lg:16px; --k-r-xl:20px; --k-r-pill:999px;
+
+  --k-shadow:0 18px 40px rgba(0,0,0,.45);
+  --k-shadow-lg:0 40px 100px rgba(0,0,0,.7);
+
+  --k-ease:cubic-bezier(.2,.7,.3,1);
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+
+body{
+  background:var(--k-bg);
+  color:var(--k-text);
+  font-family:var(--k-font);
+  font-size:var(--k-t-body);
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* One focus ring for the whole app, on the keyboard only. */
+:where(a,button,input,select,textarea,[tabindex]):focus-visible{
+  outline:2px solid var(--k-accent);
+  outline-offset:2px;
+  border-radius:var(--k-r-sm);
+}
+
+.k-wrap{max-width:1240px;margin:0 auto;padding:0 var(--k-s5);}
+
+/* ============================================================
+   Top bar — the same on every chrome page, so "where am I and how
+   do I get back" is answered in the same place every time.
+   ============================================================ */
+
+.k-top{
+  display:flex;align-items:center;gap:var(--k-s3);
+  padding:var(--k-s5) 0 0;flex-wrap:wrap;
+}
+/* Global, not scoped to .k-top — the footer uses it too. */
+.k-spacer{flex:1 1 auto;}
+
+.k-brand{
+  display:inline-flex;align-items:center;gap:var(--k-s2);
+  text-decoration:none;color:var(--k-text);font-weight:700;
+  font-size:var(--k-t-small);letter-spacing:.02em;
+}
+.k-brand .k-dot{
+  width:9px;height:9px;border-radius:50%;flex:none;
+  background:var(--k-accent);box-shadow:0 0 0 3px rgba(var(--k-accent-rgb),.18);
+}
+
+/* ============================================================
+   Buttons
+
+   .k-btn            quiet — a bordered surface. The default.
+   .k-btn--primary   the one filled violet action on the screen.
+   .k-btn--amber     the one "make something" action, if present.
+   .k-btn--plain     a link that behaves like a button. No box.
+   .k-btn--lg        pair a title with a one-line explanation.
+   ============================================================ */
+
+.k-btn{
+  display:inline-flex;align-items:center;gap:var(--k-s2);
+  background:var(--k-surface-2);color:var(--k-text);
+  border:1px solid var(--k-line);border-radius:var(--k-r);
+  padding:10px 15px;cursor:pointer;text-decoration:none;
+  font:600 var(--k-t-small)/1.2 var(--k-font);
+  transition:background .15s ease,border-color .15s ease,transform .15s var(--k-ease);
+  white-space:nowrap;
+}
+.k-btn:hover{background:var(--k-surface-3);border-color:var(--k-line-hi);}
+.k-btn:active{transform:translateY(1px);}
+.k-btn svg{width:15px;height:15px;flex:none;}
+.k-btn[disabled]{opacity:.45;cursor:default;pointer-events:none;}
+
+.k-btn--primary{
+  background:var(--k-accent-strong);border-color:transparent;color:#fff;
+  box-shadow:0 8px 22px rgba(var(--k-accent-rgb),.28);
+}
+.k-btn--primary:hover{background:#8b4df0;border-color:transparent;}
+
+.k-btn--amber{
+  background:transparent;border-color:rgba(var(--k-amber-rgb),.42);
+  color:var(--k-amber);
+}
+.k-btn--amber:hover{
+  background:rgba(var(--k-amber-rgb),.10);border-color:rgba(var(--k-amber-rgb),.65);
+}
+
+.k-btn--plain{
+  background:transparent;border-color:transparent;color:var(--k-muted);padding:10px 8px;
+}
+.k-btn--plain:hover{background:transparent;color:var(--k-text);border-color:transparent;}
+
+/* The big variant: a title and a line of explanation, so a button can
+   say what it does instead of making the user guess from two words. */
+.k-btn--lg{
+  align-items:center;padding:14px 18px;border-radius:var(--k-r-lg);
+  font-size:var(--k-t-h3);font-weight:700;letter-spacing:-.01em;
+  /* <button> centres its text and <a> doesn't, so a row of these
+     mixed together drifts out of alignment unless it's forced. */
+  text-align:left;
+}
+.k-btn--lg .k-ic{
+  width:30px;height:30px;border-radius:50%;flex:none;
+  background:rgba(255,255,255,.12);
+  display:flex;align-items:center;justify-content:center;
+}
+.k-btn--lg .k-ic svg{width:16px;height:16px;}
+.k-btn--lg small{
+  display:block;margin-top:3px;
+  font:500 var(--k-t-micro)/1.45 var(--k-font);opacity:.75;
+  white-space:normal;letter-spacing:0;
+}
+
+/* ============================================================
+   Page head — kicker, headline, lede.
+   ============================================================ */
+
+.k-head{padding:var(--k-s6) 0 0;}
+.k-kicker{
+  color:var(--k-accent);font-size:var(--k-t-micro);font-weight:700;
+  letter-spacing:.18em;text-transform:uppercase;
+}
+.k-h1{
+  font-size:var(--k-t-display);font-weight:800;letter-spacing:-.032em;
+  line-height:1.04;margin:var(--k-s3) 0 var(--k-s4);
+}
+.k-h2{font-size:var(--k-t-h1);font-weight:700;letter-spacing:-.02em;line-height:1.15;}
+.k-lede{color:var(--k-muted);font-size:17px;line-height:1.6;max-width:56ch;}
+.k-lede b,.k-lede strong{color:var(--k-text);font-weight:600;}
+
+/* ============================================================
+   Notice — the fictional-apps line.
+
+   It used to be a solid yellow bar, which put the loudest colour on
+   the page on the one element nobody needs to act on. It still has to
+   be unmissable on a first read, so it keeps the amber, the dot and
+   the top-of-page position — it just stops out-shouting the content
+   underneath it.
+   ============================================================ */
+
+.k-notice{
+  display:flex;align-items:flex-start;gap:var(--k-s3);
+  background:rgba(var(--k-amber-rgb),.07);
+  border:1px solid rgba(var(--k-amber-rgb),.26);
+  border-radius:var(--k-r);padding:11px 15px;
+  font-size:var(--k-t-small);line-height:1.5;color:#e7d3ac;
+}
+.k-notice .k-dot{
+  width:7px;height:7px;border-radius:50%;background:var(--k-amber);
+  flex:none;margin-top:6px;
+}
+.k-notice b{color:var(--k-amber);font-weight:700;}
+
+/* ============================================================
+   Chips
+   ============================================================ */
+
+.k-chip{
+  display:inline-flex;align-items:center;gap:5px;
+  background:var(--k-surface);border:1px solid var(--k-line);
+  color:var(--k-muted);border-radius:var(--k-r-sm);
+  padding:4px 9px;font-size:11px;font-weight:600;
+}
+
+/* ============================================================
+   Modal — one overlay for the tutorial, the welcome card and
+   anything else that has to sit on top of a page.
+   ============================================================ */
+
+.k-veil{
+  position:fixed;inset:0;z-index:9000;display:none;
+  align-items:center;justify-content:center;padding:var(--k-s5);
+  background:rgba(4,4,8,.8);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+}
+.k-veil.open{display:flex;animation:k-fade .18s ease;}
+@keyframes k-fade{from{opacity:0}to{opacity:1}}
+
+.k-modal{
+  width:100%;max-width:640px;max-height:calc(100vh - 48px);overflow:auto;
+  background:var(--k-surface);border:1px solid var(--k-line);
+  border-radius:var(--k-r-xl);box-shadow:var(--k-shadow-lg);
+  animation:k-pop .22s var(--k-ease);
+}
+@keyframes k-pop{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
+
+.k-modal-head{
+  display:flex;align-items:center;justify-content:space-between;gap:var(--k-s4);
+  padding:18px 22px;border-bottom:1px solid var(--k-line);
+}
+.k-modal-head h3{font-size:var(--k-t-h3);font-weight:700;letter-spacing:-.01em;}
+.k-x{
+  background:var(--k-surface-3);border:0;color:var(--k-muted);
+  width:32px;height:32px;border-radius:var(--k-r-sm);cursor:pointer;
+  font:600 15px/1 var(--k-font);flex:none;
+}
+.k-x:hover{background:#2c2c36;color:var(--k-text);}
+.k-modal-body{padding:22px;}
+.k-modal-foot{
+  padding:16px 22px;border-top:1px solid var(--k-line);
+  display:flex;gap:var(--k-s2);align-items:center;flex-wrap:wrap;
+}
+
+/* ============================================================
+   Numbered steps — used by the guide, the about page and the
+   welcome card, so "how this works" reads the same everywhere.
+   ============================================================ */
+
+.k-steps{list-style:none;display:grid;gap:var(--k-s5);}
+.k-step{display:grid;grid-template-columns:28px 1fr;gap:var(--k-s3) var(--k-s4);}
+.k-step .k-n{
+  width:28px;height:28px;border-radius:50%;
+  background:rgba(var(--k-accent-rgb),.14);
+  border:1px solid rgba(var(--k-accent-rgb),.34);color:var(--k-accent);
+  display:flex;align-items:center;justify-content:center;
+  font:700 var(--k-t-micro)/1 var(--k-font);flex:none;
+}
+.k-step h4{font-size:var(--k-t-h3);font-weight:700;letter-spacing:-.01em;align-self:center;}
+.k-step p{grid-column:2;color:var(--k-muted);font-size:var(--k-t-small);line-height:1.6;}
+.k-step p b{color:var(--k-text);font-weight:600;}
+
+/* A key the user has to press, or a gesture they have to make. */
+.k-key{
+  display:inline-block;background:var(--k-bg);border:1px solid var(--k-line-hi);
+  border-radius:6px;padding:2px 7px;margin:0 1px;
+  font:600 12px/1.5 var(--k-mono);color:#cfc6ff;
+}
+
+/* ============================================================
+   Footer
+   ============================================================ */
+
+.k-foot{
+  margin-top:var(--k-s8);padding:var(--k-s5) 0 var(--k-s7);
+  border-top:1px solid var(--k-line);
+  color:var(--k-dim);font-size:var(--k-t-micro);line-height:1.7;
+  display:flex;gap:var(--k-s4);flex-wrap:wrap;align-items:center;
+}
+.k-foot a{color:var(--k-muted);text-decoration:none;}
+.k-foot a:hover{color:var(--k-text);text-decoration:underline;}
+.k-foot code{
+  background:var(--k-surface);border:1px solid var(--k-line);
+  padding:2px 6px;border-radius:5px;font:500 11px var(--k-mono);color:#c9c9d1;
+}
+
+/* ============================================================
+   Phone
+   ============================================================ */
+
+@media (max-width:620px){
+  .k-wrap{padding:0 var(--k-s4);}
+  .k-head{padding-top:var(--k-s5);}
+  .k-lede{font-size:15.5px;}
+  .k-btn--lg{width:100%;}
+  .k-modal{max-width:none;}
+  .k-modal-body{padding:18px;}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .k-veil.open,.k-modal{animation:none;}
+  .k-btn{transition:none;}
+}

@@ -1,0 +1,30 @@
+{
+  "name": "Nimbus Pay — Krypt LARP",
+  "short_name": "Nimbus",
+  "description": "Nimbus Pay — a fictional Digital Wallet mock-up. Part of the Krypt LARP collection.",
+  "start_url": "../../dashboards/nimbus/index.html",
+  "scope": "../../",
+  "display": "standalone",
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
+  "background_color": "#FFFFFF",
+  "theme_color": "#1D5A8C",
+  "icons": [
+    {
+      "src": "../icons/nimbus-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../icons/nimbus-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

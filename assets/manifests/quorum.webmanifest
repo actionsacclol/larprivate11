@@ -1,0 +1,30 @@
+{
+  "name": "Quorum Revenue — Krypt LARP",
+  "short_name": "Quorum",
+  "description": "Quorum Revenue — a fictional Creator Payouts mock-up. Part of the Krypt LARP collection.",
+  "start_url": "../../dashboards/quorum/index.html",
+  "scope": "../../",
+  "display": "standalone",
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
+  "background_color": "#0E0E12",
+  "theme_color": "#0E0E12",
+  "icons": [
+    {
+      "src": "../icons/quorum-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../icons/quorum-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

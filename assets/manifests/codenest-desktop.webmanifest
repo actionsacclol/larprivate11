@@ -1,0 +1,30 @@
+{
+  "name": "Codenest (desktop) — Krypt LARP",
+  "short_name": "Codenest Web",
+  "description": "Codenest (desktop) — a fictional Developer mock-up. Part of the Krypt LARP collection.",
+  "start_url": "../../dashboards/codenest-desktop/index.html",
+  "scope": "../../",
+  "display": "standalone",
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "any",
+  "background_color": "#111318",
+  "theme_color": "#2A2F38",
+  "icons": [
+    {
+      "src": "../icons/codenest-desktop-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../icons/codenest-desktop-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

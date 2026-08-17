@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en" data-krypt-status="translucent">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Quorum · Revenue Sharing (Learning Demo)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     QUORUM — Revenue Sharing (TEST demo).
+     A single faithful screen: total payouts + a payouts list
+     (green money-bag = paid, gray triangle = below minimum,
+     blue calendar = next payout). Data-driven — see DATA.
+     Edit toggle = click values; saved to your browser.
+     ============================================================ */
+  :root{
+    --bg:#000000;
+    --text:#ffffff;
+    --muted:#71767b;      /* secondary text */
+    --green:#00ba7c;      /* paid */
+    --blue:#3D8FD8;       /* next payout */
+    --line:#16181c;
+    --font:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{background:#0a0a0a;font-family:var(--font);color:var(--text);display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;-webkit-font-smoothing:antialiased;}
+
+  .back{position:fixed;top:18px;left:18px;z-index:50;background:#1c1c1e;color:#fff;border:1px solid #333;text-decoration:none;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;font-family:var(--font);transition:.15s;}
+  .back:hover{background:#2a2a2c;}
+  .toolbar{position:fixed;top:18px;right:18px;display:flex;gap:8px;z-index:50;}
+  .toolbar button{background:#1c1c1e;color:#fff;border:1px solid #333;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);transition:.15s;}
+  .toolbar button:hover{background:#2a2a2c;}
+  .toolbar button.on{background:var(--blue);color:#fff;border-color:var(--blue);}
+
+  .phone{position:relative;width:390px;max-width:100%;height:844px;background:var(--bg);border-radius:44px;box-shadow:0 0 0 12px #111,0 40px 90px rgba(0,0,0,.7);overflow:hidden;display:flex;flex-direction:column;}
+
+  .statusbar{display:flex;align-items:center;justify-content:space-between;padding:15px 30px 4px;font-size:15px;font-weight:600;flex:0 0 auto;}
+  .statusbar .right{display:flex;align-items:center;gap:7px;}
+  .battery{border:1.5px solid #fff;border-radius:4px;width:26px;height:13px;position:relative;display:flex;align-items:center;padding:1.5px;}
+  .battery::after{content:"";position:absolute;right:-4px;top:4px;width:2px;height:5px;background:#fff;border-radius:0 2px 2px 0;}
+  .battery i{display:block;height:100%;background:#fff;border-radius:1.5px;width:82%;}
+  .signal{display:flex;align-items:flex-end;gap:2px;height:12px;}
+  .signal b{width:3px;background:#fff;border-radius:1px;display:block;}
+  .signal b:nth-child(1){height:5px}.signal b:nth-child(2){height:7px}.signal b:nth-child(3){height:9px}.signal b:nth-child(4){height:12px}
+
+  /* header */
+  .hdr{display:flex;align-items:center;justify-content:space-between;padding:8px 18px 10px;flex:0 0 auto;}
+  .hdr .bk{width:26px;height:26px;cursor:pointer;}
+  .hdr .bk svg{width:26px;height:26px;stroke:#fff;fill:none;stroke-width:2.2;}
+  .hdr .ttl{font-size:19px;font-weight:800;}
+  .hdr .nfo{width:28px;height:28px;border-radius:50%;border:1.6px solid #fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;font-style:italic;font-family:Georgia,serif;cursor:pointer;}
+
+  .screen{flex:1;overflow-y:auto;scrollbar-width:none;}
+  .screen::-webkit-scrollbar{display:none;}
+
+  /* total */
+  .total{text-align:center;padding:6px 0 2px;}
+  .total .big{font-size:52px;font-weight:800;letter-spacing:-1.5px;line-height:1.05;}
+  .total .lbl{font-size:16px;color:var(--muted);font-weight:500;margin-top:6px;}
+
+  .phead{font-size:23px;font-weight:800;letter-spacing:-.4px;padding:26px 20px 4px;}
+
+  /* payout rows */
+  .plist{padding:0 20px 24px;}
+  .prow{display:flex;align-items:flex-start;gap:18px;padding:16px 0;
+    opacity:0;transform:translateY(12px);animation:rise .5s ease forwards;}
+  @keyframes rise{to{opacity:1;transform:none;}}
+  .prow .ic{width:32px;height:32px;flex:0 0 auto;margin-top:2px;display:flex;align-items:center;justify-content:center;}
+  .prow .ic svg{width:30px;height:30px;fill:none;stroke-width:1.7;}
+  .prow .mid{flex:1;min-width:0;}
+  .prow .t{font-size:19px;font-weight:700;line-height:1.2;}
+  .prow .d{font-size:15px;color:var(--muted);margin-top:4px;font-weight:400;}
+
+  body.editing [data-edit]{outline:1.5px dashed var(--blue);outline-offset:3px;border-radius:4px;cursor:text;}
+  [data-edit]:focus{outline:1.5px solid var(--blue);}
+  .hint{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);color:#666;font-size:12px;}
+</style>
+<!-- krypt:phone:start -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Quorum">
+<meta name="theme-color" content="#0E0E12">
+<link rel="manifest" href="../../assets/manifests/quorum.webmanifest">
+<link rel="apple-touch-icon" href="../../assets/icons/quorum-180.png">
+<link rel="icon" type="image/png" sizes="512x512" href="../../assets/icons/quorum-512.png">
+<link rel="stylesheet" href="../../assets/phone.css">
+<!-- krypt:phone:end -->
+</head>
+<body>
+
+<a class="back" href="../../index.html">← Collection</a>
+<div class="toolbar">
+  <button id="editBtn">✎ Edit</button>
+  <button id="resetBtn">↺ Reset</button>
+</div>
+
+<div class="phone">
+  <div class="statusbar">
+    <span>9:41</span>
+    <span class="right">
+      <span class="signal"><b></b><b></b><b></b><b></b></span>
+      <svg width="18" height="14" viewBox="0 0 18 14" fill="none"><path d="M9 3C11.5 3 13.8 4 15.5 5.6M9 7C10.4 7 11.7 7.6 12.7 8.5M4.3 5.6C6 4 8.3 3 9 3M6.3 8.5C7.3 7.6 8 7.4 9 7.4" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/><circle cx="9" cy="11" r="1.2" fill="#fff"/></svg>
+      <span class="battery"><i></i></span>
+    </span>
+  </div>
+
+  <div class="hdr">
+    <div class="bk"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="ttl">Revenue Sharing</div>
+    <div class="nfo">i</div>
+  </div>
+
+  <div class="screen" id="screen">
+    <div class="total">
+      <div class="big">$<span id="total" data-edit="total">512.90</span></div>
+      <div class="lbl">Total payouts</div>
+    </div>
+    <div class="phead">Payouts</div>
+    <div class="plist" id="plist"></div>
+  </div>
+</div>
+
+<div class="hint">Toggle Edit (top-right) to change the total, amounts &amp; dates</div>
+
+<script>
+/* ============================================================
+   DATA — edit freely. Each payout row is one period.
+   type: "next" (blue calendar) · "below" (gray warning) · "paid" (green bag)
+   ============================================================ */
+const DEFAULT_DATA = {
+  total:"512.90",
+  payouts:[
+    {type:"next",  title:"Next payout",            date:"Jul 31, 2026"},
+    {type:"below", title:"Below minimum earnings", date:"Jul 3, 2026 - Jul 17, 2026"},
+    {type:"paid",  title:"$41.20",                 date:"May 9, 2026 - Jul 4, 2026"},
+    {type:"below", title:"Below minimum earnings", date:"Jun 5, 2026 - Jun 19, 2026"},
+    {type:"below", title:"Below minimum earnings", date:"May 22, 2026 - Jun 5, 2026"},
+    {type:"paid",  title:"$33.60",                 date:"Apr 25, 2026 - May 9, 2026"},
+    {type:"paid",  title:"$47.85",                 date:"Mar 28, 2026 - Apr 25, 2026"},
+    {type:"below", title:"Below minimum earnings", date:"Mar 13, 2026 - Mar 27, 2026"},
+    {type:"paid",  title:"$29.40",                 date:"Feb 27, 2026 - Mar 13, 2026"},
+    {type:"paid",  title:"$52.10",                 date:"Feb 13, 2026 - Feb 27, 2026"},
+  ],
+};
+const KEY="x-dash-v2";
+let DATA=load();
+function load(){try{const s=localStorage.getItem(KEY);if(s)return{...structuredClone(DEFAULT_DATA),...JSON.parse(s)};}catch(e){}return structuredClone(DEFAULT_DATA);}
+function save(){localStorage.setItem(KEY,JSON.stringify(DATA));}
+function editing(){return document.body.classList.contains("editing");}
+
+const ICONS={
+  next:`<svg viewBox="0 0 24 24" fill="none" stroke="#3D8FD8" stroke-width="1.7" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="3.5"/><path d="M7 5h10a3.5 3.5 0 0 1 3.5 3.5V9H3.5v-.5A3.5 3.5 0 0 1 7 5z" fill="#3D8FD8" stroke="none"/></svg>`,
+  below:`<svg viewBox="0 0 24 24" fill="none" stroke="#71767b" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10.92 4.3a1.25 1.25 0 0 1 2.16 0l7.53 13.2a1.25 1.25 0 0 1-1.08 1.9H4.47a1.25 1.25 0 0 1-1.08-1.9z"/><path d="M12 9.4v4"/><path d="M12 16.5v.01"/></svg>`,
+  paid:`<svg viewBox="0 0 24 24" fill="none" stroke="#00ba7c" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.2 6.9 10.6 3.5 12 5.5 13.4 3.5 14.8 6.9"/><path d="M9.2 6.9h5.6"/><path d="M9.4 7.1C7 8.7 5.3 11.2 5.3 14.2A4.4 4.4 0 0 0 9.7 18.6h4.6a4.4 4.4 0 0 0 4.4-4.4c0-3-1.7-5.5-4.1-7.1"/></svg>`,
+};
+
+function renderPayouts(){
+  const el=document.getElementById("plist");el.innerHTML="";
+  DATA.payouts.forEach((p,i)=>{
+    const row=document.createElement("div");row.className="prow";row.style.animationDelay=(i*45)+"ms";
+    row.innerHTML=`<span class="ic">${ICONS[p.type]||ICONS.below}</span>
+      <div class="mid"><div class="t" data-edit="p-${i}-title">${p.title}</div><div class="d" data-edit="p-${i}-date">${p.date}</div></div>`;
+    el.appendChild(row);
+  });
+  bindEdits();
+}
+
+/* count-up on the total */
+function animateTotal(){
+  const el=document.getElementById("total");
+  const target=parseFloat((DATA.total||"0").replace(/,/g,""))||0;let t0=null;
+  function step(ts){if(!t0)t0=ts;const p=Math.min((ts-t0)/1000,1),e=1-Math.pow(1-p,3);
+    el.textContent=(target*e).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+    if(p<1)requestAnimationFrame(step);}
+  requestAnimationFrame(step);
+}
+
+function bindEdits(){
+  document.querySelectorAll("[data-edit]").forEach(el=>{
+    el.setAttribute("contenteditable",editing());
+    el.oninput=()=>{
+      const k=el.getAttribute("data-edit"),v=el.textContent;let m;
+      if(m=k.match(/^p-(\d+)-(\w+)$/))DATA.payouts[+m[1]][m[2]]=v;
+      else DATA[k]=v;
+      save();
+    };
+  });
+}
+document.getElementById("editBtn").addEventListener("click",function(){
+  const on=document.body.classList.toggle("editing");
+  this.classList.toggle("on",on);this.textContent=on?"✓ Done":"✎ Edit";bindEdits();
+});
+document.getElementById("resetBtn").addEventListener("click",()=>{
+  if(confirm("Reset this dashboard to its original values?")){
+    localStorage.removeItem(KEY);DATA=structuredClone(DEFAULT_DATA);
+    renderPayouts();document.getElementById("total").textContent=DATA.total;animateTotal();
+  }
+});
+
+renderPayouts();
+if(document.visibilityState==="visible")animateTotal();
+else document.addEventListener("visibilitychange",function h(){if(document.visibilityState==="visible"){animateTotal();document.removeEventListener("visibilitychange",h);}});
+</script>
+<!-- krypt:app:start -->
+<script src="../../assets/krypt-app.js" data-root="../../" data-label="Quorum" defer></script>
+<script src="../../assets/krypt-desktop.js" defer></script>
+<script src="../../assets/push.js" defer></script>
+<!-- krypt:app:end -->
+</body>
+</html>

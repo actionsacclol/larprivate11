@@ -7,7 +7,7 @@
    details/state lines.
 
    Krypt LARP's presence follows whichever dashboard is open, so it
-   reads "Viewing Venmo" rather than something generic.
+   reads "Viewing Tandem" rather than something generic.
 
    It keeps trying. Krypt LARP starts with Windows, so at boot it is
    almost always up before Discord has finished loading — a one-shot

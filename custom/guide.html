@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0a0b">
+<title>Make your own dashboard — Krypt LARP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/ui.css">
+<style>
+  /* Aliases onto assets/ui.css — see the note in custom/index.html. */
+  :root{
+    --bg:var(--k-bg); --card:var(--k-surface); --line:var(--k-line);
+    --text:var(--k-text); --muted:var(--k-muted); --dim:var(--k-dim);
+    --accent:var(--k-accent-strong); --mint:var(--k-amber);
+    --font:var(--k-font);
+    --mono:var(--k-mono);
+  }
+  body{-webkit-font-smoothing:antialiased;padding:0 0 90px;line-height:1.65;}
+  .wrap{max-width:860px;margin:0 auto;padding:0 24px;}
+
+  .top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:26px 0 0;}
+  .back,.btn{display:inline-flex;align-items:center;gap:7px;background:#17171d;color:#fff;
+    border:1px solid var(--line);text-decoration:none;padding:9px 15px;border-radius:11px;
+    font:600 13px/1 var(--font);cursor:pointer;}
+  .back:hover,.btn:hover{background:#22222a;}
+  .btn.primary{background:linear-gradient(135deg,var(--accent),#5b21b6);border-color:transparent;}
+  .btn.primary:hover{filter:brightness(1.12);}
+
+  .kicker{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#8b7bd8;
+    font-weight:700;margin-top:34px;}
+  h1{font-size:clamp(30px,5vw,44px);font-weight:900;letter-spacing:-.03em;margin:10px 0 14px;}
+  .lede{color:var(--muted);font-size:16px;max-width:62ch;}
+
+  h2{font-size:21px;font-weight:800;letter-spacing:-.02em;margin:48px 0 12px;}
+  h3{font-size:15px;font-weight:700;margin:26px 0 8px;}
+  p{color:var(--muted);font-size:15px;margin-bottom:12px;max-width:68ch;}
+  p b,li b{color:var(--text);font-weight:600;}
+  a{color:#a78bfa;}
+
+  ol.steps{list-style:none;counter-reset:s;margin:22px 0 0;}
+  ol.steps > li{counter-increment:s;position:relative;padding:0 0 26px 52px;}
+  ol.steps > li::before{content:counter(s);position:absolute;left:0;top:-2px;
+    width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
+    background:#1c1c24;border:1px solid var(--line);color:#fff;font-weight:800;font-size:14px;}
+  ol.steps > li::after{content:"";position:absolute;left:17px;top:36px;bottom:2px;width:1px;
+    background:linear-gradient(#2a2a34,transparent);}
+  ol.steps > li:last-child::after{display:none;}
+  ol.steps h3{margin:2px 0 6px;font-size:16px;}
+
+  ul{margin:0 0 14px 20px;color:var(--muted);font-size:15px;}
+  li{margin-bottom:7px;}
+
+  .promptbox{background:#0d0d11;border:1px solid var(--line);border-radius:16px;
+    overflow:hidden;margin:16px 0 8px;}
+  .promptbox .ph{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:12px 14px 12px 18px;border-bottom:1px solid var(--line);background:#111116;}
+  .promptbox .ph b{font-size:13px;font-weight:700;}
+  .promptbox .ph .hint{color:var(--dim);font-size:12px;font-weight:500;}
+  .promptbox pre{margin:0;padding:18px;overflow-x:auto;font:400 12.5px/1.7 var(--mono);
+    color:#cfd0da;white-space:pre-wrap;word-break:break-word;max-height:440px;overflow-y:auto;}
+  .copy{border:1px solid var(--line);background:#1c1c24;color:#fff;border-radius:9px;
+    padding:8px 14px;font:600 12.5px/1 var(--font);cursor:pointer;flex:none;}
+  .copy:hover{background:#26262f;}
+  .copy.done{background:#14532d;border-color:#166534;}
+
+  .callout{border:1px solid var(--line);background:var(--card);border-radius:14px;
+    padding:18px 20px;margin:22px 0;}
+  .callout.warn{border-color:#4a3a12;background:#191408;}
+  .callout h3{margin:0 0 6px;font-size:14.5px;}
+  .callout p{margin:0;font-size:14px;}
+
+  table{width:100%;border-collapse:collapse;margin:14px 0 18px;font-size:14px;}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  th{color:var(--dim);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.08em;}
+  td code{font:600 12.5px var(--mono);color:#a5f3d0;background:#10201a;
+    padding:2px 6px;border-radius:5px;}
+
+  .end{margin-top:52px;display:flex;gap:10px;flex-wrap:wrap;}
+  @media (max-width:560px){ body{padding:0 16px 70px;} ol.steps > li{padding-left:44px;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <a class="back" href="index.html">← Your dashboards</a>
+    <span style="flex:1"></span>
+    <a class="back" href="../about.html">What is this?</a>
+    <a class="back" href="../index.html">Collection</a>
+  </div>
+
+  <div class="kicker">Make your own</div>
+  <h1>Screenshot → prompt → import</h1>
+  <p class="lede">Every dashboard in this collection is one self-contained HTML file. That is a
+    format an AI is genuinely good at producing, so you can point one at a screenshot and get a
+    dashboard back that drops straight into your gallery.</p>
+
+  <ol class="steps">
+    <li>
+      <h3>Grab a screenshot</h3>
+      <p>Anything with a layout you like — an app screen, a web dashboard, a concept on a
+        portfolio site. A full-screen phone screenshot works best; the model needs to see the
+        whole thing, not a crop of one card.</p>
+    </li>
+    <li>
+      <h3>Paste it into an AI chat with the prompt below</h3>
+      <p>Any model that reads images will do. Attach the screenshot, paste the prompt, send.
+        The prompt does the work: it spells out the file format, the phone frame, the edit mode
+        and the naming rule, so what comes back behaves like the built-in dashboards instead of
+        being a flat picture in HTML.</p>
+    </li>
+    <li>
+      <h3>Save the reply as a .html file</h3>
+      <p>Copy the code block, paste it into a text editor, save it as <b>something.html</b>.
+        If the model offers a download, take it. One file — no folder of assets.</p>
+    </li>
+    <li>
+      <h3>Import it here</h3>
+      <p>Drag the file onto <a href="index.html">Your dashboards</a>, or use <b>Import HTML</b>.
+        It gets an icon, joins the collection, and shows up on your phone too when the Wi-Fi
+        server is running.</p>
+    </li>
+  </ol>
+
+  <h2>The prompt</h2>
+  <p>Written to produce a file this app can run. Paste it with your screenshot attached.</p>
+
+  <div class="promptbox">
+    <div class="ph">
+      <b>Dashboard prompt</b>
+      <span class="hint" id="hint">attach your screenshot first</span>
+      <button class="copy" id="copy" type="button">Copy</button>
+    </div>
+    <pre id="prompt">Rebuild the interface in the attached screenshot as a single self-contained HTML file.
+
+FORMAT
+- One .html file. No external files, no build step, no frameworks, no CDN links.
+- All CSS in one <style> tag and all JS in one <script> tag, in that file.
+- No network requests of any kind at runtime. Draw icons as inline SVG. If you
+  need a font, use the system stack: -apple-system, BlinkMacSystemFont,
+  "Segoe UI", Roboto, sans-serif.
+- Plain ES5-ish JavaScript, no modules, no imports.
+
+LAYOUT
+- Wrap the whole mock in <div class="phone"> sized 390x844 with rounded corners,
+  a dark bezel and a drop shadow, centred on a near-black page background. That
+  is the desktop presentation.
+- Add this so it also fills a real phone screen:
+    @media (max-width: 560px){
+      html,body{height:100%;overflow:hidden}
+      body{padding:0!important;display:block!important;background:#000!important}
+      .phone{width:100%!important;max-width:none!important;height:100dvh!important;
+             border-radius:0!important;box-shadow:none!important;margin:0!important}
+    }
+- Inside the phone: a fake status bar (time, signal, wifi, battery as inline SVG),
+  then the app content, then the bottom nav if the screenshot has one. Give the
+  scrolling region its own overflow so the frame itself never scrolls.
+
+BEHAVIOUR
+- Recreate the layout, spacing, type scale and colour relationships you can see.
+  Match the structure, not the pixels — this is a study, not a trace.
+- Make it feel alive: entrance animations on cards, a count-up on the headline
+  number, a chart that draws itself in. Pure CSS or a few lines of JS. Nothing
+  that loops forever.
+- Any tab bar or segmented control in the screenshot should actually switch views.
+
+EDIT MODE — get this exactly right, the app drives it
+Krypt LARP attaches its own control panel to whatever you import. Tapping three
+times anywhere opens the same menu the built-in dashboards use, and its Edit and
+Reset rows work by finding and clicking the two buttons below. Use these exact
+ids and this exact class name and your dashboard behaves like a built-in one;
+miss them and it still runs, it just won't be editable from the panel.
+
+- Put <button id="editBtn">Edit</button> and <button id="resetBtn">Reset</button>
+  at the top of the page, outside the phone frame. Exactly those ids.
+- Edit toggles the class "editing" on document.body. Exactly that name.
+- Mark every value a person might want to change with data-edit="someKey" —
+  balances, names, percentages, dates, labels, times, chart figures. Be
+  generous: if someone might plausibly want it different, give it one.
+- While editing, every [data-edit] gets contenteditable="true" and a visible
+  dashed outline.
+- On blur, save that element's text into one localStorage object keyed by the
+  data-edit name. Reload restores it. Reset clears the key and restores defaults.
+- Keep all default values in one DEFAULT_DATA object at the top of the script so
+  they are easy to find and change.
+- Use localStorage normally. Each imported dashboard gets its own private store,
+  so a plain key like "state" is fine and cannot collide with anything else.
+- Don't add your own floating corner buttons, settings panel or currency
+  switcher — the app supplies all of that. Just the two buttons above.
+
+NAMING — important
+- Invent the product. Do not use the real company's name, logo, wordmark or
+  slogan from the screenshot anywhere in the output, and shift the accent colour
+  off the one the real brand is known for.
+- Give it a plausible fictional name and a matching lettermark or simple
+  geometric logo drawn as inline SVG.
+- Fake data only: invented people, invented merchants, invented amounts.
+
+Return the complete file in one code block, nothing else.</pre>
+  </div>
+
+  <div class="callout warn">
+    <h3>Why the naming rule is in there</h3>
+    <p>Every dashboard shipped with this app is an invented product for exactly this reason —
+      a design study with someone else's trademark on it stops being a design study. Keep your
+      own imports on the same footing and you can share them without thinking about it. What you
+      make on your own machine is your call; the prompt just defaults to the safe version.</p>
+  </div>
+
+  <h2>What the app looks for</h2>
+  <p>None of this is required — any HTML file will open. These are the hooks that make an
+    imported dashboard behave like a built-in one.</p>
+
+  <table>
+    <tr><th>Hook</th><th>What it does</th></tr>
+    <tr><td><code>&lt;div class="phone"&gt;</code></td>
+        <td>Full-bleeds to the screen on a real phone instead of staying a 390px card.</td></tr>
+    <tr><td><code>#editBtn</code> / <code>#resetBtn</code></td>
+        <td>The panel's <b>Edit values</b> and <b>Reset</b> rows click these. Keep the ids and
+            the triple-tap menu drives your dashboard exactly like a built-in one.</td></tr>
+    <tr><td><code>body.editing</code></td>
+        <td>The class that turns editing on, so the styling for it is yours to write.</td></tr>
+    <tr><td><code>[data-edit="key"]</code></td>
+        <td>Marks a value as editable and gives it the name it saves under.</td></tr>
+    <tr><td><code>localStorage</code></td>
+        <td>Works normally. Each imported dashboard gets its own private store — two of them
+            can both save under <code>state</code> without colliding.</td></tr>
+    <tr><td>nothing</td>
+        <td>The triple-tap panel, the corner control, Currency, Add to Home Screen and the
+            demo watermark are added for you. Don't build your own.</td></tr>
+  </table>
+
+  <h2>If it comes back wrong</h2>
+  <ul>
+    <li><b>Flat and lifeless</b> — reply “add the entrance animations and the count-up on the
+      balance, and make the tab bar switch views”. Models tend to drop motion first.</li>
+    <li><b>It fetched a font or an icon set</b> — reply “no external requests, inline every icon
+      as SVG and use the system font stack”. It will inline them.</li>
+    <li><b>Edit mode missing</b> — reply “add the edit mode exactly as specified” and paste that
+      section again.</li>
+    <li><b>Truncated</b> — reply “continue from where you stopped, in one code block”, then join
+      the pieces. Or ask for a simpler version with fewer screens.</li>
+    <li><b>Better second attempt</b> — import it as a new dashboard and delete the first. There
+      is no penalty for keeping three tries and picking one.</li>
+  </ul>
+
+  <div class="callout">
+    <h3>A note on what runs</h3>
+    <p>Imported dashboards run inside a sandbox: no access to the rest of the app, the other
+      dashboards' saved data, or anything on your machine. That is on by default and there is no
+      switch for it — it costs nothing and it means an .html file from a stranger is no more
+      dangerous than a web page.</p>
+  </div>
+
+  <div class="end">
+    <a class="btn primary" href="index.html">Import a dashboard</a>
+    <a class="btn" href="../index.html">Back to the collection</a>
+  </div>
+</div>
+
+<script>
+(function () {
+  var btn = document.getElementById('copy');
+  var hint = document.getElementById('hint');
+  btn.addEventListener('click', function () {
+    var text = document.getElementById('prompt').textContent;
+    var done = function () {
+      btn.textContent = 'Copied';
+      btn.classList.add('done');
+      hint.textContent = 'now attach your screenshot and paste';
+      setTimeout(function () {
+        btn.textContent = 'Copy';
+        btn.classList.remove('done');
+      }, 2400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, fallback);
+    } else fallback();
+
+    // execCommand is deprecated but it is the only thing that works on
+    // file:// in some browsers, which is exactly how this page often opens.
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;top:-1000px;opacity:0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); done(); }
+      catch (e) { hint.textContent = 'select the text and copy it manually'; }
+      ta.remove();
+    }
+  });
+})();
+</script>
+</body>
+</html>

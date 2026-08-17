@@ -1,7 +1,7 @@
 {
   "name": "Futures PnL — Krypt LARP",
   "short_name": "PnL",
-  "description": "Futures PnL, recreated. Part of the Krypt LARP collection.",
+  "description": "Futures PnL — a fictional Trading mock-up. Part of the Krypt LARP collection.",
   "start_url": "../../dashboards/crypto-pnl/index.html",
   "scope": "../../",
   "display": "standalone",

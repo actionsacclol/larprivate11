@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en" data-krypt-status="translucent">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meridian — Accounts</title>
+<style>
+  :root{
+    --meridian-blue:#3E67C4;
+    --meridian-deep:#28489E;
+    --meridian-deeper:#1D3576;
+    --bg:#f5f6f7;
+    --card:#ffffff;
+    --text:#2b2b2b;
+    --muted:#757575;
+    --line:#e8e9eb;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Open Sans',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:#0a0a0a;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:60px 20px;
+  }
+
+  /* ---------- shared chrome ---------- */
+  .back,.toolbar-btn{
+    background:#1c1c1e;
+    border:1px solid #333;
+    color:#fff;
+    padding:9px 16px;
+    border-radius:10px;
+    font-size:13px;
+    text-decoration:none;
+    cursor:pointer;
+    font-family:inherit;
+    display:inline-block;
+  }
+  .back{position:fixed;top:18px;left:18px;z-index:100;}
+  .toolbar{position:fixed;top:18px;right:18px;z-index:100;display:flex;gap:8px;}
+  .toolbar-btn:hover,.back:hover{background:#2a2a2c;}
+  .toolbar-btn:active{transform:scale(.96);}
+
+  /* ---------- phone frame ---------- */
+  .phone{
+    width:390px;
+    height:844px;
+    background:var(--bg);
+    border-radius:44px;
+    box-shadow:0 0 0 12px #101012, 0 0 0 14px #2a2a2c, 0 30px 70px rgba(0,0,0,.7);
+    overflow:hidden;
+    position:relative;
+    display:flex;
+    flex-direction:column;
+  }
+  .notch{
+    position:absolute;top:0;left:50%;transform:translateX(-50%);
+    width:150px;height:30px;background:#000;
+    border-bottom-left-radius:18px;border-bottom-right-radius:18px;
+    z-index:60;
+  }
+
+  /* status bar */
+  .statusbar{
+    height:52px;flex:0 0 52px;background:var(--meridian-deeper);
+    color:#fff;display:flex;align-items:flex-end;justify-content:space-between;
+    padding:0 26px 6px;font-size:13px;font-weight:600;z-index:5;
+  }
+  .statusbar .icons{display:flex;gap:6px;align-items:center;}
+
+  /* scroll area */
+  .screen{
+    flex:1;overflow-y:auto;overflow-x:hidden;
+    -webkit-overflow-scrolling:touch;
+    padding-bottom:90px;
+  }
+  .screen::-webkit-scrollbar{width:0;}
+
+  /* ---------- header band ---------- */
+  .header{
+    background:linear-gradient(180deg,var(--meridian-deeper) 0%,var(--meridian-deep) 100%);
+    color:#fff;padding:6px 20px 26px;
+    border-bottom-left-radius:22px;border-bottom-right-radius:22px;
+  }
+  .header-top{display:flex;align-items:center;justify-content:space-between;}
+  .logo-wrap{display:flex;align-items:center;gap:10px;}
+  .octagon{width:34px;height:34px;flex:0 0 34px;}
+  .brand-name{font-size:20px;font-weight:700;letter-spacing:.3px;}
+  .header-icons{display:flex;gap:16px;align-items:center;}
+  .header-icons .ic{position:relative;cursor:pointer;opacity:.95;}
+  .header-icons .ic:active{transform:scale(.9);}
+  .badge{
+    position:absolute;top:-4px;right:-5px;background:#ff5252;color:#fff;
+    font-size:9px;font-weight:700;border-radius:9px;min-width:15px;height:15px;
+    display:flex;align-items:center;justify-content:center;padding:0 3px;
+  }
+  .greeting{margin-top:20px;font-size:23px;font-weight:700;}
+  .lastlogin{margin-top:5px;font-size:12px;opacity:.82;font-weight:500;}
+
+  /* ---------- quick actions ---------- */
+  .quick-row{
+    display:flex;gap:0;overflow-x:auto;padding:16px 12px 4px;
+    scroll-snap-type:x proximity;
+  }
+  .quick-row::-webkit-scrollbar{height:0;}
+  .quick{
+    flex:0 0 auto;width:78px;display:flex;flex-direction:column;align-items:center;
+    gap:7px;cursor:pointer;padding:2px 0;scroll-snap-align:start;
+    opacity:0;transform:translateY(12px);animation:fadeUp .5s ease forwards;
+  }
+  .quick.in{opacity:1;transform:none;}
+  .quick-ic{
+    width:52px;height:52px;border-radius:50%;
+    background:#eceffb;
+    display:flex;align-items:center;justify-content:center;
+    transition:transform .15s ease, background .15s ease;
+  }
+  .quick:hover .quick-ic{background:#dfe4f7;}
+  .quick:active .quick-ic{transform:scale(.9);}
+  .quick-label{font-size:11px;color:var(--text);text-align:center;line-height:1.2;font-weight:500;}
+
+  /* ---------- section ---------- */
+  .section{padding:2px 16px;}
+  .section-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 4px 8px;
+  }
+  .section-title{font-size:16px;font-weight:700;color:var(--text);}
+  .section-link{font-size:13px;color:var(--meridian-blue);font-weight:600;cursor:pointer;}
+
+  /* ---------- account cards ---------- */
+  .acct-group{
+    background:var(--card);border-radius:16px;overflow:hidden;
+    box-shadow:0 1px 3px rgba(0,0,0,.06);
+  }
+  .acct{
+    padding:16px 16px;display:flex;align-items:center;justify-content:space-between;
+    cursor:pointer;position:relative;
+    opacity:0;transform:translateY(14px);animation:fadeUp .55s ease forwards;
+    transition:background .15s ease;
+  }
+  .acct.in{opacity:1;transform:none;}
+  .acct:not(:last-child){border-bottom:1px solid var(--line);}
+  .acct:active{background:#f2f4fc;}
+  .acct-left{flex:1;min-width:0;padding-right:12px;}
+  .acct-name{font-size:15px;font-weight:600;color:var(--text);}
+  .acct-mask{font-size:12px;color:var(--muted);margin-top:2px;}
+  .acct-sublabel{font-size:12px;color:var(--muted);margin-top:9px;}
+  .acct-right{text-align:right;display:flex;align-items:center;gap:8px;}
+  .balance{font-size:17px;font-weight:700;color:var(--text);white-space:nowrap;}
+  .balance small{font-size:12px;font-weight:600;color:var(--muted);display:block;text-align:right;margin-bottom:1px;}
+  .chev{color:#b8b8b8;flex:0 0 auto;}
+
+  /* credit card extras */
+  .credit-block{width:100%;}
+  .credit-rows{display:flex;justify-content:space-between;gap:8px;margin-top:2px;}
+  .credit-col .lbl{font-size:11px;color:var(--muted);}
+  .credit-col .val{font-size:14px;font-weight:700;color:var(--text);margin-top:2px;}
+  .credit-col.right{text-align:right;}
+  .util-bar{height:6px;background:#e9edf1;border-radius:4px;margin-top:12px;overflow:hidden;}
+  .util-fill{height:100%;background:linear-gradient(90deg,var(--meridian-blue),var(--meridian-deep));width:0;border-radius:4px;transition:width 1s ease .3s;}
+  .util-note{font-size:11px;color:var(--muted);margin-top:6px;}
+  .rewards-pill{
+    display:inline-flex;align-items:center;gap:5px;margin-top:10px;
+    background:#eceffb;color:var(--meridian-deep);font-size:11px;font-weight:700;
+    padding:4px 10px;border-radius:20px;
+  }
+
+  /* ---------- snapshot strip ---------- */
+  .snapshot{
+    background:var(--card);border-radius:16px;padding:18px 16px;
+    box-shadow:0 1px 3px rgba(0,0,0,.06);
+    opacity:0;transform:translateY(14px);animation:fadeUp .55s ease forwards;
+  }
+  .snapshot.in{opacity:1;transform:none;}
+  .snap-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+  .snap-title{font-size:15px;font-weight:700;color:var(--text);}
+  .snap-sub{font-size:12px;color:var(--muted);margin-bottom:14px;}
+  .snap-spent{font-size:24px;font-weight:800;color:var(--text);}
+  .snap-spent span{font-size:13px;font-weight:600;color:var(--muted);}
+  .chart-row{display:flex;align-items:flex-end;gap:8px;height:80px;margin-top:14px;}
+  .bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .bar{width:100%;background:#eceffb;border-radius:6px 6px 0 0;position:relative;overflow:hidden;height:60px;display:flex;align-items:flex-end;}
+  .bar i{display:block;width:100%;background:linear-gradient(180deg,var(--meridian-blue),var(--meridian-deep));height:0;border-radius:6px 6px 0 0;transition:height .9s cubic-bezier(.22,1,.36,1);}
+  .bar-lbl{font-size:10px;color:var(--muted);font-weight:600;}
+  .donut-wrap{display:flex;align-items:center;gap:16px;margin-top:6px;}
+  .donut-legend{display:flex;flex-direction:column;gap:7px;flex:1;}
+  .leg{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text);}
+  .leg .dot{width:10px;height:10px;border-radius:3px;flex:0 0 10px;}
+  .leg .amt{margin-left:auto;font-weight:700;color:var(--muted);font-size:12px;}
+
+  /* ---------- bottom tab bar ---------- */
+  .tabbar{
+    position:absolute;bottom:0;left:0;right:0;height:78px;
+    background:#fff;border-top:1px solid var(--line);
+    display:flex;justify-content:space-around;align-items:flex-start;
+    padding-top:9px;z-index:50;
+  }
+  .tab{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;color:#8a8d91;font-size:10px;font-weight:600;flex:1;}
+  .tab.active{color:var(--meridian-blue);}
+  .tab:active{transform:scale(.92);}
+  .home-indicator{
+    position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
+    width:135px;height:5px;background:#000;border-radius:3px;opacity:.85;z-index:55;
+  }
+
+  /* ---------- router views ---------- */
+  .ch-view{display:none;}
+  .ch-view.active{display:block;animation:chFade .3s ease;}
+  @keyframes chFade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+  /* simple page header for secondary tabs */
+  .ch-phead{
+    background:linear-gradient(180deg,var(--meridian-deeper) 0%,var(--meridian-deep) 100%);
+    color:#fff;padding:14px 20px 22px;
+    border-bottom-left-radius:22px;border-bottom-right-radius:22px;
+  }
+  .ch-phead h1{margin:0;font-size:22px;font-weight:700;}
+  .ch-phead p{margin:6px 0 0;font-size:12px;opacity:.85;font-weight:500;}
+
+  /* menu action rows */
+  .ch-menu{background:var(--card);border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+  .ch-mrow{
+    display:flex;align-items:center;gap:14px;padding:16px 16px;cursor:pointer;
+    transition:background .15s ease;
+  }
+  .ch-mrow:not(:last-child){border-bottom:1px solid var(--line);}
+  .ch-mrow:active{background:#f2f4fc;}
+  .ch-mic{
+    width:42px;height:42px;flex:0 0 42px;border-radius:50%;background:#eceffb;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .ch-mtext{flex:1;min-width:0;}
+  .ch-mtitle{font-size:15px;font-weight:600;color:var(--text);}
+  .ch-msub{font-size:12px;color:var(--muted);margin-top:2px;}
+
+  /* recipient avatars */
+  .ch-avatars{display:flex;gap:16px;overflow-x:auto;padding:4px 2px 6px;}
+  .ch-avatars::-webkit-scrollbar{height:0;}
+  .ch-av{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:6px;width:60px;cursor:pointer;}
+  .ch-av .circ{
+    width:52px;height:52px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:18px;font-weight:700;
+  }
+  .ch-av span{font-size:11px;color:var(--text);text-align:center;}
+
+  /* generic tile */
+  .ch-tile{
+    background:var(--card);border-radius:16px;padding:18px 16px;
+    box-shadow:0 1px 3px rgba(0,0,0,.06);
+  }
+  .ch-score{display:flex;align-items:center;gap:16px;}
+  .ch-score-num{font-size:34px;font-weight:800;color:var(--meridian-blue);line-height:1;}
+  .ch-score-lbl{font-size:12px;color:var(--muted);margin-top:4px;}
+  .ch-gauge{height:8px;border-radius:5px;background:linear-gradient(90deg,#e35d5d,#e8c34a,#3fa45b);position:relative;margin-top:14px;}
+  .ch-gauge b{position:absolute;top:-4px;width:16px;height:16px;border-radius:50%;background:#fff;border:3px solid var(--meridian-deep);transform:translateX(-50%);}
+
+  /* offers / benefits */
+  .ch-offer{
+    display:flex;align-items:center;gap:14px;padding:14px 16px;
+    background:var(--card);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:12px;
+  }
+  .ch-merch{
+    width:44px;height:44px;flex:0 0 44px;border-radius:12px;
+    display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:16px;
+  }
+  .ch-offer-txt{flex:1;min-width:0;}
+  .ch-offer-name{font-size:14px;font-weight:700;color:var(--text);}
+  .ch-offer-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+  .ch-add{
+    border:1px solid var(--meridian-blue);background:#fff;color:var(--meridian-blue);
+    font-size:12px;font-weight:700;font-family:inherit;padding:7px 12px;border-radius:20px;
+    cursor:pointer;white-space:nowrap;flex:0 0 auto;transition:background .15s ease,color .15s ease;
+  }
+  .ch-add:active{background:var(--meridian-blue);color:#fff;}
+  .ch-points{
+    background:linear-gradient(135deg,var(--meridian-deep),var(--meridian-blue));color:#fff;
+    border-radius:16px;padding:18px 18px;box-shadow:0 2px 8px rgba(0,94,184,.28);
+  }
+  .ch-points .n{font-size:30px;font-weight:800;}
+  .ch-points .t{font-size:12px;opacity:.9;font-weight:600;}
+
+  /* editing ---------- */
+  body.editing [data-edit]{
+    outline:1.5px dashed #3E67C4;outline-offset:2px;border-radius:3px;
+    cursor:text;
+  }
+  [data-edit]{transition:outline .12s ease;}
+
+  @keyframes fadeUp{to{opacity:1;transform:translateY(0);}}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+</style>
+<!-- krypt:phone:start -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Meridian">
+<meta name="theme-color" content="#2A4F9E">
+<link rel="manifest" href="../../assets/manifests/meridian.webmanifest">
+<link rel="apple-touch-icon" href="../../assets/icons/meridian-180.png">
+<link rel="icon" type="image/png" sizes="512x512" href="../../assets/icons/meridian-512.png">
+<link rel="stylesheet" href="../../assets/phone.css">
+<!-- krypt:phone:end -->
+</head>
+<body>
+
+<a class="back" href="../../index.html">← Collection</a>
+<div class="toolbar">
+  <button class="toolbar-btn" id="editBtn">✎ Edit</button>
+  <button class="toolbar-btn" id="resetBtn">↺ Reset</button>
+</div>
+
+<div class="phone">
+  <div class="notch"></div>
+
+  <div class="statusbar">
+    <span>9:41</span>
+    <span class="icons">
+      <svg width="17" height="11" viewBox="0 0 17 11" fill="#fff"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+      <svg width="16" height="11" viewBox="0 0 16 11" fill="#fff"><path d="M8 2.2c2 0 3.8.75 5.2 2l1-1.1A9 9 0 0 0 8 .5 9 9 0 0 0 1.8 3.1l1 1.1A7.4 7.4 0 0 1 8 2.2zM8 5.5c1.1 0 2.1.42 2.85 1.1l1-1.1A5.8 5.8 0 0 0 8 3.9a5.8 5.8 0 0 0-3.85 1.6l1 1.1A4.2 4.2 0 0 1 8 5.5zm0 3.3l1.4-1.5A2.4 2.4 0 0 0 8 6.9a2.4 2.4 0 0 0-1.4.4L8 8.8z"/></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="1" y="1" width="20" height="10" rx="3" stroke="#fff" opacity=".5"/><rect x="2.5" y="2.5" width="16" height="7" rx="1.5" fill="#fff"/><rect x="22.5" y="4" width="1.6" height="4" rx=".8" fill="#fff" opacity=".5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen" id="screen">
+
+   <!-- ================= ACCOUNTS VIEW ================= -->
+   <section class="ch-view active" data-view="accounts">
+
+    <!-- ============ HEADER ============ -->
+    <div class="header">
+      <div class="header-top">
+        <div class="logo-wrap">
+          <svg class="octagon" viewBox="0 0 40 40" aria-label="Meridian logo">
+            <rect x="4" y="4" width="32" height="32" rx="8" fill="#ffffff"/>
+            <path d="M12 27V13l8 7 8-7v14" fill="none" stroke="#1D3576"
+                  stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="brand-name">MERIDIAN</span>
+        </div>
+        <div class="header-icons">
+          <span class="ic" title="Messages">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M4 7l8 5 8-5"/></svg>
+            <span class="badge">3</span>
+          </span>
+          <span class="ic" title="Profile">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+          </span>
+        </div>
+      </div>
+      <div class="greeting">Good afternoon, <span data-edit="greetName">Alex</span></div>
+      <div class="lastlogin">Last login: Today at 8:12 AM</div>
+    </div>
+
+    <!-- ============ QUICK ACTIONS ============ -->
+    <div class="quick-row" id="quickRow"></div>
+
+    <!-- ============ BANK ACCOUNTS ============ -->
+    <div class="section">
+      <div class="section-head">
+        <span class="section-title">Bank accounts</span>
+        <span class="section-link">See all</span>
+      </div>
+      <div class="acct-group" id="bankGroup"></div>
+    </div>
+
+    <!-- ============ CREDIT CARDS ============ -->
+    <div class="section">
+      <div class="section-head">
+        <span class="section-title">Credit cards</span>
+        <span class="section-link">See all</span>
+      </div>
+      <div class="acct-group" id="creditGroup"></div>
+    </div>
+
+    <!-- ============ SNAPSHOT ============ -->
+    <div class="section">
+      <div class="section-head">
+        <span class="section-title">Account snapshot</span>
+        <span class="section-link">Details</span>
+      </div>
+      <div class="snapshot" id="snapshot">
+        <div class="snap-sub">You've spent this month</div>
+        <div class="snap-spent">$<span data-edit="spentMonth">1,240</span> <span>of $2,000 budget</span></div>
+
+        <div class="chart-row" id="chartRow">
+          <div class="bar-wrap"><div class="bar"><i data-h="42"></i></div><span class="bar-lbl">Mar</span></div>
+          <div class="bar-wrap"><div class="bar"><i data-h="65"></i></div><span class="bar-lbl">Apr</span></div>
+          <div class="bar-wrap"><div class="bar"><i data-h="38"></i></div><span class="bar-lbl">May</span></div>
+          <div class="bar-wrap"><div class="bar"><i data-h="80"></i></div><span class="bar-lbl">Jun</span></div>
+          <div class="bar-wrap"><div class="bar"><i data-h="62"></i></div><span class="bar-lbl">Jul</span></div>
+        </div>
+
+        <div class="donut-wrap">
+          <svg width="92" height="92" viewBox="0 0 42 42" id="donut">
+            <circle cx="21" cy="21" r="15.9" fill="none" stroke="#eceffb" stroke-width="7"/>
+            <circle cx="21" cy="21" r="15.9" fill="none" stroke="#3E67C4" stroke-width="7" stroke-dasharray="45 55" stroke-dashoffset="25" stroke-linecap="round"/>
+            <circle cx="21" cy="21" r="15.9" fill="none" stroke="#28489E" stroke-width="7" stroke-dasharray="30 70" stroke-dashoffset="-20" stroke-linecap="round"/>
+            <circle cx="21" cy="21" r="15.9" fill="none" stroke="#7fb6e0" stroke-width="7" stroke-dasharray="25 75" stroke-dashoffset="-50" stroke-linecap="round"/>
+          </svg>
+          <div class="donut-legend">
+            <div class="leg"><span class="dot" style="background:#3E67C4"></span>Dining<span class="amt">$558</span></div>
+            <div class="leg"><span class="dot" style="background:#28489E"></span>Shopping<span class="amt">$372</span></div>
+            <div class="leg"><span class="dot" style="background:#7fb6e0"></span>Bills<span class="amt">$310</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+   </section><!-- /accounts view -->
+
+   <!-- ================= PAY & TRANSFER VIEW ================= -->
+   <section class="ch-view" data-view="pay">
+     <div class="ch-phead">
+       <h1>Pay &amp; transfer</h1>
+       <p>Move money, send QuickSend, and pay bills</p>
+     </div>
+     <div class="section">
+       <div class="section-head"><span class="section-title">What would you like to do?</span></div>
+       <div class="ch-menu">
+         <div class="ch-mrow">
+           <span class="ch-mic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3E67C4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h8l-8 12h8"/></svg></span>
+           <div class="ch-mtext"><div class="ch-mtitle">Send money with QuickSend</div><div class="ch-msub">Pay friends and family fast</div></div>
+           <svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#b8b8b8" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+         </div>
+         <div class="ch-mrow">
+           <span class="ch-mic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3E67C4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h11l-2-2M20 16H9l2 2"/></svg></span>
+           <div class="ch-mtext"><div class="ch-mtitle">Transfer between accounts</div><div class="ch-msub">Checking, savings &amp; more</div></div>
+           <svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#b8b8b8" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+         </div>
+         <div class="ch-mrow">
+           <span class="ch-mic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3E67C4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h5"/></svg></span>
+           <div class="ch-mtext"><div class="ch-mtitle">Pay a bill</div><div class="ch-msub">Schedule and manage payees</div></div>
+           <svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#b8b8b8" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+         </div>
+         <div class="ch-mrow">
+           <span class="ch-mic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3E67C4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M8.5 9.5h5a2 2 0 0 1 0 4H10a2 2 0 0 0 0 4h5"/></svg></span>
+           <div class="ch-mtext"><div class="ch-mtitle">Wire transfer</div><div class="ch-msub">Domestic and international</div></div>
+           <svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#b8b8b8" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+         </div>
+       </div>
+       <div class="section-head"><span class="section-title">Recent recipients</span></div>
+       <div class="ch-avatars">
+         <div class="ch-av"><span class="circ" style="background:#3E67C4">JD</span><span data-edit="payRcp1">Jordan</span></div>
+         <div class="ch-av"><span class="circ" style="background:#28489E">SM</span><span data-edit="payRcp2">Sam</span></div>
+         <div class="ch-av"><span class="circ" style="background:#3fa45b">MO</span><span data-edit="payRcp3">Morgan</span></div>
+         <div class="ch-av"><span class="circ" style="background:#c9722b">TY</span><span data-edit="payRcp4">Taylor</span></div>
+         <div class="ch-av"><span class="circ" style="background:#7a4fb0">CR</span><span data-edit="payRcp5">Casey</span></div>
+       </div>
+     </div>
+   </section><!-- /pay view -->
+
+   <!-- ================= PLAN VIEW ================= -->
+   <section class="ch-view" data-view="plan">
+     <div class="ch-phead">
+       <h1>Plan &amp; track</h1>
+       <p>Your money at a glance</p>
+     </div>
+     <div class="section">
+       <div class="ch-tile">
+         <div class="snap-sub">Spending this month</div>
+         <div class="snap-spent">$<span data-edit="planSpent">1,240</span></div>
+         <div class="chart-row">
+           <div class="bar-wrap"><div class="bar"><i style="height:70%"></i></div><span class="bar-lbl">Food</span></div>
+           <div class="bar-wrap"><div class="bar"><i style="height:48%"></i></div><span class="bar-lbl">Shop</span></div>
+           <div class="bar-wrap"><div class="bar"><i style="height:40%"></i></div><span class="bar-lbl">Bills</span></div>
+           <div class="bar-wrap"><div class="bar"><i style="height:22%"></i></div><span class="bar-lbl">Travel</span></div>
+           <div class="bar-wrap"><div class="bar"><i style="height:16%"></i></div><span class="bar-lbl">Other</span></div>
+         </div>
+         <div class="donut-legend" style="margin-top:16px">
+           <div class="leg"><span class="dot" style="background:#3E67C4"></span>Food &amp; dining<span class="amt">$496</span></div>
+           <div class="leg"><span class="dot" style="background:#28489E"></span>Shopping<span class="amt">$372</span></div>
+           <div class="leg"><span class="dot" style="background:#7fb6e0"></span>Bills &amp; utilities<span class="amt">$372</span></div>
+         </div>
+       </div>
+       <div class="section-head"><span class="section-title">Credit Journey℠</span></div>
+       <div class="ch-tile">
+         <div class="ch-score">
+           <div><div class="ch-score-num" data-edit="planScore">742</div><div class="ch-score-lbl">Good · updated today</div></div>
+           <div class="ch-mtext"><div class="ch-msub">Your score went up 6 points since last month. Keep it up!</div></div>
+         </div>
+         <div class="ch-gauge"><b style="left:74%"></b></div>
+       </div>
+     </div>
+   </section><!-- /plan view -->
+
+   <!-- ================= BENEFITS VIEW ================= -->
+   <section class="ch-view" data-view="benefits">
+     <div class="ch-phead">
+       <h1>Benefits &amp; rewards</h1>
+       <p>Offers picked for you</p>
+     </div>
+     <div class="section">
+       <div class="ch-points">
+         <div class="t">Ultimate Rewards® balance</div>
+         <div class="n"><span data-edit="benPts">48,250</span> pts</div>
+         <div class="t">Worth about $<span data-edit="benWorth">603</span> toward travel</div>
+       </div>
+       <div class="section-head"><span class="section-title">Meridian Offers</span><span class="section-link">See all</span></div>
+       <div class="ch-offer">
+         <span class="ch-merch" style="background:#e35d5d">S</span>
+         <div class="ch-offer-txt"><div class="ch-offer-name" data-edit="benOf1">Bluebird Coffee</div><div class="ch-offer-sub" data-edit="benOf1s">10% cash back, up to $5</div></div>
+         <button class="ch-add">Add to card</button>
+       </div>
+       <div class="ch-offer">
+         <span class="ch-merch" style="background:#3fa45b">W</span>
+         <div class="ch-offer-txt"><div class="ch-offer-name" data-edit="benOf2">Greenline</div><div class="ch-offer-sub" data-edit="benOf2s">$10 back on $50+</div></div>
+         <button class="ch-add">Add to card</button>
+       </div>
+       <div class="ch-offer">
+         <span class="ch-merch" style="background:#c9722b">N</span>
+         <div class="ch-offer-txt"><div class="ch-offer-name" data-edit="benOf3">Apex</div><div class="ch-offer-sub" data-edit="benOf3s">15% cash back, up to $25</div></div>
+         <button class="ch-add">Add to card</button>
+       </div>
+       <div class="ch-offer">
+         <span class="ch-merch" style="background:#7a4fb0">L</span>
+         <div class="ch-offer-txt"><div class="ch-offer-name" data-edit="benOf4">Zipline</div><div class="ch-offer-sub" data-edit="benOf4s">$5 back on 3 rides</div></div>
+         <button class="ch-add">Add to card</button>
+       </div>
+     </div>
+   </section><!-- /benefits view -->
+
+   <!-- ================= MENU VIEW ================= -->
+   <section class="ch-view" data-view="menu">
+     <div class="ch-phead">
+       <h1>Menu</h1>
+       <p>Settings &amp; more</p>
+     </div>
+     <div class="section">
+       <div class="ch-menu">
+         <div class="ch-mrow">
+           <span class="ch-mic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3E67C4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg></span>
+           <div class="ch-mtext"><div class="ch-mtitle">Profile &amp; settings</div><div class="ch-msub" data-edit="menuEmail">alex@example.com</div></div>
+           <svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#b8b8b8" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+         </div>
+         <div class="ch-mrow">
+           <span class="ch-mic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3E67C4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
+           <div class="ch-mtext"><div class="ch-mtitle">Security center</div><div class="ch-msub">Passwords, alerts &amp; lock</div></div>
+           <svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#b8b8b8" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+         </div>
+         <div class="ch-mrow">
+           <span class="ch-mic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3E67C4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg></span>
+           <div class="ch-mtext"><div class="ch-mtitle">Help &amp; support</div><div class="ch-msub">Contact us, FAQs</div></div>
+           <svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#b8b8b8" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+         </div>
+         <div class="ch-mrow">
+           <span class="ch-mic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3E67C4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21V9l7-6v18M9 13H5v8h4"/></svg></span>
+           <div class="ch-mtext"><div class="ch-mtitle">Find a branch or ATM</div><div class="ch-msub">Locations near you</div></div>
+           <svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#b8b8b8" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+         </div>
+         <div class="ch-mrow">
+           <span class="ch-mic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3E67C4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h9M15 12H9m6 0l-3-3m3 3l-3 3"/></svg></span>
+           <div class="ch-mtext"><div class="ch-mtitle">Sign out</div><div class="ch-msub">End your session</div></div>
+           <svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#b8b8b8" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+         </div>
+       </div>
+     </div>
+   </section><!-- /menu view -->
+
+  </div><!-- /screen -->
+
+  <!-- ============ TAB BAR ============ -->
+  <div class="tabbar">
+    <div class="tab active" data-tab="accounts">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/></svg>
+      Accounts
+    </div>
+    <div class="tab" data-tab="pay">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 8h13l-2.5-2.5M21 16H8l2.5 2.5"/></svg>
+      Pay &amp; transfer
+    </div>
+    <div class="tab" data-tab="plan">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 19V9m5 10V5m5 14v-7m5 7V8"/></svg>
+      Plan
+    </div>
+    <div class="tab" data-tab="benefits">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 16.5 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg>
+      Benefits
+    </div>
+    <div class="tab" data-tab="menu">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      Menu
+    </div>
+  </div>
+
+  <div class="home-indicator"></div>
+</div>
+
+<script>
+/* =====================================================================
+   MERIDIAN DASHBOARD — DATA MODEL
+   ---------------------------------------------------------------------
+   Everything shown in the account cards + quick actions is driven from
+   this DATA object. Editing any [data-edit] field on screen (in Edit
+   mode) writes the new text back into localStorage under MERIDIAN_KEY and
+   is restored on reload. Reset clears storage and restores these
+   defaults.
+
+   Balance fields are stored as display strings (e.g. "4,820.55") so the
+   count-up animation can parse the numeric value and re-render with the
+   same formatting.
+   ===================================================================== */
+const MERIDIAN_KEY = "meridian-dash-v1";
+
+const DATA = {
+  quickActions: [
+    { label:"Pay &<br>transfer", icon:'<path d="M4 8h11l-2-2M20 16H9l2 2"/>' },
+    { label:"Deposit<br>checks",  icon:'<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/>' },
+    { label:"QuickSend",             icon:'<path d="M8 6h8l-8 12h8"/>' },
+    { label:"Rewards",           icon:'<path d="M12 3l2.5 5L20 8.8l-4 3.9.9 5.5L12 15.6 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/>' },
+    { label:"Snapshot",          icon:'<path d="M4 19V9m5 10V5m5 14v-8m5 8V7"/>' }
+  ],
+  bankAccounts: [
+    { id:"checking", name:"Meridian Everyday Checking", mask:"(...1234)",
+      sublabel:"Available balance", balance:"4,820.55" },
+    { id:"savings",  name:"Meridian Savings",        mask:"(...5678)",
+      sublabel:"Available balance", balance:"12,300.00" }
+  ],
+  creditCards: [
+    { id:"sapphire", name:"Meridian Azure Rewards", mask:"(...9012)",
+      type:"credit", current:"842.19", available:"9,157.81",
+      limit:10000, util:8 },
+    { id:"freedom",  name:"Meridian Flex Unlimited",  mask:"(...3456)",
+      type:"rewards", current:"0.00", points:"24,500" }
+  ]
+};
+
+/* ---------- helpers ---------- */
+const $ = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>[...r.querySelectorAll(s)];
+const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+const CHEV = '<svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>';
+
+/* ---------- render quick actions ---------- */
+function renderQuick(){
+  const row = $("#quickRow");
+  row.innerHTML = DATA.quickActions.map((q,i)=>`
+    <div class="quick" style="animation-delay:${i*70}ms">
+      <div class="quick-ic">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3E67C4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${q.icon}</svg>
+      </div>
+      <div class="quick-label">${q.label}</div>
+    </div>`).join("");
+}
+
+/* ---------- render bank accounts ---------- */
+function renderBank(){
+  const g = $("#bankGroup");
+  g.innerHTML = DATA.bankAccounts.map((a,i)=>`
+    <div class="acct" style="animation-delay:${120+i*90}ms">
+      <div class="acct-left">
+        <div class="acct-name"><span data-edit="${a.id}Name">${esc(a.name)}</span> <span class="acct-mask" data-edit="${a.id}Mask">${esc(a.mask)}</span></div>
+        <div class="acct-sublabel">${esc(a.sublabel)}</div>
+      </div>
+      <div class="acct-right">
+        <span class="balance">$<span class="count" data-edit="${a.id}Bal" data-target="${a.balance}">0.00</span></span>
+        ${CHEV}
+      </div>
+    </div>`).join("");
+}
+
+/* ---------- render credit cards ---------- */
+function renderCredit(){
+  const g = $("#creditGroup");
+  g.innerHTML = DATA.creditCards.map((a,i)=>{
+    if(a.type==="credit"){
+      return `
+      <div class="acct" style="animation-delay:${120+i*90}ms">
+        <div class="credit-block">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div class="acct-left">
+              <div class="acct-name"><span data-edit="${a.id}Name">${esc(a.name)}</span></div>
+              <div class="acct-mask" data-edit="${a.id}Mask">${esc(a.mask)}</div>
+            </div>
+            ${CHEV}
+          </div>
+          <div class="credit-rows">
+            <div class="credit-col">
+              <div class="lbl">Current balance</div>
+              <div class="val">$<span class="count" data-edit="${a.id}Cur" data-target="${a.current}">0.00</span></div>
+            </div>
+            <div class="credit-col right">
+              <div class="lbl">Available credit</div>
+              <div class="val">$<span class="count" data-edit="${a.id}Avail" data-target="${a.available}">0.00</span></div>
+            </div>
+          </div>
+          <div class="util-bar"><div class="util-fill" data-util="${a.util}"></div></div>
+          <div class="util-note"><span data-edit="${a.id}Util">${a.util}</span>% of credit limit used</div>
+        </div>
+      </div>`;
+    } else {
+      return `
+      <div class="acct" style="animation-delay:${120+i*90}ms">
+        <div class="acct-left">
+          <div class="acct-name"><span data-edit="${a.id}Name">${esc(a.name)}</span> <span class="acct-mask" data-edit="${a.id}Mask">${esc(a.mask)}</span></div>
+          <div class="rewards-pill">★ <span data-edit="${a.id}Pts">${esc(a.points)}</span> pts</div>
+        </div>
+        <div class="acct-right">
+          <span class="balance"><small>Current balance</small>$<span class="count" data-edit="${a.id}Cur" data-target="${a.current}">0.00</span></span>
+          ${CHEV}
+        </div>
+      </div>`;
+    }
+  }).join("");
+}
+
+/* ---------- count-up animation ---------- */
+function animateCounts(){
+  const easeOut = t => 1 - Math.pow(1-t,3);
+  $$(".count").forEach((el,idx)=>{
+    const target = parseFloat(String(el.dataset.target).replace(/,/g,""));
+    if(isNaN(target)) return;
+    const dur = 900, start = performance.now(), delay = idx*120;
+    const fmt = n => n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+    function step(now){
+      const t = Math.min(1,(now-start-delay)/dur);
+      if(t<0){ requestAnimationFrame(step); return; }
+      el.textContent = fmt(target*easeOut(t));
+      if(t<1) requestAnimationFrame(step);
+      else el.textContent = fmt(target);
+    }
+    requestAnimationFrame(step);
+  });
+}
+
+/* ---------- trigger stagger + viz animations ---------- */
+function triggerAnims(){
+  $$(".quick").forEach(q=>q.classList.add("in"));
+  $$(".acct").forEach(a=>a.classList.add("in"));
+  $("#snapshot").classList.add("in");
+  setTimeout(()=>{
+    $$(".util-fill").forEach(f=>f.style.width = (f.dataset.util||0)+"%");
+    drawSpendBars();
+  }, 300);
+}
+
+
+/* ---------- spending bars ----------
+   Each bar is that month's spend against the $2,000 budget printed
+   beside it, so the July bar and the "spent this month" figure are the
+   same number. Retype the figure and July moves. */
+const SPEND_BUDGET = 2000;
+function spendAmounts(){
+  return $$("#chartRow .bar i").map(i => +(i.dataset.amt || (i.dataset.h/100*SPEND_BUDGET)));
+}
+function drawSpendBars(){
+  const el = $("[data-edit='spentMonth']");
+  const cur = el ? (parseFloat(el.textContent.replace(/[^\d.]/g,"")) || 0) : null;
+  const bars = $$("#chartRow .bar i");
+  bars.forEach((i,ix) => {
+    if(!i.dataset.amt) i.dataset.amt = String(i.dataset.h/100*SPEND_BUDGET);
+    if(cur !== null && ix === bars.length-1) i.dataset.amt = String(cur);   // July = this month
+    i.style.height = Math.max(0, Math.min(100, i.dataset.amt/SPEND_BUDGET*100)) + "%";
+  });
+}
+/* ---------- localStorage persistence ---------- */
+function saveEdits(){
+  const store = {};
+  $$("[data-edit]").forEach(el=>{ store[el.dataset.edit] = el.innerHTML; });
+  localStorage.setItem(MERIDIAN_KEY, JSON.stringify(store));
+}
+function restoreEdits(){
+  let store;
+  try{ store = JSON.parse(localStorage.getItem(MERIDIAN_KEY)||"{}"); }catch(e){ store={}; }
+  $$("[data-edit]").forEach(el=>{
+    const k = el.dataset.edit;
+    if(store[k]!==undefined){
+      el.innerHTML = store[k];
+      // keep count-up target in sync with any edited balance
+      if(el.classList.contains("count")){
+        el.dataset.target = el.textContent.trim();
+      }
+    }
+  });
+}
+
+/* ---------- edit mode ---------- */
+const editBtn = $("#editBtn"), resetBtn = $("#resetBtn");
+let editing = false;
+$$("[data-edit]").forEach(el=>{
+  if(el.dataset.edit==="spentMonth"||el.dataset.edit==="planSpent")
+    el.addEventListener("input",()=>{
+      // the two screens show the same figure — keep them together
+      const v=el.textContent;
+      $$("[data-edit='spentMonth'],[data-edit='planSpent']").forEach(o=>{if(o!==el)o.textContent=v;});
+      drawSpendBars();
+    });
+});
+function setEdit(on){
+  editing = on;
+  document.body.classList.toggle("editing", on);
+  $$("[data-edit]").forEach(el=> el.contentEditable = on ? "true" : "false");
+  editBtn.textContent = on ? "✓ Done" : "✎ Edit";
+  if(!on) saveEdits();
+}
+editBtn.addEventListener("click", ()=> setEdit(!editing));
+resetBtn.addEventListener("click", ()=>{
+  if(confirm("Reset all edits and restore default values?")){
+    localStorage.removeItem(MERIDIAN_KEY);
+    location.reload();
+  }
+});
+
+/* ---------- tab router ---------- */
+function showView(name){
+  $$(".ch-view").forEach(v=> v.classList.toggle("active", v.dataset.view===name));
+  $$(".tab").forEach(t=> t.classList.toggle("active", t.dataset.tab===name));
+  const scr = $("#screen");
+  if(scr) scr.scrollTop = 0;
+}
+$$(".tab").forEach(tab=>{
+  tab.addEventListener("click", ()=>{
+    if(editing) return;              // ignore taps while editing text
+    showView(tab.dataset.tab);
+  });
+});
+
+/* ---------- boot ---------- */
+renderQuick();
+renderBank();
+renderCredit();
+restoreEdits();
+function bootAnims(){
+  triggerAnims();
+  animateCounts();
+}
+if(document.visibilityState==="visible")requestAnimationFrame(bootAnims);
+else document.addEventListener("visibilitychange",function h(){if(document.visibilityState==="visible"){bootAnims();document.removeEventListener("visibilitychange",h);}});
+</script>
+<!-- krypt:app:start -->
+<script src="../../assets/krypt-app.js" data-root="../../" data-label="Meridian" defer></script>
+<script src="../../assets/krypt-desktop.js" defer></script>
+<script src="../../assets/push.js" defer></script>
+<!-- krypt:app:end -->
+</body>
+</html>

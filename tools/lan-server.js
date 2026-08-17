@@ -163,14 +163,23 @@ function esc(s) {
 /* ---------- the server ---------- */
 
 /**
- * createLanServer({ root, port, onLaunchPage })
+ * createLanServer({ root, port, launchPage, cacheDays, custom })
  *   root         folder to serve
  *   port         TCP port (default 4173)
  *   launchPage   optional () => string, served at /_launch
+ *   custom       optional store from tools/custom-store.js. Mounted at
+ *                /custom/ with its list at /api/custom.
+ *
+ * The custom mount is a second root on purpose. Dashboards a user
+ * imports cannot live under `root` — in a packaged build that is an
+ * asar archive and read-only — so they sit in userData and get served
+ * from there. Without this the phone would show the built-in
+ * collection and none of the ones you made.
  *
  * Returns { listen, close, port, urls, primaryUrl, isRunning }.
  */
-function createLanServer({ root, port = 4173, launchPage = null, cacheDays = 7 } = {}) {
+function createLanServer({ root, port = 4173, launchPage = null, cacheDays = 7,
+  custom = null } = {}) {
   const ROOT = path.resolve(root);
   // How long a phone may keep a file without asking again. This is what
   // lets the collection keep working after the server goes away: the
@@ -252,6 +261,39 @@ place-items:center;height:100vh;text-align:center}a{color:#8ab4ff}</style>
 
     if (urlPath === '/_launch' && launchPage) {
       return send(res, 200, launchPage(), { 'Content-Type': MIME['.html'] });
+    }
+
+    /* ---- dashboards the user imported ---- */
+    if (urlPath === '/api/custom') {
+      const body = JSON.stringify(custom ? custom.list() : []);
+      // Never cached: the whole point is that the phone sees an import
+      // the moment it happens.
+      return send(res, 200, body, { 'Content-Type': MIME['.json'] });
+    }
+
+    if (urlPath === '/custom' || urlPath === '/custom/') {
+      // The management page is part of the app, not the store.
+      return send(res, 302, '', { Location: '/custom/index.html' });
+    }
+
+    if (urlPath.startsWith('/custom/')) {
+      // The project's own pages under custom/ (the manager, the viewer,
+      // the guide) are tried first, so no imported dashboard can be
+      // named in a way that shadows the UI. Both roots go into one
+      // candidate list rather than an existsSync() probe, because
+      // stat() misbehaves inside an asar archive and readFile doesn't.
+      const rest = urlPath.slice('/custom/'.length);
+      const stored = custom
+        ? custom.resolveServed(!rest || rest.endsWith('/') ? rest + 'index.html' : rest)
+        : null;
+      if (custom && !stored) {
+        return send(res, 403, 'Forbidden', { 'Content-Type': 'text/plain' });
+      }
+      const list = [
+        ...candidatesFor(urlPath),
+        ...(stored ? (path.extname(stored) ? [stored] : [stored, path.join(stored, 'index.html')]) : []),
+      ];
+      return tryServe(list, 0, urlPath, res, fresh);
     }
 
     const list = candidatesFor(urlPath);

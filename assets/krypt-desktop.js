@@ -163,9 +163,12 @@
         '<div class="kd-feat"><div class="t">Self-contained</div><div class="d">One HTML file each. ' +
           'No build step, nothing phones home.</div></div>' +
         '</div>' +
-        '<div class="kd-note"><span class="i">!</span><span class="x">Every screen is watermarked ' +
-        '<b>TEST · LEARNING DEMO · NOT A REAL APP</b>. These are UI studies — they are not the ' +
-        'real services and can\'t do anything real.</span></div>',
+        '<div class="kd-note"><span class="i">!</span><span class="x">Every screen carries a ' +
+        '<b>LARP · not a real app</b> mark in the corner, so a screenshot still says what it ' +
+        'is after it leaves here. You can turn it off per device — tap 3× on a phone, or use ' +
+        'the corner control — and from then on your screenshots won\'t be marked. These are ' +
+        'invented products: they are not the real services and can\'t do anything real.' +
+        '</span></div>',
     },
     {
       title: 'Use it on your phone',

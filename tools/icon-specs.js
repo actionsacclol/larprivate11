@@ -1,17 +1,26 @@
 /* ============================================================
    icon-specs.js — one home-screen icon design per dashboard.
 
-   These are original marks drawn in each app's signature colour —
-   a letterform or a simple geometric glyph — not copies of the real
-   logos. Same idea as the dashboards themselves: recognisably in the
-   spirit of the app, clearly our own artwork.
+   Every mark in this file is drawn here, from primitives, for a product
+   that does not exist. None of them trace, redraw or recolour a real
+   company's logo, and the palettes are deliberately off the colours any
+   real app is known for — a payments tile that is teal rather than that
+   particular blue, a music tile that is amber rather than that
+   particular green.
+
+   That is the whole point of the file, so if you are tempted to make
+   one "a bit more accurate", don't. The dashboards are original
+   fictional products (see tools/brand-map.js); the icons have to be
+   too. Users who want the real thing on their own phone can set their
+   own icon from the in-app panel — that is their call to make, on their
+   own device, and it is not shipped by us.
 
    Fields per entry:
      label   what shows under the icon on the home screen
      title   full name used in the manifest
      theme   status-bar / theme colour
      bgc     splash background while the app opens
-     dark    is the top of the screen dark? (picks the iOS status-bar style)
+     dark    is the top of the screen dark? (picks the status-bar style)
      bg      icon tile background
      marks   icon artwork
    ============================================================ */
@@ -34,7 +43,9 @@ const A = {
   L: [[[0, 0], [0, 1], [0.88, 1]]],
   M: [[[0, 1], [0, 0], [0.5, 0.62], [1, 0], [1, 1]]],
   N: [[[0, 1], [0, 0], [1, 1], [1, 0]]],
+  O: [arc(0.5, 0.5, 0.5, 0, 360)],
   P: [[[0, 0], [0, 1]], arc(0, 0.27, 0.27, -90, 90)],
+  Q: [arc(0.5, 0.5, 0.5, 0, 360), [[0.66, 0.68], [1.04, 1.06]]],
   R: [[[0, 0], [0, 1]], arc(0, 0.27, 0.27, -90, 90), [[0.02, 0.54], [0.88, 1]]],
   S: [arc(0.5, 0.27, 0.27, -45, -270), arc(0.5, 0.73, 0.27, -90, 135)],
   T: [[[0, 0], [1, 0]], [[0.5, 0], [0.5, 1]]],
@@ -46,11 +57,13 @@ const A = {
   Z: [[[0, 0], [1, 0], [0, 1], [1, 1]]],
 };
 
-/* Lay a letter into the icon box. `wide` letters get more room. */
+/* Lay a letter into the icon box. `wide` letters get more room, and the
+   round ones get a square box so they don't come out as ellipses. */
 function L(ch, color, opts = {}) {
   const wide = 'WM'.includes(ch);
-  const w = opts.w ?? (wide ? 0.46 : 0.36);
-  const h = opts.h ?? 0.42;
+  const round = 'OQ'.includes(ch);
+  const h = opts.h ?? (round ? 0.40 : 0.42);
+  const w = opts.w ?? (round ? h : wide ? 0.46 : 0.36);
   const cx = opts.cx ?? 0.5;
   const cy = opts.cy ?? 0.5;
   const x = cx - w / 2, y = cy - h / 2;
@@ -62,25 +75,16 @@ function L(ch, color, opts = {}) {
   };
 }
 
-/* A dollar sign: the S plus a stroke straight through it. */
-function dollar(color, opts = {}) {
-  const s = L('S', color, opts);
-  const cy = opts.cy ?? 0.5, h = opts.h ?? 0.42, cx = opts.cx ?? 0.5;
-  s.pts = s.pts.concat([[[cx, cy - h * 0.66], [cx, cy + h * 0.66]]]);
-  return s;
-}
-
 function polyStroke(pts, color, w, closed = false) {
   return { type: 'stroke', pts, color, w, closed };
 }
 
-function ngon(cx, cy, r, n, rot = 0) {
-  const pts = [];
-  for (let i = 0; i < n; i++) {
-    const a = ((rot + (360 / n) * i) * Math.PI) / 180;
-    pts.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]);
-  }
-  return pts;
+function fill(pts, color) {
+  return { type: 'fill', pts, color };
+}
+
+function dot(cx, cy, r, color) {
+  return { type: 'circle', c: [cx, cy], r, color };
 }
 
 /* Vertical bars, evenly spaced, heights given as fractions. */
@@ -91,6 +95,49 @@ function bars(heights, color, { cx = 0.5, base = 0.68, span = 0.4, w = 0.062 } =
     type: 'strokes', w, color,
     pts: heights.map((hh, i) => [[x0 + step * i, base], [x0 + step * i, base - hh]]),
   };
+}
+
+/* A crescent: the part of circle A that circle B doesn't cover. The
+   two angles are where the circles cross — worked out once, hard-coded,
+   because the radii never change. */
+function crescent(color) {
+  return fill([
+    ...arc(0.5, 0.5, 0.24, 63.6, 296.4),
+    ...arc(0.60, 0.5, 0.215, 271.8, 88.2),
+  ], color);
+}
+
+/* A shopfront: pitched awning, walls, doorway. `cy` shifts the whole
+   thing down for the desktop variants, which lose the top strip. */
+function shopfront(color, w = 0.062, dy = 0) {
+  return {
+    type: 'strokes', w, color,
+    pts: [
+      [[0.23, 0.44 + dy], [0.5, 0.27 + dy], [0.77, 0.44 + dy]],
+      [[0.30, 0.44 + dy], [0.30, 0.73 + dy], [0.70, 0.73 + dy], [0.70, 0.44 + dy]],
+      [[0.43, 0.73 + dy], [0.43, 0.565 + dy], [0.57, 0.565 + dy], [0.57, 0.73 + dy]],
+    ],
+  };
+}
+
+/* A shield. Straight shoulders, a rounded point. */
+function shield(color, w = 0.062) {
+  return polyStroke([
+    [0.5, 0.255], [0.735, 0.335], [0.735, 0.505],
+    ...arc(0.5, 0.505, 0.235, 0, 180),
+    [0.265, 0.335],
+  ], color, w, true);
+}
+
+/* A cloud, built as overlapping solids rather than one outline —
+   they're the same colour, so the silhouette unions cleanly. */
+function cloud(color) {
+  return [
+    dot(0.375, 0.535, 0.105, color),
+    dot(0.515, 0.470, 0.150, color),
+    dot(0.645, 0.545, 0.098, color),
+    fill([[0.375, 0.470], [0.645, 0.470], [0.645, 0.643], [0.375, 0.643]], color),
+  ];
 }
 
 /* The strip across the top that marks a desktop-mode dashboard. */
@@ -113,166 +160,193 @@ const grad = (angle, ...stops) => ({
 /* ---------------- the designs ---------------- */
 
 const SPECS = {
-  'phantom-wallet': {
-    label: 'Phantom', title: 'Phantom', theme: '#AB9FF2', bgc: '#1C1C28', dark: true,
-    bg: grad(135, '#B9AEF7', '#8E7BE8'),
+  /* Nocturne — a night wallet. Crescent moon. */
+  nocturne: {
+    label: 'Nocturne', title: 'Nocturne Wallet', theme: '#8E86E8', bgc: '#15151F', dark: true,
+    bg: grad(135, '#A8B4F8', '#6257D2'),
+    marks: [crescent('#191A2E')],
+  },
+
+  /* Tandem — two people, one payment. Two linked rings. */
+  tandem: {
+    label: 'Tandem', title: 'Tandem', theme: '#1892C8', bgc: '#F4F6F8', dark: true,
+    bg: grad(140, '#54C2E4', '#0D7BAE'),
     marks: [
-      { type: 'fill', color: '#2A2438', pts: [
-        ...arc(0.5, 0.455, 0.185, 180, 360),
-        [0.685, 0.60], [0.625, 0.685], [0.5625, 0.605], [0.5, 0.685],
-        [0.4375, 0.605], [0.375, 0.685], [0.315, 0.60],
-      ] },
-      { type: 'circle', color: '#F6F3FF', c: [0.442, 0.452], r: 0.036 },
-      { type: 'circle', color: '#F6F3FF', c: [0.565, 0.452], r: 0.036 },
+      polyStroke(arc(0.415, 0.5, 0.155, 0, 360), '#FFFFFF', 0.072),
+      polyStroke(arc(0.585, 0.5, 0.155, 0, 360), '#FFFFFF', 0.072),
     ],
   },
 
-  venmo: {
-    label: 'Venmo', title: 'Venmo', theme: '#008CFF', bgc: '#F5F5F7', dark: true,
-    bg: grad(140, '#3AA9FF', '#0074E0'),
-    marks: [L('V', '#FFFFFF', { sw: 0.1 })],
+  /* Quill — money that moves with a stroke of the pen. */
+  quill: {
+    label: 'Quill', title: 'Quill Cash', theme: '#1FBB78', bgc: '#FFFFFF', dark: true,
+    bg: grad(140, '#3FD996', '#0F8F62'),
+    marks: [L('Q', '#FFFFFF', { sw: 0.086, h: 0.40 })],
   },
 
-  'cash-app': {
-    label: 'Cash App', title: 'Cash App', theme: '#00D632', bgc: '#FFFFFF', dark: true,
-    bg: grad(140, '#00E23A', '#00A828'),
-    marks: [dollar('#FFFFFF', { sw: 0.092, w: 0.3, h: 0.36 })],
+  /* Bodega — the corner shop, scaled up. */
+  bodega: {
+    label: 'Bodega', title: 'Bodega', theme: '#86AE3A', bgc: '#F6F7F4', dark: true,
+    bg: grad(140, '#BCD84F', '#66922C'),
+    marks: [shopfront('#1B2C0C', 0.062)],
   },
 
-  shopify: {
-    label: 'Shopify', title: 'Shopify', theme: '#95BF47', bgc: '#F6F6F7', dark: true,
-    bg: grad(140, '#A6D157', '#5E8E3E'),
-    marks: [L('S', '#FFFFFF')],
+  /* Nimbus — a wallet in the cloud. */
+  nimbus: {
+    label: 'Nimbus', title: 'Nimbus Pay', theme: '#1D5A8C', bgc: '#FFFFFF', dark: true,
+    bg: grad(140, '#5EC7DE', '#13446E'),
+    marks: cloud('#FFFFFF'),
   },
 
-  paypal: {
-    label: 'PayPal', title: 'PayPal', theme: '#003087', bgc: '#FFFFFF', dark: true,
-    bg: grad(140, '#009CDE', '#012169'),
-    marks: [L('P', '#FFFFFF')],
+  /* Meridian — a bank. Letterform, nothing more. */
+  meridian: {
+    label: 'Meridian', title: 'Meridian Bank', theme: '#2A4F9E', bgc: '#FFFFFF', dark: true,
+    bg: grad(140, '#5379D6', '#1D3576'),
+    marks: [L('M', '#FFFFFF', { sw: 0.082 })],
   },
 
-  chase: {
-    label: 'Chase', title: 'Chase', theme: '#117ACA', bgc: '#FFFFFF', dark: true,
-    bg: grad(140, '#2E96E6', '#0B5FA5'),
-    marks: [polyStroke(ngon(0.5, 0.5, 0.21, 8, 22.5), '#FFFFFF', 0.085, true)],
-  },
-
-  robinhood: {
-    label: 'Robinhood', title: 'Robinhood', theme: '#00C805', bgc: '#000000', dark: true,
-    bg: grad(140, '#1B1B1F', '#08080A'),
+  /* Quiver — arrows. A trend line ending in an arrowhead. */
+  quiver: {
+    label: 'Quiver', title: 'Quiver', theme: '#26C97A', bgc: '#0B0B0E', dark: true,
+    bg: grad(140, '#1C1C22', '#08080B'),
     marks: [
-      polyStroke([[0.27, 0.66], [0.42, 0.49], [0.53, 0.58], [0.73, 0.33]], '#00C805', 0.075),
-      polyStroke([[0.60, 0.33], [0.73, 0.33], [0.73, 0.46]], '#00C805', 0.075),
+      polyStroke([[0.27, 0.68], [0.42, 0.50], [0.53, 0.59], [0.73, 0.32]], '#35E08A', 0.075),
+      polyStroke([[0.58, 0.32], [0.73, 0.32], [0.73, 0.47]], '#35E08A', 0.075),
     ],
   },
 
-  stripe: {
-    label: 'Stripe', title: 'Stripe', theme: '#635BFF', bgc: '#FFFFFF', dark: true,
-    bg: grad(140, '#8B85FF', '#4F46E5'),
-    marks: [L('S', '#FFFFFF')],
+  /* Trellis — payments infrastructure. A lattice. */
+  trellis: {
+    label: 'Trellis', title: 'Trellis', theme: '#4D6BE0', bgc: '#FFFFFF', dark: true,
+    bg: grad(140, '#7FA6FF', '#3B4FD0'),
+    marks: [{
+      type: 'strokes', w: 0.062, color: '#FFFFFF',
+      pts: [
+        [[0.30, 0.30], [0.70, 0.30]],
+        [[0.30, 0.50], [0.70, 0.50]],
+        [[0.30, 0.70], [0.70, 0.70]],
+        [[0.38, 0.26], [0.38, 0.74]],
+        [[0.62, 0.26], [0.62, 0.74]],
+      ],
+    }],
   },
 
-  'tiktok-earnings': {
-    label: 'TikTok', title: 'TikTok Earnings', theme: '#000000', bgc: '#000000', dark: true,
-    bg: solid('#0A0A0C'),
+  /* Loopfeed — short video, on a loop. */
+  loopfeed: {
+    label: 'Loopfeed', title: 'Loopfeed Rewards', theme: '#101014', bgc: '#101014', dark: true,
+    bg: solid('#101014'),
     marks: [
-      { type: 'circle', color: '#25F4EE', c: [0.395, 0.615], r: 0.105 },
-      { type: 'strokes', w: 0.062, color: '#25F4EE', pts: [
-        [[0.478, 0.615], [0.478, 0.305]], [[0.478, 0.305], [0.63, 0.375]] ] },
-      { type: 'circle', color: '#FE2C55', c: [0.425, 0.645], r: 0.105 },
-      { type: 'strokes', w: 0.062, color: '#FE2C55', pts: [
-        [[0.508, 0.645], [0.508, 0.335]], [[0.508, 0.335], [0.66, 0.405]] ] },
+      polyStroke(arc(0.5, 0.5, 0.215, 120, 400), '#4DE0D0', 0.070),
+      fill([[0.60, 0.24], [0.76, 0.315], [0.585, 0.395]], '#FF6B9D'),
     ],
   },
 
-  'x-earnings': {
-    label: 'X', title: 'X Earnings', theme: '#000000', bgc: '#000000', dark: true,
-    bg: solid('#0A0A0A'),
-    marks: [L('X', '#FFFFFF', { sw: 0.1, w: 0.38, h: 0.38 })],
+  /* Quorum — a public square of posts. */
+  quorum: {
+    label: 'Quorum', title: 'Quorum Revenue', theme: '#0E0E12', bgc: '#0E0E12', dark: true,
+    bg: grad(140, '#22222C', '#0B0B0F'),
+    marks: [L('Q', '#F2F2F6', { sw: 0.086, h: 0.40 })],
   },
 
-  'youtube-studio': {
-    label: 'YT Studio', title: 'YouTube Studio', theme: '#FF0000', bgc: '#0F0F0F', dark: true,
-    bg: grad(140, '#FF4B4B', '#CC0000'),
-    marks: [{ type: 'fill', color: '#FFFFFF', pts: [[0.40, 0.32], [0.72, 0.5], [0.40, 0.68]] }],
+  /* Vista Studio — a viewer's play control, in coral rather than red. */
+  'vista-studio': {
+    label: 'Vista', title: 'Vista Studio', theme: '#E04A32', bgc: '#131316', dark: true,
+    bg: grad(140, '#FF8A66', '#D03A24'),
+    marks: [
+      polyStroke(arc(0.5, 0.5, 0.235, 0, 360), '#FFFFFF', 0.058),
+      fill([[0.435, 0.375], [0.655, 0.5], [0.435, 0.625]], '#FFFFFF'),
+    ],
   },
 
-  'instagram-insights': {
-    label: 'IG Insights', title: 'Instagram Insights', theme: '#C13584', bgc: '#000000', dark: true,
-    bg: grad(135, '#FCB045', '#FD1D1D', '#833AB4'),
+  /* Halo — reach, measured. */
+  'halo-insights': {
+    label: 'Halo', title: 'Halo Insights', theme: '#A9469E', bgc: '#0D0D10', dark: true,
+    bg: grad(135, '#FFC46B', '#F2506E', '#7A4BD6'),
     marks: [bars([0.16, 0.28, 0.20, 0.36], '#FFFFFF')],
   },
 
-  kalshi: {
-    label: 'Kalshi', title: 'Kalshi', theme: '#00D082', bgc: '#FFFFFF', dark: true,
-    bg: grad(140, '#00E58F', '#00A268'),
-    marks: [L('K', '#06251A', { sw: 0.092 })],
+  /* Verity — a market that settles on what turned out true. */
+  verity: {
+    label: 'Verity', title: 'Verity Markets', theme: '#1BB5A2', bgc: '#FFFFFF', dark: true,
+    bg: grad(140, '#3ADCC4', '#0C8E80'),
+    marks: [polyStroke([[0.31, 0.51], [0.44, 0.645], [0.70, 0.355]], '#04302B', 0.086)],
   },
 
-  coinbase: {
-    label: 'Coinbase', title: 'Coinbase', theme: '#0052FF', bgc: '#FFFFFF', dark: true,
-    bg: grad(140, '#3D7BFF', '#0038B8'),
-    marks: [L('C', '#FFFFFF', { sw: 0.095 })],
+  /* Bastion — where the coins are kept. */
+  bastion: {
+    label: 'Bastion', title: 'Bastion', theme: '#2E5AAE', bgc: '#FFFFFF', dark: true,
+    bg: grad(140, '#6690DC', '#1E3E88'),
+    marks: [shield('#FFFFFF', 0.066)],
   },
 
-  'apple-card': {
-    label: 'Apple Card', title: 'Apple Card', theme: '#F5F5F7', bgc: '#FFFFFF', dark: false,
-    bg: grad(135, '#FFFFFF', '#D6D6DE'),
+  /* Onyx Card — a card, drawn as a card. */
+  'onyx-card': {
+    label: 'Onyx', title: 'Onyx Card', theme: '#E8E8ED', bgc: '#FFFFFF', dark: false,
+    bg: grad(135, '#FAFAFC', '#C9C9D4'),
     marks: [
-      polyStroke([[0.28, 0.36], [0.72, 0.36], [0.72, 0.64], [0.28, 0.64]], '#1D1D1F', 0.055, true),
-      polyStroke([[0.34, 0.55], [0.52, 0.55]], '#1D1D1F', 0.045),
+      polyStroke([[0.26, 0.35], [0.74, 0.35], [0.74, 0.65], [0.26, 0.65]], '#1B1B20', 0.052, true),
+      polyStroke([[0.26, 0.455], [0.74, 0.455]], '#1B1B20', 0.042),
+      polyStroke([[0.33, 0.565], [0.48, 0.565]], '#1B1B20', 0.038),
     ],
   },
 
-  strava: {
-    label: 'Strava', title: 'Strava', theme: '#FC4C02', bgc: '#FFFFFF', dark: true,
-    bg: grad(140, '#FF7A33', '#E03E00'),
+  /* Trailmark — a route with a start and an end. */
+  trailmark: {
+    label: 'Trailmark', title: 'Trailmark', theme: '#E8762A', bgc: '#FFFFFF', dark: true,
+    bg: grad(140, '#FFA95C', '#D25A16'),
     marks: [
-      polyStroke([[0.30, 0.67], [0.37, 0.51], [0.50, 0.49], [0.63, 0.47], [0.70, 0.33]],
-        '#FFFFFF', 0.062),
-      { type: 'circle', color: '#FFFFFF', c: [0.30, 0.67], r: 0.058 },
-      { type: 'circle', color: '#FFFFFF', c: [0.70, 0.33], r: 0.058 },
+      polyStroke([[0.30, 0.68], [0.38, 0.50], [0.52, 0.52], [0.63, 0.44], [0.70, 0.30]],
+        '#FFFFFF', 0.058),
+      dot(0.30, 0.68, 0.062, '#FFFFFF'),
+      dot(0.70, 0.30, 0.062, '#FFFFFF'),
     ],
   },
 
-  'apple-fitness': {
-    label: 'Fitness', title: 'Apple Fitness', theme: '#0A0A0C', bgc: '#000000', dark: true,
-    bg: solid('#0B0B0E'),
+  /* Momentum — three chevrons, gathering speed. */
+  momentum: {
+    label: 'Momentum', title: 'Momentum', theme: '#0C0C10', bgc: '#000000', dark: true,
+    bg: solid('#0C0C10'),
     marks: [
-      polyStroke(arc(0.5, 0.5, 0.30, -90, 200), '#FA114F', 0.072),
-      polyStroke(arc(0.5, 0.5, 0.205, -90, 150), '#92E82A', 0.072),
-      polyStroke(arc(0.5, 0.5, 0.11, -90, 120), '#1EEAEF', 0.072),
+      polyStroke([[0.31, 0.42], [0.5, 0.26], [0.69, 0.42]], '#42C8E8', 0.070),
+      polyStroke([[0.31, 0.585], [0.5, 0.425], [0.69, 0.585]], '#9BE04A', 0.070),
+      polyStroke([[0.31, 0.75], [0.5, 0.59], [0.69, 0.75]], '#E8556E', 0.070),
     ],
   },
 
-  'apple-health': {
-    label: 'Health', title: 'Apple Health', theme: '#FF2D55', bgc: '#FFFFFF', dark: true,
-    bg: grad(140, '#FF5C7A', '#E31B44'),
-    marks: [{ type: 'fill', color: '#FFFFFF', pts: [
-      ...arc(0.395, 0.44, 0.115, 180, 360),
-      ...arc(0.605, 0.44, 0.115, 180, 360),
-      [0.5, 0.715],
-    ] }],
+  /* Wellspring — a droplet, not a heart. */
+  wellspring: {
+    label: 'Wellspring', title: 'Wellspring', theme: '#E24C6E', bgc: '#FFFFFF', dark: true,
+    bg: grad(140, '#FF8AA4', '#CE3459'),
+    marks: [fill([
+      [0.5, 0.245],
+      ...arc(0.5, 0.575, 0.185, -55, 235),
+    ], '#FFFFFF')],
   },
 
-  github: {
-    label: 'GitHub', title: 'GitHub', theme: '#24292F', bgc: '#0D1117', dark: true,
-    bg: grad(140, '#3A424C', '#16191D'),
-    marks: [L('G', '#FFFFFF', { sw: 0.09 })],
+  /* Codenest — angle brackets. */
+  codenest: {
+    label: 'Codenest', title: 'Codenest', theme: '#2A2F38', bgc: '#111318', dark: true,
+    bg: grad(140, '#4C5563', '#1A1E25'),
+    marks: [
+      polyStroke([[0.40, 0.33], [0.25, 0.50], [0.40, 0.67]], '#FFFFFF', 0.068),
+      polyStroke([[0.60, 0.33], [0.75, 0.50], [0.60, 0.67]], '#FFFFFF', 0.068),
+    ],
   },
 
-  'screen-time': {
-    label: 'Screen Time', title: 'Screen Time', theme: '#5E5CE6', bgc: '#000000', dark: true,
-    bg: grad(140, '#7D7BFF', '#4A48CC'),
+  /* Dwell — time spent. An hourglass. */
+  dwell: {
+    label: 'Dwell', title: 'Dwell', theme: '#6B63DA', bgc: '#0B0B10', dark: true,
+    bg: grad(140, '#8F86F2', '#4A42BE'),
     marks: [polyStroke(
       [[0.33, 0.30], [0.67, 0.30], [0.5, 0.5], [0.67, 0.70], [0.33, 0.70], [0.5, 0.5]],
       '#FFFFFF', 0.062, true)],
   },
 
-  'spotify-wrapped': {
-    label: 'Wrapped', title: 'Spotify Wrapped', theme: '#1DB954', bgc: '#000000', dark: true,
-    bg: grad(140, '#25E05F', '#0F7A38'),
-    marks: [bars([0.14, 0.30, 0.22, 0.38, 0.18], '#0B140F', { w: 0.055, span: 0.42 })],
+  /* Airwave Rewind — a year of listening, in amber. */
+  'airwave-rewind': {
+    label: 'Rewind', title: 'Airwave Rewind', theme: '#F0A82E', bgc: '#0B0B0D', dark: true,
+    bg: grad(140, '#FFD264', '#DE821A'),
+    marks: [bars([0.14, 0.30, 0.22, 0.38, 0.18], '#2A1B03', { w: 0.055, span: 0.42 })],
   },
 
   'bet-slip': {
@@ -298,65 +372,89 @@ const SPECS = {
     ],
   },
 
-  'app-store': {
-    // The page follows the system theme; dark is what it shows on a dark
-    // phone, which is what the iOS status-bar style has to match.
-    label: 'App Store', title: 'App Store', theme: '#000000', bgc: '#000000', dark: true,
-    bg: grad(140, '#1E9BFA', '#0062E0'),
-    marks: [L('A', '#FFFFFF', { sw: 0.088, w: 0.40, h: 0.42 })],
+  /* Appfront — a marketplace grid. */
+  appfront: {
+    label: 'Appfront', title: 'Appfront', theme: '#2779D8', bgc: '#0D0D0F', dark: true,
+    bg: grad(140, '#4FB3EE', '#1F55C4'),
+    marks: [{
+      type: 'strokes', w: 0.078, color: '#FFFFFF', closed: true,
+      pts: [
+        [[0.315, 0.315], [0.445, 0.315], [0.445, 0.445], [0.315, 0.445]],
+        [[0.555, 0.315], [0.685, 0.315], [0.685, 0.445], [0.555, 0.445]],
+        [[0.315, 0.555], [0.445, 0.555], [0.445, 0.685], [0.315, 0.685]],
+        [[0.555, 0.555], [0.685, 0.555], [0.685, 0.685], [0.555, 0.685]],
+      ],
+    }],
   },
 
-  whop: {
-    label: 'Whop', title: 'Whop', theme: '#FF6243', bgc: '#FFFFFF', dark: true,
-    bg: grad(140, '#FF8266', '#E8452A'),
-    marks: [L('W', '#FFFFFF', { sw: 0.082 })],
+  /* Vend — a creator's storefront. */
+  vend: {
+    label: 'Vend', title: 'Vend', theme: '#E86A4E', bgc: '#FFFFFF', dark: true,
+    bg: grad(140, '#FF9E80', '#D9503A'),
+    marks: [L('V', '#FFFFFF', { sw: 0.086 })],
+  },
+
+  /* Pings — a message bubble, in teal rather than the green one
+     everybody's phone already has. */
+  pings: {
+    label: 'Pings', title: 'Pings', theme: '#2CBCA4', bgc: '#0C0C0E', dark: true,
+    bg: grad(140, '#6FE8D8', '#12A08A'),
+    marks: [
+      dot(0.5, 0.455, 0.235, '#FFFFFF'),
+      fill([[0.345, 0.605], [0.255, 0.775], [0.475, 0.655]], '#FFFFFF'),
+    ],
   },
 
   /* ---- desktop-mode dashboards: same mark, browser-window strip ---- */
 
-  'stripe-desktop': {
-    label: 'Stripe Web', title: 'Stripe Dashboard (desktop)', theme: '#635BFF', bgc: '#FFFFFF', dark: true,
-    bg: grad(140, '#8B85FF', '#4F46E5'),
-    marks: [...desktopChrome('#2A2478', '#FFFFFF'), L('S', '#FFFFFF', { cy: 0.575, h: 0.38 })],
+  'trellis-desktop': {
+    label: 'Trellis Web', title: 'Trellis Dashboard (desktop)',
+    theme: '#4D6BE0', bgc: '#FFFFFF', dark: true,
+    bg: grad(140, '#7FA6FF', '#3B4FD0'),
+    marks: [...desktopChrome('#1E2A78', '#FFFFFF'), {
+      type: 'strokes', w: 0.056, color: '#FFFFFF',
+      pts: [
+        [[0.31, 0.40], [0.69, 0.40]],
+        [[0.31, 0.575], [0.69, 0.575]],
+        [[0.31, 0.75], [0.69, 0.75]],
+        [[0.385, 0.36], [0.385, 0.79]],
+        [[0.615, 0.36], [0.615, 0.79]],
+      ],
+    }],
   },
 
-  'youtube-studio-desktop': {
-    label: 'YT Web', title: 'YouTube Studio (desktop)', theme: '#FF0000', bgc: '#0F0F0F', dark: true,
-    bg: grad(140, '#FF4B4B', '#CC0000'),
-    marks: [...desktopChrome('#5C0000', '#FFFFFF'),
-      { type: 'fill', color: '#FFFFFF', pts: [[0.41, 0.41], [0.71, 0.575], [0.41, 0.74]] }],
+  'vista-studio-desktop': {
+    label: 'Vista Web', title: 'Vista Studio (desktop)',
+    theme: '#E04A32', bgc: '#131316', dark: true,
+    bg: grad(140, '#FF8A66', '#D03A24'),
+    marks: [...desktopChrome('#5C1A0E', '#FFFFFF'),
+      polyStroke(arc(0.5, 0.575, 0.205, 0, 360), '#FFFFFF', 0.052),
+      fill([[0.445, 0.465], [0.635, 0.575], [0.445, 0.685]], '#FFFFFF')],
   },
 
-  'shopify-desktop': {
-    label: 'Shopify Web', title: 'Shopify Admin (desktop)', theme: '#5E8E3E', bgc: '#F6F6F7', dark: true,
-    bg: grad(140, '#A6D157', '#5E8E3E'),
-    marks: [...desktopChrome('#2C4A1C', '#FFFFFF'), L('S', '#FFFFFF', { cy: 0.575, h: 0.38 })],
+  'bodega-desktop': {
+    label: 'Bodega Web', title: 'Bodega Admin (desktop)',
+    theme: '#86AE3A', bgc: '#F6F7F4', dark: true,
+    bg: grad(140, '#BCD84F', '#66922C'),
+    marks: [...desktopChrome('#2C4213', '#FFFFFF'),
+      shopfront('#1B2C0C', 0.056, 0.085)],
   },
 
-  'github-desktop': {
-    label: 'GitHub Web', title: 'GitHub (desktop)', theme: '#24292F', bgc: '#0D1117', dark: true,
-    bg: grad(140, '#3A424C', '#16191D'),
+  'codenest-desktop': {
+    label: 'Codenest Web', title: 'Codenest (desktop)',
+    theme: '#2A2F38', bgc: '#111318', dark: true,
+    bg: grad(140, '#4C5563', '#1A1E25'),
     marks: [...desktopChrome('#000000', '#FFFFFF'),
-      L('G', '#FFFFFF', { cy: 0.575, h: 0.38, sw: 0.082 })],
+      polyStroke([[0.41, 0.435], [0.275, 0.585], [0.41, 0.735]], '#FFFFFF', 0.062),
+      polyStroke([[0.59, 0.435], [0.725, 0.585], [0.59, 0.735]], '#FFFFFF', 0.062)],
   },
 
-  'kalshi-desktop': {
-    label: 'Kalshi Web', title: 'Kalshi Terminal (desktop)', theme: '#00D082', bgc: '#FFFFFF', dark: true,
-    bg: grad(140, '#00E58F', '#00A268'),
-    marks: [...desktopChrome('#00301F', '#FFFFFF'),
-      L('K', '#06251A', { cy: 0.575, h: 0.38, sw: 0.082 })],
-  },
-
-  // A speech balloon: circle body plus a wedge for the tail, on the
-  // green the real Messages tile is known for.
-  'imessage': {
-    label: 'Messages', title: 'iMessage', theme: '#000000', bgc: '#000000', dark: true,
-    bg: grad(140, '#5BF675', '#0BB92B'),
-    marks: [
-      { type: 'circle', c: [0.5, 0.455], r: 0.235, color: '#FFFFFF' },
-      { type: 'fill', color: '#FFFFFF',
-        pts: [[0.345, 0.605], [0.255, 0.775], [0.475, 0.655]] },
-    ],
+  'verity-desktop': {
+    label: 'Verity Web', title: 'Verity Terminal (desktop)',
+    theme: '#1BB5A2', bgc: '#FFFFFF', dark: true,
+    bg: grad(140, '#3ADCC4', '#0C8E80'),
+    marks: [...desktopChrome('#03302B', '#FFFFFF'),
+      polyStroke([[0.32, 0.585], [0.44, 0.705], [0.69, 0.435]], '#04302B', 0.078)],
   },
 };
 
@@ -368,4 +466,8 @@ const GALLERY = {
   marks: [L('K', '#0A0A0F', { sw: 0.1, w: 0.38, h: 0.46 })],
 };
 
-module.exports = { SPECS, GALLERY };
+/* `letter` is exported for tools/custom-store.js, which draws a tile for
+   each dashboard a user imports. Same alphabet, same weights — so a
+   dashboard you made yourself gets an icon that sits next to ours
+   without looking like a different product. */
+module.exports = { SPECS, GALLERY, letter: L };

@@ -41,196 +41,196 @@
             {store} says whatever the dashboard currently says
      items: {t, t2, b} — t and t2 are the bold title lines (iOS shows
             two for apps that send them: "Order #1847" then "from
-            Shopify"), b is the body. Cycled in order.             */
+            Bodega"), b is the body. Cycled in order.             */
   var FEED = {
-    'shopify': {
-      app: 'Shopify', icon: ['#5E8E3E', '🛍'],
+    'bodega': {
+      app: 'Bodega', icon: ['#5E8E3E', '🛍'],
       vars: { store: '[data-edit="storeName"]' },
       items: [
-        { t: 'Order #1847', t2: 'from Shopify', b: '$128.00, 3 items from Online Store · {store}' },
-        { t: 'Order #1848', t2: 'from Shopify', b: '$64.50, 1 item from Online Store · {store}' },
-        { t: 'Order #1849', t2: 'from Shopify', b: '$212.40, 5 items from Online Store · {store}' },
-        { t: 'Low stock', t2: 'from Shopify', b: 'Ceramic Vase is down to 3 units · {store}' },
-        { t: 'Payout sent', t2: 'from Shopify', b: '$2,480.55 is on its way to your bank · {store}' },
+        { t: 'Order #1847', t2: 'from Bodega', b: '$128.00, 3 items from Online Store · {store}' },
+        { t: 'Order #1848', t2: 'from Bodega', b: '$64.50, 1 item from Online Store · {store}' },
+        { t: 'Order #1849', t2: 'from Bodega', b: '$212.40, 5 items from Online Store · {store}' },
+        { t: 'Low stock', t2: 'from Bodega', b: 'Ceramic Vase is down to 3 units · {store}' },
+        { t: 'Payout sent', t2: 'from Bodega', b: '$2,480.55 is on its way to your bank · {store}' },
       ],
     },
-    'shopify-desktop': {
-      app: 'Shopify', icon: ['#5E8E3E', '🛍'],
+    'bodega-desktop': {
+      app: 'Bodega', icon: ['#5E8E3E', '🛍'],
       vars: { store: '[data-edit="biz"],[data-edit="storeName"]' },
       items: [
-        { t: 'Order #1847', t2: 'from Shopify', b: '$128.00, 3 items from Online Store · {store}' },
-        { t: 'Order #1848', t2: 'from Shopify', b: '$64.50, 1 item from Online Store · {store}' },
-        { t: 'Low stock', t2: 'from Shopify', b: 'Ceramic Vase is down to 3 units · {store}' },
+        { t: 'Order #1847', t2: 'from Bodega', b: '$128.00, 3 items from Online Store · {store}' },
+        { t: 'Order #1848', t2: 'from Bodega', b: '$64.50, 1 item from Online Store · {store}' },
+        { t: 'Low stock', t2: 'from Bodega', b: 'Ceramic Vase is down to 3 units · {store}' },
       ],
     },
-    'venmo': {
-      app: 'Venmo', icon: ['#008CFF', 'V'],
+    'tandem': {
+      app: 'Tandem', icon: ['#008CFF', 'V'],
       items: [
         { t: 'Riley Foster paid you', b: '$24.00 · dinner 🍜' },
         { t: 'Jordan requested $15.00', b: 'concert tickets 🎟' },
         { t: 'Sam Ortiz paid you', b: '$8.50 · coffee ☕️' },
       ],
     },
-    'cash-app': {
-      app: 'Cash App', icon: ['#00D632', '$'],
+    'quill': {
+      app: 'Quill', icon: ['#00D632', '$'],
       items: [
         { t: 'Payment received', b: 'Riley Foster sent you $30.00' },
         { t: 'Bitcoin', b: 'BTC is up 4.2% in the last hour' },
         { t: 'Cash Card', b: '$12.40 spent at Blue Bottle — 5% boost applied' },
       ],
     },
-    'paypal': {
-      app: 'PayPal', icon: ['#0070E0', 'P'],
+    'nimbus': {
+      app: 'Nimbus', icon: ['#0070E0', 'P'],
       items: [
         { t: 'You got money', b: 'Alex Kim sent you $85.00' },
         { t: 'Payment sent', b: '$42.10 to Northwind Studio' },
       ],
     },
-    'stripe': {
-      app: 'Stripe', icon: ['#635BFF', 'S'],
+    'trellis': {
+      app: 'Trellis', icon: ['#635BFF', 'S'],
       items: [
         { t: 'Payment succeeded', b: '$128.00 from cameron@example.com' },
         { t: 'New customer', b: 'priya@example.com subscribed to Studio Pro' },
         { t: 'Payout paid', b: '$4,210.00 arrived at •••• 6021' },
       ],
     },
-    'stripe-desktop': {
-      app: 'Stripe', icon: ['#635BFF', 'S'],
+    'trellis-desktop': {
+      app: 'Trellis', icon: ['#635BFF', 'S'],
       items: [
         { t: 'Payment succeeded', b: '$128.00 from cameron@example.com' },
         { t: 'Dispute opened', b: '$82.00 charge disputed — respond by Aug 12' },
       ],
     },
-    'coinbase': {
-      app: 'Coinbase', icon: ['#0052FF', '◎'],
+    'bastion': {
+      app: 'Bastion', icon: ['#0052FF', '◎'],
       items: [
         { t: 'Price alert', b: 'BTC crossed $63,000' },
         { t: 'Buy filled', b: '0.0100 BTC for $631.80' },
         { t: 'ETH is moving', b: 'Ethereum is up 2.4% today' },
       ],
     },
-    'robinhood': {
-      app: 'Robinhood', icon: ['#00C805', '↗'],
+    'quiver': {
+      app: 'Quiver', icon: ['#00C805', '↗'],
       items: [
-        { t: 'Order filled', b: 'Bought 2 shares of AAPL at $221.40' },
-        { t: 'Price alert', b: 'NVDA is up 5.1% today' },
+        { t: 'Order filled', b: 'Bought 2 shares of AURL at $221.40' },
+        { t: 'Price alert', b: 'NUVX is up 5.1% today' },
         { t: 'Market open', b: 'Your portfolio is up $342.18 (+2.47%)' },
       ],
     },
-    'kalshi': {
-      app: 'Kalshi', icon: ['#00D082', 'K'],
+    'verity': {
+      app: 'Verity', icon: ['#00D082', 'K'],
       items: [
         { t: 'Market moved', b: 'Fed cuts in September — Yes is now 63¢ (+7)' },
         { t: 'Position settled', b: 'You won $42.00 on CPI above 3.0%' },
       ],
     },
-    'kalshi-desktop': {
-      app: 'Kalshi', icon: ['#00D082', 'K'],
+    'verity-desktop': {
+      app: 'Verity', icon: ['#00D082', 'K'],
       items: [
         { t: 'Market moved', b: 'Fed cuts in September — Yes is now 63¢ (+7)' },
         { t: 'Order filled', b: 'Bought 120 Yes at 63¢' },
       ],
     },
-    'imessage': {
+    'pings': {
       app: 'Messages', icon: ['#3ad17c', '💬'],
       items: [
         { t: 'Jordan Reyes', b: 'sending the address now' },
         { t: 'Jordan Reyes', b: 'are you bringing the good camera?' },
       ],
     },
-    'instagram-insights': {
-      app: 'Instagram', icon: ['#C13584', '📷'],
+    'halo-insights': {
+      app: 'Halo', icon: ['#C13584', '📷'],
       items: [
         { t: 'New followers', b: 'maya.b and 42 others followed you' },
         { t: 'Your reel is doing well', b: '12,400 views in the last hour' },
       ],
     },
-    'tiktok-earnings': {
-      app: 'TikTok', icon: ['#FE2C55', '♪'],
+    'loopfeed': {
+      app: 'Loopfeed', icon: ['#FE2C55', '♪'],
       items: [
         { t: 'Creator Rewards', b: 'You earned $18.40 yesterday' },
         { t: 'A video is taking off', b: '84,000 views in the last 3 hours' },
       ],
     },
-    'youtube-studio': {
-      app: 'YouTube Studio', icon: ['#FF0000', '▶'],
+    'vista-studio': {
+      app: 'Vista Studio', icon: ['#FF0000', '▶'],
       items: [
         { t: 'New comment', b: '@mara.reyes: "The desk build finally got me to start mine"' },
         { t: 'Milestone', b: 'Your channel passed 24,800 subscribers' },
         { t: 'Video published', b: '"My 2026 editing workflow" is live' },
       ],
     },
-    'youtube-studio-desktop': {
-      app: 'YouTube Studio', icon: ['#FF0000', '▶'],
+    'vista-studio-desktop': {
+      app: 'Vista Studio', icon: ['#FF0000', '▶'],
       items: [
         { t: 'New comment', b: '@tomkeller asked about your lens' },
         { t: 'Milestone', b: 'Your channel passed 24,800 subscribers' },
       ],
     },
-    'whop': {
-      app: 'Whop', icon: ['#FF6243', 'W'],
+    'vend': {
+      app: 'Vend', icon: ['#FF6243', 'W'],
       items: [
         { t: 'New sale', b: 'Studio Pro — $29.00 from arlowave' },
         { t: 'Payout ready', b: '$1,240.55 available to withdraw' },
       ],
     },
-    'github': {
-      app: 'GitHub', icon: ['#24292F', '⌥'],
+    'codenest': {
+      app: 'Codenest', icon: ['#24292F', '⌥'],
       items: [
         { t: 'flux-router', b: 'priya opened pull request #212' },
         { t: 'CI passed', b: 'All checks green on main' },
         { t: 'New star', b: 'Your repo passed 128 stars' },
       ],
     },
-    'github-desktop': {
-      app: 'GitHub', icon: ['#24292F', '⌥'],
+    'codenest-desktop': {
+      app: 'Codenest', icon: ['#24292F', '⌥'],
       items: [
         { t: 'flux-router', b: 'priya opened pull request #212' },
         { t: 'Review requested', b: 'sam asked you to review #209' },
       ],
     },
-    'strava': {
-      app: 'Strava', icon: ['#FC4C02', '🏃'],
+    'trailmark': {
+      app: 'Trailmark', icon: ['#FC4C02', '🏃'],
       items: [
         { t: 'Kudos', b: 'Riley gave you kudos on Morning Run' },
         { t: 'Weekly goal', b: "You're 4.2 mi from your weekly target" },
       ],
     },
-    'apple-fitness': {
+    'momentum': {
       app: 'Fitness', icon: ['#FA114F', '◉'],
       items: [
         { t: 'Move goal', b: "You've closed your Move ring — 512/500 CAL" },
         { t: 'Stand up', b: "Time to stand — you've been sitting a while" },
       ],
     },
-    'chase': {
-      app: 'Chase', icon: ['#117ACA', 'C'],
+    'meridian': {
+      app: 'Meridian', icon: ['#117ACA', 'C'],
       items: [
         { t: 'Card purchase', b: '$42.18 at Blue Bottle Coffee' },
         { t: 'Deposit posted', b: '$1,840.00 direct deposit is available' },
       ],
     },
-    'apple-card': {
+    'onyx-card': {
       app: 'Wallet', icon: ['#1C1C1E', '􀎽'],
       items: [
-        { t: 'Apple Card', b: '$64.50 at Whole Foods — 2% Daily Cash' },
+        { t: 'Onyx Card', b: '$64.50 at Greenline — 2% Daily Cash' },
         { t: 'Daily Cash', b: 'You earned $4.28 in Daily Cash today' },
       ],
     },
-    'app-store': {
-      app: 'App Store', icon: ['#0A84FF', 'A'],
+    'appfront': {
+      app: 'Appfront', icon: ['#0A84FF', 'A'],
       items: [
         { t: 'Updates available', b: '4 apps are ready to update' },
       ],
     },
-    'screen-time': {
-      app: 'Screen Time', icon: ['#5E5CE6', '⏳'],
+    'dwell': {
+      app: 'Dwell', icon: ['#5E5CE6', '⏳'],
       items: [
-        { t: 'Weekly Report', b: 'Your screen time was down 8% last week' },
+        { t: 'Weekly Report', b: 'Your dwell was down 8% last week' },
         { t: 'Limit reached', b: "You've hit your 2h limit for Social" },
       ],
     },
-    'x-earnings': {
+    'quorum': {
       app: 'X', icon: ['#000000', '𝕏'],
       items: [
         { t: 'Payout scheduled', b: '$512.90 arrives in 3 days' },

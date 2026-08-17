@@ -1,0 +1,30 @@
+{
+  "name": "Pings — Krypt LARP",
+  "short_name": "Pings",
+  "description": "Pings — a fictional Messaging mock-up. Part of the Krypt LARP collection.",
+  "start_url": "../../dashboards/pings/index.html",
+  "scope": "../../",
+  "display": "standalone",
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
+  "background_color": "#0C0C0E",
+  "theme_color": "#2CBCA4",
+  "icons": [
+    {
+      "src": "../icons/pings-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../icons/pings-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

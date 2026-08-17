@@ -1,0 +1,30 @@
+{
+  "name": "Loopfeed Rewards — Krypt LARP",
+  "short_name": "Loopfeed",
+  "description": "Loopfeed Rewards — a fictional Creator Payouts mock-up. Part of the Krypt LARP collection.",
+  "start_url": "../../dashboards/loopfeed/index.html",
+  "scope": "../../",
+  "display": "standalone",
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
+  "background_color": "#101014",
+  "theme_color": "#101014",
+  "icons": [
+    {
+      "src": "../icons/loopfeed-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../icons/loopfeed-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -18,6 +18,7 @@ const { execFile } = require('child_process');
 const {
   createLanServer, lanAddresses, qrMatrix, qrToTerminal, qrToSvg, esc,
 } = require('./lan-server.js');
+const { createStore, defaultDir } = require('./custom-store.js');
 
 const ROOT = path.resolve(__dirname, '..');
 const PORT = Number(process.env.PORT) || 4173;
@@ -96,6 +97,11 @@ const server = createLanServer({
   root: ROOT,
   port: PORT,
   launchPage: () => launchPage(current),
+  // The dashboards you imported live in the desktop app's user folder,
+  // not in this repo. Serving them from here too means the .cmd and the
+  // app's Phone panel show a phone the same collection — there is no
+  // Electron in this process to ask, so the path is reconstructed.
+  custom: createStore(defaultDir()),
   // Days a phone may keep files without re-asking — this is what keeps
   // the collection working once this window is closed. CACHE_DAYS=0
   // turns it off.

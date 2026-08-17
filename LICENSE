@@ -22,7 +22,54 @@ SOFTWARE.
 
 ---
 
-The dashboards in this collection are original recreations of app interfaces,
-built from scratch for learning. They are not affiliated with, endorsed by, or
-connected to any of the companies whose products they recreate. Product names
-and trademarks belong to their respective owners.
+NOTICE — what is in this repository
+
+The MIT grant above is the licence. Everything below is description, not a
+condition on it.
+
+Every product in this collection is fictional. Nocturne, Tandem, Quill, Bodega,
+Nimbus, Meridian, Quiver, Trellis, Loopfeed, Quorum, Vista Studio, Halo, Verity,
+Bastion, Onyx Card, Trailmark, Momentum, Wellspring, Codenest, Dwell, Airwave,
+Bet Slip, Appfront, Vend, Pings and the rest are invented companies with invented
+names, invented logos and invented colour palettes. Every home-screen icon is
+drawn from primitives in tools/icon-specs.js. No screenshot, logo, wordmark or
+asset belonging to a real company is reproduced, redistributed or shipped here,
+and tools/rebrand.js --check fails the build if one appears.
+
+The deliberate exception is assets: token tickers and their artwork (BTC, ETH,
+SOL, USDC) are real, because a ticker names what an asset is rather than who
+makes it, and a wallet that cannot name what it holds is broken rather than
+careful. The line is company versus asset. Company names are invented; asset
+tickers are not. Stock tickers on invented positions ARE renamed, because a
+fabricated gain attached to a named public company is a claim about that company.
+
+Where a real name is unavoidable outside the mocks — the README naming GitHub,
+the install sheet naming Safari or iOS — that is nominative use: naming a real
+thing in order to tell you a true fact about it.
+
+No affiliation with, endorsement by, or connection to any real company is claimed
+or implied. Any trademarks that appear in documentation belong to their owners.
+
+---
+
+ACCEPTABLE USE
+
+Not a licence condition, and not enforceable as one. It is what this project is
+for, stated plainly, because the tool would otherwise be easy to misread.
+
+These are interface studies. They exist so you can look at how a good banking,
+payments, trading or analytics screen is put together, take one apart, and change
+it. Editable values and a phone view are there so the study is a study rather
+than a picture.
+
+They are not evidence of anything. Do not use them to represent to another person
+that you hold money, an asset, a position, a payout, a transaction or an account
+that you do not hold. Presenting a mock-up as a real balance, a real payment, a
+real return or a real payout in order to obtain money, credit, investment,
+goodwill or anything else of value is fraud in most places, and the fact that the
+image came from here is not a defence.
+
+Every screen carries a "LARP · not a real app" mark by default, and the switch
+that removes it says in plain words what removing it means. Turning it off is
+allowed and sometimes reasonable. What you do with an unmarked screenshot is
+yours, and so is the consequence.

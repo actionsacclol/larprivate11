@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en" data-krypt-status="opaque">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Onyx Card · Learning Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     ONYX CARD (Wallet) — a learning recreation (TEST demo).
+     Light Lumen OS-grouped theme + the titanium card's mesh gradient.
+     Drill-down nav (Aurelia has no bottom tabs): Summary tiles open
+     Balance / Spending (category wheel) / Daily Cash / Transactions,
+     each with a back chevron. Data-driven — see DEFAULT_DATA.
+     Edit toggle = click values; saved to browser. Entrance
+     animations are pure CSS; headline figures count up when visible.
+     ============================================================ */
+  :root{
+    --bg:#f2f2f7;         /* Lumen OS grouped background */
+    --card:#ffffff;
+    --text:#1c1c1e;
+    --muted:#8a8a8e;
+    --dim:#aeaeb2;
+    --line:#e6e6ea;
+    --blue:#007aff;
+    --sep:#e9e9ee;
+    /* category palette */
+    --food:#ff9500; --shop:#ff2d55; --groc:#34c759; --trans:#007aff; --ent:#af52de; --other:#8e8e93;
+    --font:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{background:#0a0a0a;font-family:var(--font);color:var(--text);display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;-webkit-font-smoothing:antialiased;}
+
+  /* shared chrome — only .back is fixed; toolbar buttons flow inside .toolbar */
+  .back{position:fixed;top:18px;left:18px;z-index:50;background:#1c1c1e;color:#fff;border:1px solid #333;text-decoration:none;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;font-family:var(--font);transition:.15s;}
+  .back:hover{background:#2a2a2c;}
+  .toolbar{position:fixed;top:18px;right:18px;display:flex;gap:8px;z-index:50;}
+  .toolbar button{background:#1c1c1e;color:#fff;border:1px solid #333;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);transition:.15s;}
+  .toolbar button:hover{background:#2a2a2c;}
+  .toolbar button.on{background:var(--blue);color:#fff;border-color:var(--blue);}
+
+  .phone{position:relative;width:390px;max-width:100%;height:844px;background:var(--bg);border-radius:44px;box-shadow:0 0 0 12px #111,0 40px 90px rgba(0,0,0,.7);overflow:hidden;display:flex;flex-direction:column;}
+
+  .statusbar{display:flex;align-items:center;justify-content:space-between;padding:15px 30px 4px;font-size:15px;font-weight:600;flex:0 0 auto;color:#1c1c1e;}
+  .statusbar .right{display:flex;align-items:center;gap:7px;}
+  .battery{border:1.5px solid #1c1c1e;border-radius:4px;width:26px;height:13px;position:relative;display:flex;align-items:center;padding:1.5px;}
+  .battery::after{content:"";position:absolute;right:-4px;top:4px;width:2px;height:5px;background:#1c1c1e;border-radius:0 2px 2px 0;}
+  .battery i{display:block;height:100%;background:#1c1c1e;border-radius:1.5px;width:82%;}
+  .signal{display:flex;align-items:flex-end;gap:2px;height:12px;}
+  .signal b{width:3px;background:#1c1c1e;border-radius:1px;display:block;}
+  .signal b:nth-child(1){height:5px}.signal b:nth-child(2){height:7px}.signal b:nth-child(3){height:9px}.signal b:nth-child(4){height:12px;opacity:.35}
+
+  /* app bar */
+  .appbar{display:flex;align-items:center;justify-content:space-between;padding:6px 14px 8px;flex:0 0 auto;min-height:44px;}
+  .appbar .bk{display:flex;align-items:center;gap:2px;color:var(--blue);font-size:17px;font-weight:500;cursor:pointer;visibility:hidden;}
+  .appbar .bk svg{width:22px;height:22px;stroke:var(--blue);fill:none;stroke-width:2.4;}
+  .appbar .ttl{font-size:17px;font-weight:700;}
+  .appbar .more{width:30px;height:30px;border-radius:50%;background:rgba(120,120,128,.14);display:flex;align-items:center;justify-content:center;cursor:pointer;}
+  .appbar .more svg{width:18px;height:18px;fill:var(--blue);}
+
+  .screen{flex:1;overflow-y:auto;scrollbar-width:none;padding:0 0 34px;}
+  .screen::-webkit-scrollbar{display:none;}
+
+  .view{display:none;padding:0 16px;}
+  .view.on{display:block;animation:vfade .24s ease;}
+  @keyframes vfade{from{opacity:0}to{opacity:1}}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  @keyframes pop{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:none}}
+
+  /* ============ the Onyx Card ============ */
+  .cardwrap{padding:6px 4px 4px;opacity:0;transform:translateY(14px);animation:rise .55s ease forwards;}
+  .onyxcard{position:relative;border-radius:22px;aspect-ratio:1.585/1;overflow:hidden;
+    background:
+      radial-gradient(120px 110px at 80% 16%, rgba(255,149,0,.34), transparent 68%),
+      radial-gradient(150px 130px at 62% 72%, rgba(255,45,85,.30), transparent 70%),
+      radial-gradient(170px 150px at 22% 88%, rgba(0,122,255,.28), transparent 70%),
+      radial-gradient(130px 130px at 14% 22%, rgba(52,199,89,.26), transparent 70%),
+      radial-gradient(120px 120px at 92% 88%, rgba(175,82,222,.22), transparent 70%),
+      linear-gradient(135deg,#fbfbfb,#e9e9ec);
+    box-shadow:0 12px 30px rgba(0,0,0,.14),inset 0 0 0 1px rgba(255,255,255,.6);}
+  .onyxcard .logo{position:absolute;top:18px;left:18px;width:26px;height:26px;}
+  .onyxcard .nfc{position:absolute;top:20px;right:18px;width:20px;height:22px;}
+  .onyxcard .nm{position:absolute;left:20px;bottom:44px;font-size:19px;font-weight:600;letter-spacing:.3px;color:#3a3a3c;}
+  .onyxcard .net{position:absolute;right:18px;bottom:16px;display:flex;align-items:center;}
+  .onyxcard .net i{width:22px;height:22px;border-radius:50%;display:block;}
+  .onyxcard .net i:first-child{background:#6B4FE0;}
+  .onyxcard .net i:last-child{background:#28C2D4;mix-blend-mode:multiply;margin-left:-9px;}
+
+  /* grouped tiles */
+  .tile{background:var(--card);border-radius:16px;margin-top:14px;overflow:hidden;opacity:0;transform:translateY(14px);animation:rise .5s ease forwards;}
+  .tile.d1{animation-delay:.05s}.tile.d2{animation-delay:.1s}.tile.d3{animation-delay:.15s}
+  .trow{display:flex;align-items:center;gap:14px;padding:15px 16px;cursor:pointer;}
+  .trow:active{background:#f7f7fa;}
+  .trow+.trow{border-top:1px solid var(--sep);}
+  .trow .ic{width:34px;height:34px;border-radius:9px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;}
+  .trow .ic svg{width:19px;height:19px;stroke:#fff;fill:none;stroke-width:2;}
+  .trow .mid{flex:1;min-width:0;}
+  .trow .t1{font-size:16px;font-weight:600;}
+  .trow .t2{font-size:13px;color:var(--muted);margin-top:2px;}
+  .trow .rt{text-align:right;flex:0 0 auto;}
+  .trow .r1{font-size:16px;font-weight:600;}
+  .trow .r2{font-size:13px;color:var(--muted);margin-top:2px;}
+  .trow .chev{width:9px;height:16px;stroke:var(--dim);fill:none;stroke-width:2.2;flex:0 0 auto;}
+
+  .tile-h{padding:15px 16px 6px;font-size:13px;font-weight:700;letter-spacing:.4px;color:var(--muted);text-transform:uppercase;}
+  .balrow{padding:14px 16px 16px;}
+  .balrow .lbl{font-size:14px;color:var(--muted);}
+  .balrow .big{font-size:34px;font-weight:700;letter-spacing:-1px;margin-top:2px;}
+  .balrow .status{color:#34c759;font-weight:600;font-size:14px;margin-top:2px;}
+  .payline{display:flex;gap:12px;padding:0 16px 16px;}
+  .paybtn{flex:1;background:#000;color:#fff;border:0;font-family:var(--font);font-size:16px;font-weight:600;padding:13px;border-radius:12px;cursor:pointer;transition:.12s;}
+  .paybtn:active{transform:scale(.98);}
+  .paybtn.sec{background:rgba(120,120,128,.12);color:#000;}
+
+  .seeall{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;color:var(--blue);font-size:16px;font-weight:500;cursor:pointer;border-top:1px solid var(--sep);}
+  .seeall svg{width:8px;height:15px;stroke:var(--dim);fill:none;stroke-width:2.2;}
+
+  /* daily cash row accent */
+  .dc{display:inline-flex;align-items:center;gap:5px;color:#8a8a8e;font-size:13px;}
+  .dc .coin{width:14px;height:14px;border-radius:50%;background:linear-gradient(135deg,#f5c451,#e88b2a);display:inline-block;flex:0 0 auto;}
+
+  /* ============ SPENDING wheel ============ */
+  .spend-total{text-align:center;padding:12px 0 2px;}
+  .spend-total .lbl{font-size:14px;color:var(--muted);}
+  .spend-total .big{font-size:36px;font-weight:700;letter-spacing:-1px;margin-top:2px;}
+  .wheelwrap{display:flex;justify-content:center;padding:14px 0 6px;opacity:0;animation:pop .6s .12s ease forwards;}
+  .wheelwrap svg{width:200px;height:200px;transform:rotate(-90deg);}
+  .wheelwrap .hole{transform:rotate(90deg);}
+  .cat-list{margin-top:6px;}
+  .cat-row{display:flex;align-items:center;gap:12px;padding:12px 16px;}
+  .cat-row+.cat-row{border-top:1px solid var(--sep);}
+  .cat-row .sw{width:12px;height:12px;border-radius:4px;flex:0 0 auto;}
+  .cat-row .cn{flex:1;font-size:16px;font-weight:500;}
+  .cat-row .cv{font-size:16px;font-weight:600;}
+  .cat-row .cp{font-size:13px;color:var(--muted);width:44px;text-align:right;}
+
+  /* weekly bars */
+  .weekly{padding:16px 16px 18px;}
+  .weekly .bars{display:flex;align-items:flex-end;gap:8px;height:110px;margin-top:10px;}
+  .weekly .bar{flex:1;background:linear-gradient(180deg,#c9c9ce,#e4e4e9);border-radius:6px 6px 3px 3px;min-height:6px;transition:.4s;}
+  .weekly .bar.hi{background:linear-gradient(180deg,#ff9f0a,#ff8a00);}
+  .weekly .xlabels{display:flex;gap:8px;margin-top:8px;}
+  .weekly .xlabels span{flex:1;text-align:center;font-size:11px;color:var(--muted);}
+
+  /* daily cash header card */
+  .dc-hero{text-align:center;padding:18px 0 6px;}
+  .dc-hero .ring{width:74px;height:74px;border-radius:50%;background:linear-gradient(135deg,#f6cf5b,#e07f26);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(224,127,38,.4);}
+  .dc-hero .ring svg{width:34px;height:34px;fill:#fff;}
+  .dc-hero .lbl{font-size:14px;color:var(--muted);}
+  .dc-hero .big{font-size:38px;font-weight:700;letter-spacing:-1px;margin-top:2px;}
+
+  body.editing [data-edit]{outline:1.5px dashed var(--blue);outline-offset:3px;border-radius:4px;cursor:text;}
+  [data-edit]:focus{outline:1.5px solid var(--blue);}
+  .hint{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);color:#666;font-size:12px;text-align:center;max-width:90vw;}
+</style>
+<!-- krypt:phone:start -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Onyx">
+<meta name="theme-color" content="#E8E8ED">
+<link rel="manifest" href="../../assets/manifests/onyx-card.webmanifest">
+<link rel="apple-touch-icon" href="../../assets/icons/onyx-card-180.png">
+<link rel="icon" type="image/png" sizes="512x512" href="../../assets/icons/onyx-card-512.png">
+<link rel="stylesheet" href="../../assets/phone.css">
+<!-- krypt:phone:end -->
+</head>
+<body>
+
+<a class="back" href="../../index.html">← Collection</a>
+<div class="toolbar">
+  <button id="editBtn">✎ Edit</button>
+  <button id="resetBtn">↺ Reset</button>
+</div>
+
+<div class="phone">
+  <div class="statusbar">
+    <span>9:41</span>
+    <span class="right">
+      <span class="signal"><b></b><b></b><b></b><b></b></span>
+      <svg width="18" height="14" viewBox="0 0 18 14" fill="none"><path d="M9 3C11.5 3 13.8 4 15.5 5.6M9 7C10.4 7 11.7 7.6 12.7 8.5M4.3 5.6C6 4 8.3 3 9 3M6.3 8.5C7.3 7.6 8 7.4 9 7.4" stroke="#1c1c1e" stroke-width="1.6" stroke-linecap="round"/><circle cx="9" cy="11" r="1.2" fill="#1c1c1e"/></svg>
+      <span class="battery"><i></i></span>
+    </span>
+  </div>
+
+  <div class="appbar">
+    <div class="bk" id="backBtn"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>Wallet</div>
+    <div class="ttl" id="appTitle"></div>
+    <div class="more"><svg viewBox="0 0 24 24"><circle cx="6" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="18" cy="12" r="2"/></svg></div>
+  </div>
+
+  <div class="screen" id="screen">
+
+    <!-- ============ SUMMARY ============ -->
+    <div class="view on" data-view="summary" data-title="">
+      <div class="cardwrap">
+        <div class="onyxcard">
+          <!-- Onyx's mark: a cut gem. -->
+          <svg class="logo" viewBox="0 0 24 24"><path d="M12 2.6l8.2 4.7v9.4L12 21.4 3.8 16.7V7.3z" fill="#111"/><path d="M12 7.4l4 2.3v4.6l-4 2.3-4-2.3V9.7z" fill="#fff" opacity=".9"/></svg>
+          <svg class="nfc" viewBox="0 0 24 24" fill="none"><path d="M7 4a12 12 0 010 16M12 6a8 8 0 010 12M17 8a4 4 0 010 8" stroke="#9a9a9e" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <div class="nm" data-edit="holder">A. Kepler</div>
+          <div class="net"><i></i><i></i></div>
+        </div>
+      </div>
+
+      <div class="tile d1">
+        <div class="tile-h">Card Balance</div>
+        <div class="balrow">
+          <div class="big">$<span class="cu" data-edit="balance" data-count="1240.55" data-fmt="2">1,240.55</span></div>
+          <div class="status" data-edit="payStatus">No Payment Due · Paid</div>
+        </div>
+        <div class="payline">
+          <button class="paybtn" data-goto="balance">Pay</button>
+          <button class="paybtn sec" data-goto="balance">Show Balance Details</button>
+        </div>
+      </div>
+
+      <div class="tile d2" data-goto="spending" style="cursor:pointer">
+        <div class="trow">
+          <div class="ic" style="background:var(--shop)"><svg viewBox="0 0 24 24"><path d="M6 7h12l-1 13H7L6 7zM9 7a3 3 0 016 0" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="mid"><div class="t1">Spending</div><div class="t2" data-edit="spendPeriod">This month · 6 categories</div></div>
+          <div class="rt"><div class="r1">$<span data-edit="spendTotalMini">1,660</span></div></div>
+          <svg class="chev" viewBox="0 0 12 20"><path d="M2 2l8 8-8 8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+
+      <div class="tile d2" data-goto="dailycash" style="cursor:pointer">
+        <div class="trow">
+          <div class="ic" style="background:linear-gradient(135deg,#f6cf5b,#e07f26)"><svg viewBox="0 0 24 24"><path d="M12 3v18M8 8a3 3 0 013-2h2a3 3 0 010 6h-2a3 3 0 000 6h2a3 3 0 003-2" stroke-linecap="round"/></svg></div>
+          <div class="mid"><div class="t1">Daily Cash</div><div class="t2" data-edit="dcPeriod">Earned this month</div></div>
+          <div class="rt"><div class="r1">$<span data-edit="dcTotalMini">48.20</span></div></div>
+          <svg class="chev" viewBox="0 0 12 20"><path d="M2 2l8 8-8 8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+
+      <div class="tile d3">
+        <div class="tile-h">Latest Transactions</div>
+        <div id="summaryTx"></div>
+        <div class="seeall" data-goto="transactions"><span>See All</span><svg viewBox="0 0 12 20"><path d="M2 2l8 8-8 8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      </div>
+    </div>
+
+    <!-- ============ BALANCE ============ -->
+    <div class="view" data-view="balance" data-title="Card Balance">
+      <div class="tile d1">
+        <div class="tile-h">Card Balance</div>
+        <div class="balrow">
+          <div class="big">$<span data-edit="balance2">1,240.55</span></div>
+          <div class="status" data-edit="payStatus2">No Payment Due · Paid</div>
+        </div>
+        <div class="payline"><button class="paybtn">Pay Early</button></div>
+      </div>
+      <div class="tile d2">
+        <div class="trow"><div class="mid"><div class="t1">Available Credit</div></div><div class="rt"><div class="r1">$<span data-edit="avail">4,759.45</span></div></div></div>
+        <div class="trow"><div class="mid"><div class="t1">Credit Limit</div></div><div class="rt"><div class="r1">$<span data-edit="limit">6,000.00</span></div></div></div>
+        <div class="trow"><div class="mid"><div class="t1">APR</div></div><div class="rt"><div class="r1"><span data-edit="apr">19.24%</span></div></div></div>
+      </div>
+      <div class="tile d3">
+        <div class="tile-h">This Month</div>
+        <div class="weekly">
+          <div style="font-size:14px;color:var(--muted)">Spending by week</div>
+          <div class="bars" id="weekBars"></div>
+          <div class="xlabels" id="weekLabels"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ SPENDING (category wheel) ============ -->
+    <div class="view" data-view="spending" data-title="Spending">
+      <div class="spend-total">
+        <div class="lbl" data-edit="spendCaption">This month</div>
+        <div class="big">$<span class="cu" data-edit="spendTotal" data-count="1660" data-fmt="0">1,660</span></div>
+      </div>
+      <div class="wheelwrap"><svg viewBox="0 0 200 200" id="wheel"></svg></div>
+      <div class="tile d1"><div class="cat-list" id="catList"></div></div>
+      <div class="tile d2">
+        <div class="tile-h">Weekly Activity</div>
+        <div class="weekly">
+          <div class="bars" id="weekBars2"></div>
+          <div class="xlabels" id="weekLabels2"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ DAILY CASH ============ -->
+    <div class="view" data-view="dailycash" data-title="Daily Cash">
+      <div class="dc-hero">
+        <div class="ring"><svg viewBox="0 0 24 24"><path d="M12 2v20M8 8a3 3 0 013-2h2a3 3 0 010 6h-2a3 3 0 000 6h2a3 3 0 003-2" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+        <div class="lbl" data-edit="dcHeroLbl">Daily Cash earned this month</div>
+        <div class="big">$<span class="cu" data-edit="dcTotal" data-count="48.20" data-fmt="2">48.20</span></div>
+      </div>
+      <div class="tile d1"><div class="tile-h">Earned From</div><div id="dcList"></div></div>
+    </div>
+
+    <!-- ============ TRANSACTIONS ============ -->
+    <div class="view" data-view="transactions" data-title="Transactions">
+      <div class="tile d1"><div id="allTx"></div></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="hint">Tap Spending / Daily Cash / See All to drill in · back chevron returns · Toggle Edit (top-right) to change values</div>
+
+<script>
+/* ============================================================
+   DATA — fictional cardholder, merchants & amounts. Edit freely.
+   ============================================================ */
+const CAT={
+  food:{name:"Food & Drink", c:"#ff9500"},
+  shop:{name:"Shopping", c:"#ff2d55"},
+  groc:{name:"Groceries", c:"#34c759"},
+  trans:{name:"Transportation", c:"#007aff"},
+  ent:{name:"Entertainment", c:"#af52de"},
+  other:{name:"Other", c:"#8e8e93"},
+};
+const ICON={
+  food:`<path d="M6 3v7a2 2 0 004 0V3M8 3v18M18 3c-1.5 0-3 1.5-3 5s1.5 4 3 4v9" stroke-linecap="round" stroke-linejoin="round"/>`,
+  shop:`<path d="M6 7h12l-1 13H7L6 7zM9 7a3 3 0 016 0" stroke-linecap="round" stroke-linejoin="round"/>`,
+  groc:`<path d="M4 5h2l2 11h9l2-8H7M9 20a1 1 0 100 .01M17 20a1 1 0 100 .01" stroke-linecap="round" stroke-linejoin="round"/>`,
+  trans:`<path d="M5 16V8a2 2 0 012-2h10a2 2 0 012 2v8M4 16h16M7 19v1M17 19v1M7 11h10" stroke-linecap="round" stroke-linejoin="round"/>`,
+  ent:`<path d="M4 5h16v14H4zM4 9h16M9 5v4M15 5v4M9 19v-4M15 19v-4" stroke-linecap="round" stroke-linejoin="round"/>`,
+  other:`<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2" stroke-linecap="round"/>`,
+};
+
+const DEFAULT_DATA = {
+  holder:"A. Kepler",
+  balance:"1,240.55", balance2:"1,240.55",
+  payStatus:"No Payment Due · Paid", payStatus2:"No Payment Due · Paid",
+  spendPeriod:"This month · 6 categories", spendTotalMini:"1,660",
+  dcPeriod:"Earned this month", dcTotalMini:"48.20",
+  avail:"4,759.45", limit:"6,000.00", apr:"19.24%",
+  spendCaption:"This month", spendTotal:"1,660",
+  dcHeroLbl:"Daily Cash earned this month", dcTotal:"48.20",
+
+  /* spending by category (for the wheel + list) */
+  spending:[
+    {k:"shop", amt:520},
+    {k:"groc", amt:410},
+    {k:"food", amt:340},
+    {k:"trans", amt:180},
+    {k:"ent", amt:120},
+    {k:"other", amt:90},
+  ],
+
+  /* weekly spending bars */
+  weeks:[
+    {l:"W1", v:290}, {l:"W2", v:520}, {l:"W3", v:410}, {l:"W4", v:440},
+  ],
+
+  /* transactions: merchant, category key, amount, daily-cash % */
+  tx:[
+    {m:"Aurelia Store", k:"shop", d:"Aurelia", amt:"9.99", dc:"3"},
+    {m:"Greenline Market", k:"groc", d:"Groceries", amt:"64.20", dc:"3"},
+    {m:"Blue Bottle Coffee", k:"food", d:"Food & Drink", amt:"6.75", dc:"2"},
+    {m:"Ryde", k:"trans", d:"Transportation", amt:"18.40", dc:"2"},
+    {m:"Cartwell", k:"shop", d:"Shopping", amt:"88.30", dc:"2"},
+    {m:"Streamly", k:"ent", d:"Entertainment", amt:"15.99", dc:"1"},
+    {m:"Shell", k:"trans", d:"Transportation", amt:"52.10", dc:"2"},
+    {m:"Corner Grocer", k:"groc", d:"Groceries", amt:"41.85", dc:"2"},
+  ],
+};
+
+const KEY="onyxcard-dash-v1";
+let DATA=load();
+function load(){try{const s=localStorage.getItem(KEY);if(s)return{...structuredClone(DEFAULT_DATA),...JSON.parse(s)};}catch(e){}return structuredClone(DEFAULT_DATA);}
+function save(){localStorage.setItem(KEY,JSON.stringify(DATA));}
+function editing(){return document.body.classList.contains("editing");}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function money(n){return n.toLocaleString("en-US");}
+
+/* ---- transaction row markup ---- */
+function txRow(t,clickable){
+  const cat=CAT[t.k]||CAT.other;
+  return `<div class="trow">
+    <div class="ic" style="background:${cat.c}"><svg viewBox="0 0 24 24">${ICON[t.k]||ICON.other}</svg></div>
+    <div class="mid"><div class="t1">${esc(t.m)}</div><div class="t2"><span class="dc"><span class="coin"></span>${esc(t.dc)}% Daily Cash</span></div></div>
+    <div class="rt"><div class="r1">$${esc(t.amt)}</div></div>
+  </div>`;
+}
+function renderSummaryTx(){document.getElementById("summaryTx").innerHTML=DATA.tx.slice(0,3).map(t=>txRow(t)).join("");}
+function renderAllTx(){document.getElementById("allTx").innerHTML=DATA.tx.map(t=>txRow(t)).join("");}
+function renderDcList(){
+  document.getElementById("dcList").innerHTML=DATA.tx.map(t=>{
+    const cash=(parseFloat(t.amt.replace(/,/g,""))*parseFloat(t.dc)/100).toFixed(2);
+    const cat=CAT[t.k]||CAT.other;
+    return `<div class="trow">
+      <div class="ic" style="background:${cat.c}"><svg viewBox="0 0 24 24">${ICON[t.k]||ICON.other}</svg></div>
+      <div class="mid"><div class="t1">${esc(t.m)}</div><div class="t2">${esc(t.dc)}% Daily Cash</div></div>
+      <div class="rt"><div class="r1" style="color:#e07f26">+$${cash}</div></div>
+    </div>`;
+  }).join("");
+}
+
+/* ---- spending wheel (segmented SVG donut, always visible) ---- */
+/* Redraws just the ring. Rebuilding the legend too would replace the
+   element being typed into and drop the caret. */
+function redrawWheelOnly(){
+  const total=DATA.spending.reduce((s,x)=>s+x.amt,0)||1;
+  const r=78, cx=100, cy=100, circ=2*Math.PI*r, gap=6;
+  let off=0, segs="";
+  DATA.spending.forEach(x=>{
+    const cat=CAT[x.k]||CAT.other;
+    const len=(x.amt/total)*circ, dash=Math.max(0,len-gap);
+    segs+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${cat.c}" stroke-width="20"
+      stroke-dasharray="${dash.toFixed(1)} ${(circ-dash).toFixed(1)}" stroke-dashoffset="${(-off).toFixed(1)}" stroke-linecap="round"/>`;
+    off+=len;
+  });
+  document.getElementById("wheel").innerHTML=segs;
+  document.querySelectorAll("#catList .cat-row").forEach((row,i)=>{
+    const cp=row.querySelector(".cp");
+    if(cp&&DATA.spending[i])cp.textContent=Math.round(DATA.spending[i].amt/total*100)+"%";
+  });
+}
+function renderWheel(){
+  const total=DATA.spending.reduce((s,x)=>s+x.amt,0)||1;
+  const r=78, cx=100, cy=100, circ=2*Math.PI*r, gap=6;
+  let off=0, segs="";
+  DATA.spending.forEach(x=>{
+    const cat=CAT[x.k]||CAT.other;
+    const len=(x.amt/total)*circ;
+    const dash=Math.max(0,len-gap);
+    segs+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${cat.c}" stroke-width="20"
+      stroke-dasharray="${dash.toFixed(1)} ${(circ-dash).toFixed(1)}" stroke-dashoffset="${(-off).toFixed(1)}" stroke-linecap="round"/>`;
+    off+=len;
+  });
+  document.getElementById("wheel").innerHTML=segs;
+  // category legend
+  document.getElementById("catList").innerHTML=DATA.spending.map((x,i)=>{
+    const cat=CAT[x.k]||CAT.other, pct=Math.round(x.amt/total*100);
+    return `<div class="cat-row"><span class="sw" style="background:${cat.c}"></span><span class="cn">${esc(cat.name)}</span><span class="cv">$<span data-edit="sp-${i}-amt">${money(x.amt)}</span></span><span class="cp">${pct}%</span></div>`;
+  }).join("");
+}
+
+/* ---- weekly bars (both places) ---- */
+function renderWeeks(barsId,labId){
+  const max=Math.max(...DATA.weeks.map(w=>w.v))||1, hiIdx=DATA.weeks.reduce((mi,w,i,a)=>w.v>a[mi].v?i:mi,0);
+  document.getElementById(barsId).innerHTML=DATA.weeks.map((w,i)=>`<div class="bar ${i===hiIdx?"hi":""}" style="height:${Math.max(6,w.v/max*110)}px"></div>`).join("");
+  document.getElementById(labId).innerHTML=DATA.weeks.map(w=>`<span>${esc(w.l)}</span>`).join("");
+}
+
+/* ---- count-up (visible-only) ---- */
+function fmtNum(v,fmt){
+  if(fmt==="2") return v.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+  return Math.round(v).toLocaleString("en-US");
+}
+function countUp(){
+  document.querySelectorAll(".cu").forEach(el=>{
+    if(el.dataset.done) return;
+    const target=parseFloat(String(el.dataset.count).replace(/,/g,"")); if(isNaN(target)) return;
+    const fmt=el.dataset.fmt||"n", dur=1100, start=performance.now();
+    function step(now){
+      const p=Math.min((now-start)/dur,1), e=1-Math.pow(1-p,3);
+      el.textContent=fmtNum(target*e,fmt);
+      if(p<1) requestAnimationFrame(step);
+      else{ el.textContent=fmtNum(target,fmt); el.dataset.done="1"; }
+    }
+    requestAnimationFrame(step);
+  });
+}
+function maybeCountUp(){
+  if(document.visibilityState==="visible") countUp();
+  else document.addEventListener("visibilitychange",function h(){
+    if(document.visibilityState==="visible"){countUp();document.removeEventListener("visibilitychange",h);}
+  });
+}
+
+/* ---- editing ---- */
+function bindEdits(){
+  document.querySelectorAll("[data-edit]").forEach(el=>{
+    el.setAttribute("contenteditable",editing());
+    el.oninput=()=>{
+      const k=el.getAttribute("data-edit");
+      // Category amounts feed the spending wheel — the donut is drawn
+      // from these numbers, so it has to be redrawn when they change.
+      const m=k.match(/^sp-(\d+)-amt$/);
+      if(m){
+        DATA.spending[+m[1]].amt=parseFloat(el.textContent.replace(/[^\d.]/g,""))||0;
+        save();
+        const seg=document.querySelectorAll("#wheel circle"), keep=el.textContent;
+        redrawWheelOnly();
+        return;
+      }
+      DATA[k]=el.textContent;save();
+    };
+  });
+}
+document.getElementById("editBtn").addEventListener("click",function(){
+  const on=document.body.classList.toggle("editing");
+  this.classList.toggle("on",on);this.textContent=on?"✓ Done":"✎ Edit";bindEdits();
+});
+document.getElementById("resetBtn").addEventListener("click",()=>{
+  if(confirm("Reset this dashboard to its original values?")){
+    localStorage.removeItem(KEY);DATA=structuredClone(DEFAULT_DATA);
+    renderAll();restoreScalars();bindEdits();
+  }
+});
+function restoreScalars(){
+  document.querySelectorAll("[data-edit]").forEach(el=>{
+    const k=el.getAttribute("data-edit");if(DATA[k]!==undefined)el.textContent=DATA[k];
+  });
+}
+
+/* ---- drill-down router ---- */
+function showView(name){
+  document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.dataset.view===name));
+  const cur=document.querySelector('.view[data-view="'+name+'"]');
+  const title=cur?cur.dataset.title:"";
+  document.getElementById("appTitle").textContent=title;
+  document.getElementById("backBtn").style.visibility=(name==="summary")?"hidden":"visible";
+  document.getElementById("screen").scrollTop=0;
+  bindEdits();
+}
+document.querySelectorAll("[data-goto]").forEach(el=>el.addEventListener("click",e=>{
+  if(editing())return; e.stopPropagation(); showView(el.dataset.goto);
+}));
+document.getElementById("backBtn").addEventListener("click",()=>{if(!editing())showView("summary");});
+
+/* ---- init ---- */
+function renderAll(){
+  renderSummaryTx();renderAllTx();renderDcList();renderWheel();
+  renderWeeks("weekBars","weekLabels");renderWeeks("weekBars2","weekLabels2");
+}
+renderAll();restoreScalars();bindEdits();maybeCountUp();
+</script>
+<!-- krypt:app:start -->
+<script src="../../assets/krypt-app.js" data-root="../../" data-label="Onyx" defer></script>
+<script src="../../assets/krypt-desktop.js" defer></script>
+<script src="../../assets/push.js" defer></script>
+<!-- krypt:app:end -->
+</body>
+</html>

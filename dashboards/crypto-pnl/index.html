@@ -9,7 +9,7 @@
   /* ============================================================
      FUTURES PnL "FLEX CARD" — a learning recreation (TEST demo).
      The shareable position card traders screenshot. Two skins you
-     can toggle: Binance (black/yellow) and Hyperliquid (dark/mint).
+     can toggle: Bitwave (black/yellow) and Hyperflux (dark/mint).
      Positions list → tap Share → the card. Data-driven (DEFAULT_DATA).
      The QR is a DECORATIVE, NON-FUNCTIONAL pattern (encodes nothing,
      links nowhere); referral codes are fictional. Clearly TEST.
@@ -17,7 +17,7 @@
   :root{
     --bg:#0b0e11; --card:#161b22; --card2:#1e242d; --line:#262d37;
     --text:#eef1f4; --muted:#8b95a1; --dim:#5a636e;
-    --up:#0ecb81; --down:#f6465d; --yellow:#f0b90b; --mint:#7cf7d4;
+    --up:#0ecb81; --down:#f6465d; --yellow:#E8A21E; --mint:#7cf7d4;
     --font:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
@@ -104,15 +104,15 @@
   .pc-qr{width:78px;height:78px;border-radius:8px;padding:5px;flex:0 0 auto;background:#fff;}
   .pc-qr svg{display:block;width:100%;height:100%;}
 
-  /* Binance skin */
-  .pnlcard.binance{background:#0c0d10;color:#eef1f4;border:1px solid #23262d;}
-  .pnlcard.binance .pc-brand{color:var(--yellow);}
-  .pnlcard.binance .pc-brand .bsub{color:#eef1f4;}
-  .pnlcard.binance::before{content:"";position:absolute;right:-40px;top:-30px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(240,185,11,.12),transparent 70%);}
-  .pnlcard.binance .pc-roi.up{color:var(--up);} .pnlcard.binance .pc-roi.down{color:var(--down);}
-  .pnlcard.binance .pc-ref .rv{color:var(--yellow);}
+  /* Bitwave skin */
+  .pnlcard.bitwave{background:#0c0d10;color:#eef1f4;border:1px solid #23262d;}
+  .pnlcard.bitwave .pc-brand{color:var(--yellow);}
+  .pnlcard.bitwave .pc-brand .bsub{color:#eef1f4;}
+  .pnlcard.bitwave::before{content:"";position:absolute;right:-40px;top:-30px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(240,185,11,.12),transparent 70%);}
+  .pnlcard.bitwave .pc-roi.up{color:var(--up);} .pnlcard.bitwave .pc-roi.down{color:var(--down);}
+  .pnlcard.bitwave .pc-ref .rv{color:var(--yellow);}
 
-  /* Hyperliquid skin */
+  /* Hyperflux skin */
   .pnlcard.hyper{background:linear-gradient(160deg,#0a1f1c,#07100f);color:#eafffb;border:1px solid #17332e;}
   .pnlcard.hyper .pc-brand{color:var(--mint);}
   .pnlcard.hyper .pc-brand .bsub{color:#eafffb;}
@@ -182,7 +182,7 @@
 
     <!-- ============ PnL CARD ============ -->
     <div class="view" data-view="card">
-      <div class="skin" id="skinToggle"><span data-skin="binance" class="on">Binance</span><span data-skin="hyper">Hyperliquid</span></div>
+      <div class="skin" id="skinToggle"><span data-skin="bitwave" class="on">Bitwave</span><span data-skin="hyper">Hyperflux</span></div>
       <div id="cardHost"></div>
       <div class="shareact"><button class="save">Save Image</button><button class="post">Share</button></div>
       <div class="card-note">Decorative card · the QR encodes nothing &amp; links nowhere · referral code is fictional</div>
@@ -191,7 +191,7 @@
   </div>
 </div>
 
-<div class="hint">Positions → tap Share on a position · toggle Binance / Hyperliquid · Toggle Edit to change pair, ROI, prices &amp; referral</div>
+<div class="hint">Positions → tap Share on a position · toggle Bitwave / Hyperflux · Toggle Edit to change pair, ROI, prices &amp; referral</div>
 
 <script>
 /* ============================================================
@@ -199,7 +199,7 @@
    ============================================================ */
 const DEFAULT_DATA = {
   equity:"47,820.66", uPnl:"+6,564.26", uRoe:"+15.9%",
-  skin:"binance", ref:"WRAP4X8Z",
+  skin:"bitwave", ref:"WRAP4X8Z",
   positions:[
     {pair:"BTCUSDT", side:"Long", lev:"20", size:"0.850 BTC", entry:"58,420.0", mark:"63,180.5", pnl:"+4,046.42", roi:"+1284.50", up:true},
     {pair:"ETHUSDT", side:"Long", lev:"10", size:"12.40 ETH", entry:"1,720.0", mark:"1,904.1", pnl:"+2,282.84", roi:"+107.00", up:true},
@@ -215,7 +215,7 @@ function save(){localStorage.setItem(KEY,JSON.stringify(DATA));}
 function editing(){return document.body.classList.contains("editing");}
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 
-let posIdx=0, skin="binance";
+let posIdx=0, skin="bitwave";
 
 /* ---- decorative QR (NON-FUNCTIONAL: 3 finder patterns + deterministic noise) ---- */
 function qr(px,seed,dark){
@@ -254,8 +254,8 @@ function renderCard(){
   const p=DATA.positions[posIdx];if(!p)return;
   const dark=skin==="hyper"?"#0a1f1c":"#0c0d10";
   const brand=skin==="hyper"
-    ? `<span style="width:22px;height:22px;border-radius:6px;background:var(--mint);display:inline-flex;align-items:center;justify-content:center;"><svg viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M6 5v14M18 5v14M6 12h12" stroke="#04211b" stroke-width="2.9" fill="none" stroke-linecap="round"/></svg></span> Hyperliquid`
-    : `<span style="width:22px;height:22px;border-radius:5px;background:var(--yellow);display:inline-flex;align-items:center;justify-content:center;transform:rotate(45deg);"><span style="width:9px;height:9px;background:#0c0d10;transform:rotate(0)"></span></span> BINANCE <span class="bsub">FUTURES</span>`;
+    ? `<span style="width:22px;height:22px;border-radius:6px;background:var(--mint);display:inline-flex;align-items:center;justify-content:center;"><svg viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M6 5v14M18 5v14M6 12h12" stroke="#04211b" stroke-width="2.9" fill="none" stroke-linecap="round"/></svg></span> Hyperflux`
+    : `<span style="width:22px;height:22px;border-radius:5px;background:var(--yellow);display:inline-flex;align-items:center;justify-content:center;transform:rotate(45deg);"><span style="width:9px;height:9px;background:#0c0d10;transform:rotate(0)"></span></span> BITWAVE <span class="bsub">FUTURES</span>`;
   document.getElementById("cardHost").innerHTML=`
     <div class="pnlcard ${skin}">
       <div class="pc-brand">${brand}</div>
@@ -297,7 +297,7 @@ function bindEdits(){
   });
 }
 document.getElementById("editBtn").addEventListener("click",function(){const on=document.body.classList.toggle("editing");this.classList.toggle("on",on);this.textContent=on?"✓ Done":"✎ Edit";bindEdits();});
-document.getElementById("resetBtn").addEventListener("click",()=>{if(confirm("Reset this dashboard to its original values?")){localStorage.removeItem(KEY);DATA=structuredClone(DEFAULT_DATA);skin="binance";document.querySelectorAll("#skinToggle span").forEach(x=>x.classList.toggle("on",x.dataset.skin==="binance"));renderPositions();renderCard();restoreScalars();bindEdits();}});
+document.getElementById("resetBtn").addEventListener("click",()=>{if(confirm("Reset this dashboard to its original values?")){localStorage.removeItem(KEY);DATA=structuredClone(DEFAULT_DATA);skin="bitwave";document.querySelectorAll("#skinToggle span").forEach(x=>x.classList.toggle("on",x.dataset.skin==="bitwave"));renderPositions();renderCard();restoreScalars();bindEdits();}});
 function restoreScalars(){document.querySelectorAll("[data-edit]").forEach(el=>{const k=el.getAttribute("data-edit");if(/^card-/.test(k))return;if(DATA[k]!==undefined)el.textContent=DATA[k];});}
 
 /* ---- skin toggle ---- */
@@ -314,7 +314,7 @@ function showView(name){
 document.getElementById("backBtn").addEventListener("click",()=>{if(!editing())showView("positions");});
 
 /* ---- init ---- */
-skin=DATA.skin||"binance";
+skin=DATA.skin||"bitwave";
 document.querySelectorAll("#skinToggle span").forEach(x=>x.classList.toggle("on",x.dataset.skin===skin));
 renderPositions();renderCard();restoreScalars();bindEdits();maybeCountUp();
 </script>

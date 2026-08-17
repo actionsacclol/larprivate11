@@ -1,0 +1,30 @@
+{
+  "name": "Trailmark — Krypt LARP",
+  "short_name": "Trailmark",
+  "description": "Trailmark — a fictional Fitness Social mock-up. Part of the Krypt LARP collection.",
+  "start_url": "../../dashboards/trailmark/index.html",
+  "scope": "../../",
+  "display": "standalone",
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
+  "background_color": "#FFFFFF",
+  "theme_color": "#E8762A",
+  "icons": [
+    {
+      "src": "../icons/trailmark-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../icons/trailmark-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
