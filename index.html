@@ -120,35 +120,31 @@
 
   /* The primary button keeps a subtle violet fill; the "make your own"
      button is the single amber thing on the page, outlined rather than
-     filled so it reads as the second choice it is. */
+     filled so it reads as the second choice it is.
+
+     This slot used to be a "Watch the tutorial" button that opened an
+     embedded video. That video went away, so the primary action moved
+     to about.html — which explains the same things, works offline, and
+     cannot 404. There is a video again now, and it sits *under* that
+     rather than in front of it, for the same reason: it lives on
+     YouTube, so it is the one action here that needs a connection and
+     can rot. Nothing is embedded — an iframe would put a third-party
+     player, and its requests, on the front page of an app whose whole
+     claim is that it doesn't phone home. It opens in the browser. */
   .tutbtn{background:var(--k-accent-strong);border-color:transparent;color:#fff;
     box-shadow:0 10px 26px rgba(139,124,246,.26);}
   .tutbtn:hover{background:#8b4df0;border-color:transparent;}
   .tutbtn .k-ic{background:rgba(255,255,255,.16);}
-  .tutbtn .k-ic svg{width:13px;height:13px;margin-left:2px;}
+  .tutbtn .k-ic svg{width:16px;height:16px;}
+
+  /* Third in the ladder: plain surface, no fill, so it reads after the
+     violet and the amber rather than competing with them. */
+  .vidbtn .k-ic{background:rgba(255,255,255,.08);}
+  .vidbtn .k-ic svg{fill:currentColor;stroke:none;}
 
   .minebtn .k-ic{background:rgba(240,168,46,.14);}
   .minebtn .k-ic svg{fill:none;stroke:currentColor;stroke-width:1.9;
     stroke-linecap:round;stroke-linejoin:round;}
-
-  /* ---- tutorial video overlay ----
-     Uses the shared .k-veil / .k-modal shell; only the 16:9 frame and
-     its placeholder are local. The <iframe> is created on open, so
-     nothing talks to Vista unless the user asks for it. */
-  .tutcard{max-width:900px;overflow:hidden;}
-  .tutframe{position:relative;aspect-ratio:16/9;background:#000;}
-  .tutframe iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
-  .tutph{
-    position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
-    justify-content:center;gap:10px;text-align:center;padding:28px;
-    background:repeating-linear-gradient(45deg,#17171d,#17171d 12px,#1b1b22 12px,#1b1b22 24px);
-    color:var(--muted);font-size:14px;line-height:1.6;
-  }
-  .tutph b{color:var(--text);font-size:15px;}
-  .tutph code{
-    background:#0c0c10;border:1px solid #2a2a34;border-radius:6px;padding:3px 8px;
-    font:600 12.5px var(--k-mono);color:#c9c9d6;
-  }
 
   @media (max-width:900px){
     header{grid-template-columns:1fr;gap:28px;padding-top:28px;}
@@ -388,14 +384,19 @@
          outbound links moved up to the nav bar so this rail is only
          the things that do something inside the app. -->
     <div class="rail">
-      <button class="k-btn k-btn--lg tutbtn" id="tutBtn" type="button">
-        <span class="k-ic"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 3.5l14 8.5-14 8.5z"/></svg></span>
-        <span>Watch the tutorial<small>How it works, on desktop and on your phone</small></span>
-      </button>
+      <a class="k-btn k-btn--lg tutbtn" href="about.html">
+        <span class="k-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><circle cx="12" cy="7.9" r="1.05" fill="currentColor" stroke="none"/></svg></span>
+        <span>How it works<small>The controls, editing, and getting it on your phone</small></span>
+      </a>
 
       <a class="k-btn k-btn--lg k-btn--amber minebtn" href="custom/index.html">
         <span class="k-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M14.5 5.5l4 4"/></svg></span>
         <span>Make your own<small id="mineCta">Screenshot an app, let AI rebuild it, import it</small></span>
+      </a>
+
+      <a class="k-btn k-btn--lg vidbtn" data-ext="https://www.youtube.com/watch?v=jPjsNWckGiQ" href="https://www.youtube.com/watch?v=jPjsNWckGiQ">
+        <span class="k-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.6v12.8a1 1 0 0 0 1.52.85l10.4-6.4a1 1 0 0 0 0-1.7L9.52 4.75A1 1 0 0 0 8 5.6z"/></svg></span>
+        <span>Watch the guide<small>The whole thing in one video — opens on YouTube</small></span>
       </a>
 
       <div class="links">
@@ -1195,17 +1196,6 @@
   </footer>
 </div>
 
-<div class="k-veil" id="tutVeil" role="dialog" aria-modal="true" aria-label="Tutorial video">
-  <div class="k-modal tutcard">
-    <div class="k-modal-head">
-      <h3 id="tutTitle">Krypt LARP — tutorial</h3>
-      <button class="k-x" id="tutClose" type="button" aria-label="Close">✕</button>
-    </div>
-    <div class="tutframe" id="tutFrame"></div>
-    <div class="k-modal-foot"><a class="k-btn k-btn--plain" id="tutOpen">Open on Vista ↗</a></div>
-  </div>
-</div>
-
 <!-- ============================================================
      WELCOME — first visit only.
 
@@ -1247,77 +1237,13 @@
     </div>
     <div class="k-modal-foot">
       <button class="k-btn k-btn--primary" id="welGo" type="button">Got it — show me the dashboards</button>
+      <a class="k-btn" data-ext="https://www.youtube.com/watch?v=jPjsNWckGiQ" href="https://www.youtube.com/watch?v=jPjsNWckGiQ">Watch the guide</a>
       <a class="k-btn" href="about.html">Read the longer version</a>
     </div>
   </div>
 </div>
 
 <script>
-  /* ============================================================
-     TUTORIAL VIDEO — set `id` to your Vista video id and it goes live.
-     That's the 11 characters after "watch?v=" in the URL, e.g.
-     https://www.vista.tv/watch?v=dQw4w9WgXcQ  ->  "dQw4w9WgXcQ"
-
-     While it's left as PLACEHOLDER the overlay explains itself instead
-     of embedding a dead player.
-     ============================================================ */
-  const TUTORIAL = {
-    id: "8wlHYFw0vrg",
-    title: "Krypt LARP — tutorial",
-  };
-
-  (function initTutorial(){
-    const veil  = document.getElementById("tutVeil");
-    const frame = document.getElementById("tutFrame");
-    const open  = document.getElementById("tutOpen");
-    const ready = TUTORIAL.id && TUTORIAL.id !== "PLACEHOLDER";
-    const url   = "https://www.vista.tv/watch?v=" + TUTORIAL.id;
-
-    document.getElementById("tutTitle").textContent = TUTORIAL.title;
-    open.style.display = ready ? "" : "none";
-    open.addEventListener("click", () => {
-      // In the desktop app this has to leave the app deliberately;
-      // in a plain browser it's an ordinary new tab.
-      if (window.krypt && window.krypt.app) window.krypt.app.openExternal(url);
-      else window.open(url, "_blank", "noopener");
-    });
-
-    function show(){
-      if (!frame.firstChild) {
-        if (ready) {
-          const f = document.createElement("iframe");
-          // nocookie host + no related videos from other channels
-          f.src = "https://www.vista-nocookie.com/embed/" + encodeURIComponent(TUTORIAL.id) +
-                  "?rel=0&modestbranding=1&autoplay=1";
-          f.title = TUTORIAL.title;
-          f.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture";
-          f.allowFullscreen = true;
-          f.referrerPolicy = "strict-origin-when-cross-origin";
-          frame.appendChild(f);
-        } else {
-          frame.innerHTML =
-            '<div class="tutph"><b>No tutorial video set yet</b>' +
-            '<div>Put your Vista video id in <code>TUTORIAL.id</code> ' +
-            'near the bottom of <code>index.html</code> and this becomes the player.</div></div>';
-        }
-      }
-      veil.classList.add("open");
-    }
-
-    function hide(){
-      veil.classList.remove("open");
-      // Tear the iframe down so the video actually stops.
-      if (ready) frame.innerHTML = "";
-    }
-
-    document.getElementById("tutBtn").addEventListener("click", show);
-    document.getElementById("tutClose").addEventListener("click", hide);
-    veil.addEventListener("click", e => { if (e.target === veil) hide(); });
-    document.addEventListener("keydown", e => {
-      if (e.key === "Escape" && veil.classList.contains("open")) hide();
-    });
-  })();
-
   /* ============================================================
      GALLERY — search, category and mobile/desktop filtering.
 
@@ -1504,10 +1430,20 @@
      Shown once, ever. The gesture that opens the control panel is the
      one thing a user cannot discover by looking, so it gets said out
      loud before they go hunting — and then never again.
-     ============================================================ */
+
+     This card is the *browser and phone* welcome. The desktop app has
+     its own — three screens, in krypt-desktop.js, driven by a flag in
+     the settings file so the Help menu can clear it. Both used to fire
+     on a desktop first run, one on top of the other; this one now
+     stands down when that one is present, and the header link hands
+     off to it rather than opening a second, thinner version of the
+     same thing. */
   (function initWelcome(){
     const KEY  = "krypt-welcome";
     const veil = document.getElementById("welVeil");
+    // The desktop build's own onboarding, if this is the desktop build.
+    const KD = () => (window.kryptDesktop && window.kryptDesktop.showOnboarding) || null;
+    const DESKTOP = !!(window.krypt && window.krypt.isDesktop);
 
     function open(){
       veil.classList.add("open");
@@ -1527,8 +1463,15 @@
 
     document.getElementById("replayWelcome").addEventListener("click", e => {
       e.preventDefault();
-      open();
+      // Same link, whichever build you are in: on the desktop it replays
+      // the three-screen version, which is the one that ran on first run.
+      const show = KD();
+      if (show) show(); else open();
     });
+
+    // On the desktop, krypt-desktop.js pulls its own onboarding flag on
+    // load and shows the three-screen version. Nothing to do here.
+    if (DESKTOP) return;
 
     let seen;
     // A blocked localStorage reads as "seen", so a private window gets

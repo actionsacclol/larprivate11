@@ -76,6 +76,8 @@
     '.kd-link:hover{filter:brightness(1.12);}',
     '.kd-link.dc{background:linear-gradient(120deg,#5865F2,#7A84FF);}',
     '.kd-link.kc{background:linear-gradient(120deg,#0EA5A5,#22D3EE);}',
+    '.kd-link.yt{background:linear-gradient(120deg,#D9364C,#F0655C);}',
+    '.kd-link.yt .g svg{fill:#fff;stroke:none;}',
     '.kd-link .t{display:block;font-size:13px;font-weight:700;color:#fff;}',
     '.kd-link .d{display:block;font-size:11.5px;color:rgba(255,255,255,.82);margin-top:2px;}',
     '.kd-link .g{width:26px;height:26px;border-radius:50%;flex:none;',
@@ -162,6 +164,15 @@
           'browser-window frames, toggled in the gallery.</div></div>' +
         '<div class="kd-feat"><div class="t">Self-contained</div><div class="d">One HTML file each. ' +
           'No build step, nothing phones home.</div></div>' +
+        '</div>' +
+        /* Offered at the start, where "I would rather be shown this"
+           is a live thought. It leaves the app — nothing is embedded. */
+        '<div class="kd-links">' +
+          '<a class="kd-link yt" data-ext="https://www.youtube.com/watch?v=jPjsNWckGiQ">' +
+            '<span class="g"><svg viewBox="0 0 24 24"><path d="M8 5.6v12.8a1 1 0 0 0 1.52.85l10.4-6.4' +
+            'a1 1 0 0 0 0-1.7L9.52 4.75A1 1 0 0 0 8 5.6z"/></svg></span>' +
+            '<span><span class="t">Watch the guide</span>' +
+            '<span class="d">The whole app in one video, on YouTube</span></span></a>' +
         '</div>' +
         '<div class="kd-note"><span class="i">!</span><span class="x">Every screen carries a ' +
         '<b>LARP · not a real app</b> mark in the corner, so a screenshot still says what it ' +
@@ -362,6 +373,12 @@
 
   // Help -> Show the welcome guide pushes this.
   K.onboarding.onShow(showOnboarding);
+
+  /* The gallery's own "Show the welcome again" link defers to this when
+     it is here, so the desktop replays the three screens it was actually
+     shown rather than the browser card it never saw. Exported rather
+     than duplicated for the same reason the panel faces are. */
+  window.kryptDesktop = { showOnboarding: showOnboarding };
 
   // First run is a *pull*, not a push. The main process used to fire
   // 'krypt:showOnboarding' on ready-to-show, which raced this deferred

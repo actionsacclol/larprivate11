@@ -137,62 +137,143 @@
       <span class="hint" id="hint">attach your screenshot first</span>
       <button class="copy" id="copy" type="button">Copy</button>
     </div>
-    <pre id="prompt">Rebuild the interface in the attached screenshot as a single self-contained HTML file.
+    <pre id="prompt">Rebuild the interface in the attached screenshot as a single self-contained HTML file:
+a fake phone dashboard, dense enough to scroll through, with every value on screen
+editable in place. It is going into Krypt LARP, which supplies the control panel.
 
 FORMAT
 - One .html file. No external files, no build step, no frameworks, no CDN links.
-- All CSS in one <style> tag and all JS in one <script> tag, in that file.
-- No network requests of any kind at runtime. Draw icons as inline SVG. If you
+- All CSS in one &lt;style&gt; tag and all JS in one &lt;script&gt; tag, in that file.
+- No network requests of any kind at runtime. Draw every icon as inline SVG. If you
   need a font, use the system stack: -apple-system, BlinkMacSystemFont,
   "Segoe UI", Roboto, sans-serif.
-- Plain ES5-ish JavaScript, no modules, no imports.
+- Plain ES5-ish JavaScript: var and function, no modules, no imports, no optional
+  chaining.
+- Expect 700-1200 lines. A thin sketch is the usual failure. Build the whole screen.
 
 LAYOUT
-- Wrap the whole mock in <div class="phone"> sized 390x844 with rounded corners,
+- Wrap the whole mock in &lt;div class="phone"&gt; sized 390x844 with rounded corners,
   a dark bezel and a drop shadow, centred on a near-black page background. That
   is the desktop presentation.
-- Add this so it also fills a real phone screen:
+- Add this so it also fills a real phone screen and drops the desktop chrome:
     @media (max-width: 560px){
       html,body{height:100%;overflow:hidden}
       body{padding:0!important;display:block!important;background:#000!important}
       .phone{width:100%!important;max-width:none!important;height:100dvh!important;
-             border-radius:0!important;box-shadow:none!important;margin:0!important}
+             min-height:100dvh!important;border-radius:0!important;
+             box-shadow:none!important;margin:0!important}
+      .phone::before,.phone::after{display:none!important}
+      .toolbar,.back,.caption{display:none!important}
     }
+- Pad for the hardware: env(safe-area-inset-top) above the status bar and
+  env(safe-area-inset-bottom) under the bottom nav.
 - Inside the phone: a fake status bar (time, signal, wifi, battery as inline SVG),
   then the app content, then the bottom nav if the screenshot has one. Give the
   scrolling region its own overflow so the frame itself never scrolls.
 
-BEHAVIOUR
-- Recreate the layout, spacing, type scale and colour relationships you can see.
-  Match the structure, not the pixels — this is a study, not a trace.
+HOW MUCH TO BUILD
+The screenshot is one state of an app. Build the app around it.
+- Every tab in the bottom nav is a real view with its own content. Four tabs means
+  four screens, not one screen and three empty states.
+- The main list runs 8-12 rows, not 3. Sections, dividers, day headers, a
+  "See all" — whatever that kind of app really has.
+- One thing opens: a row expands, a sheet slides up, a chip filters the list.
+- Fake data with texture: invented people and merchants, non-round amounts,
+  timestamps that aren't all 9:41, a couple of long names that have to truncate.
 - Make it feel alive: entrance animations on cards, a count-up on the headline
   number, a chart that draws itself in. Pure CSS or a few lines of JS. Nothing
   that loops forever.
-- Any tab bar or segmented control in the screenshot should actually switch views.
+- Recreate the layout, spacing, type scale and colour relationships you can see.
+  Match the structure, not the pixels — this is a study, not a trace.
 
 EDIT MODE — get this exactly right, the app drives it
 Krypt LARP attaches its own control panel to whatever you import. Tapping three
-times anywhere opens the same menu the built-in dashboards use, and its Edit and
-Reset rows work by finding and clicking the two buttons below. Use these exact
-ids and this exact class name and your dashboard behaves like a built-in one;
-miss them and it still runs, it just won't be editable from the panel.
+times anywhere opens the same menu the built-in dashboards use; its Edit and Reset
+rows work by finding and clicking the two buttons below. Match these names and your
+dashboard behaves like a built-in one.
 
-- Put <button id="editBtn">Edit</button> and <button id="resetBtn">Reset</button>
-  at the top of the page, outside the phone frame. Exactly those ids.
+- Put the two buttons at the top of the page, outside the phone frame:
+    &lt;div class="toolbar"&gt;
+      &lt;button id="editBtn"&gt;Edit&lt;/button&gt;
+      &lt;button id="resetBtn"&gt;Reset&lt;/button&gt;
+    &lt;/div&gt;
+  Exactly those ids. The media query above hides them on a phone; the panel still
+  clicks them.
 - Edit toggles the class "editing" on document.body. Exactly that name.
-- Mark every value a person might want to change with data-edit="someKey" —
-  balances, names, percentages, dates, labels, times, chart figures. Be
-  generous: if someone might plausibly want it different, give it one.
-- While editing, every [data-edit] gets contenteditable="true" and a visible
-  dashed outline.
-- On blur, save that element's text into one localStorage object keyed by the
-  data-edit name. Reload restores it. Reset clears the key and restores defaults.
-- Keep all default values in one DEFAULT_DATA object at the top of the script so
-  they are easy to find and change.
-- Use localStorage normally. Each imported dashboard gets its own private store,
-  so a plain key like "state" is fine and cannot collide with anything else.
-- Don't add your own floating corner buttons, settings panel or currency
-  switcher — the app supplies all of that. Just the two buttons above.
+- Mark every value a person might plausibly want to change with data-edit="key" —
+  balances, names, percentages, dates, labels, times, chart figures, the status
+  bar clock, the nav labels. Be generous. A screen with four editable values is
+  the second usual failure; forty is right.
+- Rows rendered from an array get indexed keys: data-edit="rows-0-amt". Never
+  hand-write a list you also keep in DATA — render it, so Reset can rebuild it.
+- Style it: body.editing [data-edit] gets a dashed outline, offset a few px.
+
+Use this wiring as written:
+
+    var DEFAULT_DATA = {
+      balance: "6,240.18",
+      owner: "Ava Lindqvist",
+      rows: [
+        { name:"Nordvik Coffee", when:"Today 08:14", amt:"-4.20",   dir:"out" },
+        { name:"Marta Aylward",  when:"Yesterday",   amt:"+180.00", dir:"in"  }
+      ]
+    };
+    var STORE_KEY = "yourname-v1";
+    var DATA = load();
+
+    function clone(o){ return JSON.parse(JSON.stringify(o)); }
+    function load(){
+      try { var s = localStorage.getItem(STORE_KEY);
+            if (s) { var j = JSON.parse(s), d = clone(DEFAULT_DATA);
+                     for (var k in j) d[k] = j[k]; return d; } } catch(e){}
+      return clone(DEFAULT_DATA);
+    }
+    function save(){ try { localStorage.setItem(STORE_KEY, JSON.stringify(DATA)); } catch(e){} }
+    function editing(){ return document.body.classList.contains("editing"); }
+
+    /* Call after every render and every toggle — new nodes need binding too. */
+    function bindEdits(){
+      var els = document.querySelectorAll("[data-edit]");
+      for (var i = 0; i &lt; els.length; i++) (function(el){
+        el.setAttribute("contenteditable", editing() ? "true" : "false");
+        el.oninput = function(){
+          var k = el.getAttribute("data-edit"), v = el.textContent, m;
+          if (m = k.match(/^rows-(\d+)-(\w+)$/)) DATA.rows[+m[1]][m[2]] = v;
+          else DATA[k] = v;
+          save();
+        };
+      })(els[i]);
+    }
+
+    /* Saved values back into the static nodes, before anything animates. */
+    function restore(){
+      var els = document.querySelectorAll("[data-edit]");
+      for (var i = 0; i &lt; els.length; i++){
+        var k = els[i].getAttribute("data-edit");
+        if (DATA[k] !== undefined) els[i].textContent = DATA[k];
+      }
+    }
+
+    document.getElementById("editBtn").addEventListener("click", function(){
+      var on = document.body.classList.toggle("editing");
+      this.textContent = on ? "Done" : "Edit";
+      bindEdits();
+    });
+    document.getElementById("resetBtn").addEventListener("click", function(){
+      try { localStorage.removeItem(STORE_KEY); } catch(e){}
+      DATA = clone(DEFAULT_DATA);
+      renderAll(); restore(); bindEdits();
+    });
+
+    renderAll(); restore(); bindEdits();
+
+- renderAll() is yours: it rebuilds every list in the mock out of DATA.
+- Keep every default in that one DEFAULT_DATA object at the top of the script.
+- localStorage works normally. Each imported dashboard gets its own private store,
+  so a plain key is fine and cannot collide with anything else.
+- Don't add your own floating corner buttons, settings panel, currency switcher,
+  "back to gallery" link or watermark — the app supplies all of that. Just the
+  two buttons above.
 
 NAMING — important
 - Invent the product. Do not use the real company's name, logo, wordmark or
@@ -200,7 +281,16 @@ NAMING — important
   off the one the real brand is known for.
 - Give it a plausible fictional name and a matching lettermark or simple
   geometric logo drawn as inline SVG.
+- Put &lt;meta name="theme-color" content="#yourAccent"&gt; in the head — the app
+  draws the home-screen tile from the name and the colour it finds there.
 - Fake data only: invented people, invented merchants, invented amounts.
+
+BEFORE YOU ANSWER, CHECK
+- Every bottom-nav tab switches to real content.
+- More than thirty [data-edit] values, list rows included.
+- Edit outlines them, typing sticks after a reload, Reset puts the defaults back.
+- Nothing loads over the network. Nothing scrolls the page outside the phone.
+- No real brand names anywhere.
 
 Return the complete file in one code block, nothing else.</pre>
   </div>
@@ -231,6 +321,13 @@ Return the complete file in one code block, nothing else.</pre>
     <tr><td><code>localStorage</code></td>
         <td>Works normally. Each imported dashboard gets its own private store — two of them
             can both save under <code>state</code> without colliding.</td></tr>
+    <tr><td><code>.toolbar</code> hidden<br>under 560px</td>
+        <td>Built-in dashboards load <code>phone.css</code>, which hides their Edit/Reset row on
+            a phone. An imported file is self-contained, so it has to hide its own — the panel
+            clicks those buttons whether they are visible or not.</td></tr>
+    <tr><td><code>&lt;meta name="theme-color"&gt;</code></td>
+        <td>The colour the generated home-screen tile is drawn in. The letter comes from the
+            dashboard's name.</td></tr>
     <tr><td>nothing</td>
         <td>The triple-tap panel, the corner control, Currency, Add to Home Screen and the
             demo watermark are added for you. Don't build your own.</td></tr>
@@ -244,6 +341,12 @@ Return the complete file in one code block, nothing else.</pre>
       as SVG and use the system font stack”. It will inline them.</li>
     <li><b>Edit mode missing</b> — reply “add the edit mode exactly as specified” and paste that
       section again.</li>
+    <li><b>Only a handful of things are editable</b> — reply “put data-edit on every visible
+      value, list rows included, using the indexed keys”. This is the most common miss.</li>
+    <li><b>Only one screen is real</b> — reply “build out the other tabs with their own content”.
+      Models tend to leave the nav decorative.</li>
+    <li><b>Edit/Reset buttons showing on the phone</b> — reply “hide .toolbar inside the
+      max-width:560px media query”.</li>
     <li><b>Truncated</b> — reply “continue from where you stopped, in one code block”, then join
       the pieces. Or ask for a simpler version with fewer screens.</li>
     <li><b>Better second attempt</b> — import it as a new dashboard and delete the first. There

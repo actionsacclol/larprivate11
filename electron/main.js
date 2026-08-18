@@ -321,6 +321,10 @@ function installMenu() {
             createMainWindow().webContents.send('krypt:showOnboarding');
           },
         },
+        {
+          label: 'Watch the guide (video)',
+          click: () => shell.openExternal('https://www.youtube.com/watch?v=jPjsNWckGiQ'),
+        },
         { type: 'separator' },
         { label: 'Krypt free tools', click: () => shell.openExternal('https://krypt.cc/tools') },
         { label: 'Discord', click: () => shell.openExternal('https://discord.gg/muzFKR657F') },

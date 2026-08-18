@@ -7,6 +7,8 @@ to your phone over your own Wi-Fi.
 The gallery carries a **FICTIONAL APPS · LEARNING DEMOS** banner in its header.
 These are UI studies — no real accounts, data, or transactions.
 
+**Guide video:** [Krypt LARP — Larp Everything for Free](https://www.youtube.com/watch?v=jPjsNWckGiQ)
+
 ## Every company in here is invented
 
 Every product name, every logo, every home-screen icon and every colour palette
@@ -138,7 +140,7 @@ custom/view.html     runs one of them
 
 | Where | What |
 |---|---|
-| Gallery header | **Make your own**, the amber button next to the tutorial |
+| Gallery header | **Make your own**, the amber button under *How it works* |
 | Gallery grid | the *Your dashboards* card at the end, with a live count |
 | Any dashboard, desktop | **Yours** in the corner pill |
 | Any dashboard, phone | **Your dashboards** in the tap-3× panel |
