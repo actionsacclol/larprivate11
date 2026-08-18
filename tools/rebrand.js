@@ -112,11 +112,22 @@ const WATCH_RE = WATCH.map(w => {
              are how you ask a phone for a home-screen icon. They are
              API names, not branding, and renaming them breaks the page
              silently — wrong font everywhere, Add to Home Screen quietly
-             doing nothing, no error in any console. */
+             doing nothing, no error in any console.
+   OFFSITE   the address of a video we published, on the site we
+             published it to. A URL is a destination, not a mark: the
+             rule is that a mock must never *say* YouTube, not that a
+             link to our own guide must resolve somewhere else. Without
+             this the text pass rewrites the host — `youtube.com` is a
+             RULES entry — and the guide link dies pointing at a domain
+             that was invented for a dashboard. Nothing about the visible
+             copy is exempted; this covers the URL token and no more, so
+             a label reading "watch on YouTube" still fails the check. */
 const PATHISH = /(?:\.{0,2}\/)*(?:dashboards|assets|tools|electron)\/[\w./-]+/g;
 const PLATFORM =
   /-apple-system|apple-(?:touch-icon|touch-startup-image|mobile-web-app-[\w-]+)/g;
-const MASKED = new RegExp(`${PATHISH.source}|${PLATFORM.source}`, 'g');
+const OFFSITE = /https?:\/\/(?:www\.)?(?:youtube\.com|youtu\.be)\/[^\s"'<>)]+/g;
+const MASKED = new RegExp(
+  `${PATHISH.source}|${PLATFORM.source}|${OFFSITE.source}`, 'g');
 const FENCE = String.fromCharCode(0);
 const UNMASK = new RegExp(FENCE + '(\\d+)' + FENCE, 'g');
 

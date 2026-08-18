@@ -172,7 +172,7 @@
             '<span class="g"><svg viewBox="0 0 24 24"><path d="M8 5.6v12.8a1 1 0 0 0 1.52.85l10.4-6.4' +
             'a1 1 0 0 0 0-1.7L9.52 4.75A1 1 0 0 0 8 5.6z"/></svg></span>' +
             '<span><span class="t">Watch the guide</span>' +
-            '<span class="d">The whole app in one video, on YouTube</span></span></a>' +
+            '<span class="d">The whole app in one video, in your browser</span></span></a>' +
         '</div>' +
         '<div class="kd-note"><span class="i">!</span><span class="x">Every screen carries a ' +
         '<b>LARP · not a real app</b> mark in the corner, so a screenshot still says what it ' +

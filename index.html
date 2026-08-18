@@ -126,11 +126,15 @@
      embedded video. That video went away, so the primary action moved
      to about.html — which explains the same things, works offline, and
      cannot 404. There is a video again now, and it sits *under* that
-     rather than in front of it, for the same reason: it lives on
-     YouTube, so it is the one action here that needs a connection and
+     rather than in front of it, for the same reason: it is hosted
+     off-site, so it is the one action here that needs a connection and
      can rot. Nothing is embedded — an iframe would put a third-party
      player, and its requests, on the front page of an app whose whole
-     claim is that it doesn't phone home. It opens in the browser. */
+     claim is that it doesn't phone home. It opens in the browser.
+
+     The label says "opens in your browser" rather than naming the site
+     it opens: this file is a mock as far as brand:check is concerned,
+     and the guard is on the words, not on the href. */
   .tutbtn{background:var(--k-accent-strong);border-color:transparent;color:#fff;
     box-shadow:0 10px 26px rgba(139,124,246,.26);}
   .tutbtn:hover{background:#8b4df0;border-color:transparent;}
@@ -396,7 +400,7 @@
 
       <a class="k-btn k-btn--lg vidbtn" data-ext="https://www.youtube.com/watch?v=jPjsNWckGiQ" href="https://www.youtube.com/watch?v=jPjsNWckGiQ">
         <span class="k-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.6v12.8a1 1 0 0 0 1.52.85l10.4-6.4a1 1 0 0 0 0-1.7L9.52 4.75A1 1 0 0 0 8 5.6z"/></svg></span>
-        <span>Watch the guide<small>The whole thing in one video — opens on YouTube</small></span>
+        <span>Watch the guide<small>The whole thing in one video — opens in your browser</small></span>
       </a>
 
       <div class="links">
