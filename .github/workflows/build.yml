@@ -14,7 +14,7 @@ name: build
 # hosting service, not the Codenest mock. rebrand.js walks .yml, so it
 # will try to scrub this line. Leave it — the rule is about the mocks.)
 #
-# Run it from the Actions tab (Run workflow), or push a tag like v1.1.0.
+# Run it from the Actions tab (Run workflow), or push a tag like v2.0.0.
 # A plain push to main builds nothing — it is tags only.
 # Either way the result is a DRAFT release you review before publishing.
 
@@ -28,8 +28,45 @@ permissions:
   contents: write        # electron-builder needs this to create the release
 
 jobs:
+  # Re-running a build for a version that already has a draft release
+  # fails on upload, not on build: GitHub rejects an asset name already
+  # attached to the release (422, "already_exists"), and electron-builder
+  # replaces the installers but not the .blockmap files beside them. So
+  # a second attempt at the same version dies uploading a blockmap while the app
+  # it just packaged is perfectly fine.
+  #
+  # Clearing the draft first makes a re-run idempotent. It runs once,
+  # before the matrix, rather than inside it — a per-platform cleanup
+  # would delete the assets the previous runner had just uploaded.
+  #
+  # It only ever deletes a DRAFT. A release that has been published is
+  # left alone and the build fails as it did before, which is the right
+  # outcome: replacing a binary people have already downloaded is a
+  # decision, not a retry.
+  clean:
+    name: Clear stale draft
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Delete the draft release for this version, if there is one
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="v$(node -p "require('./package.json').version")"
+          STATE=$(gh release view "$TAG" --json isDraft -q .isDraft 2>/dev/null || echo none)
+          if [ "$STATE" = "true" ]; then
+            # The tag itself is left in place — no --cleanup-tag.
+            gh release delete "$TAG" --yes
+            echo "Deleted stale draft $TAG; this run starts it fresh."
+          elif [ "$STATE" = "false" ]; then
+            echo "::warning::$TAG is already published — not touching it. Bump the version if the upload fails on duplicate assets."
+          else
+            echo "No existing release for $TAG."
+          fi
+
   build:
     name: ${{ matrix.name }}
+    needs: clean
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false   # one platform failing shouldn't hide the others

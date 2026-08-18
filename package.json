@@ -1,7 +1,7 @@
 {
   "name": "krypt-larp",
   "productName": "Krypt LARP",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "A collection of editable, animated mock-ups of fictional apps \u2014 31 original screens drawn from scratch, browsable on your desktop and servable to your phone over your own Wi-Fi. Part of the Krypt free tools suite.",
   "main": "electron/main.js",
   "author": {

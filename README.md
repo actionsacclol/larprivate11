@@ -224,7 +224,7 @@ needs macOS's `hdiutil`, and the Linux targets want a Linux toolchain. So
 | | |
 |---|---|
 | Run it | Actions tab → **build** → *Run workflow* |
-| Get a release | push a tag: `git tag v1.1.0 && git push origin v1.1.0` |
+| Get a release | push a tag: `git tag v2.0.0 && git push origin v2.0.0` |
 | Output | `.exe` · `.dmg` + `.zip` (Intel + Apple Silicon) · `.AppImage` + `.deb` |
 
 Tag pushes also open a **draft** GitHub Release with everything attached, so
